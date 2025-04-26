@@ -140,6 +140,10 @@
   <ItemGroup>
     <ClInclude Include="include\engine.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Shader\BaseFragmentShader.glsl" />
+    <None Include="Shader\BaseVertexShader.glsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

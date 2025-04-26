@@ -30,4 +30,8 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Shader\BaseVertexShader.glsl" />
+    <None Include="Shader\BaseFragmentShader.glsl" />
+  </ItemGroup>
 </Project>

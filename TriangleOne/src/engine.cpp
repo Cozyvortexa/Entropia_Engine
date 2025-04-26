@@ -6,29 +6,70 @@ float vertices[] = {
 	0.0f, 0.5f, 0.0f
 };
 
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-" gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"}\0";
 
-void Engine::CreateShader() {
-	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
+std::string ReadFileToString(const std::string& filePath) {
+	std::ifstream file(filePath);
+	if (!file.is_open()) {
+		std::cerr << "Erreur : impossible d'ouvrir le fichier " << filePath << std::endl;
+		return "";
+	}
 
-	//Chek succes
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	return buffer.str();
+}
+
+void Engine::CreateShader(std::string path, int methode) {  // methode a transformer en enum
+	std::string vertexCode = ReadFileToString(path);
+	const char* codeCStr = vertexCode.c_str();
+
+	unsigned int shader;
+	if (methode == 1) {
+		shader = glCreateShader(GL_FRAGMENT_SHADER);
+	}
+	else{
+		shader = glCreateShader(GL_VERTEX_SHADER);
+	}
+
+	glShaderSource(shader, 1, &codeCStr, NULL);
+	glCompileShader(shader);
+
+	//Verification du shader
 	int success;
 	char infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		glGetShaderInfoLog(shader, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-
+		return;
 	}
+	shaderListe.push_back(shader);
+}
+
+void Engine::CreateShaderProg() {
+	shaderProgram = glCreateProgram();
+	for (auto& shader : shaderListe) {
+		glAttachShader(shaderProgram, shader);
+	}
+	glLinkProgram(shaderProgram);
+
+	//Verif
+	int success;
+	char infoLog[512];
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::PROG::CREATION_FAILED\n" << infoLog << std::endl;
+		return;
+	}
+	//
+
+	for (auto& shader : shaderListe) {  // oui en deux temps 
+		glDeleteShader(shader);
+	}
+	shaderListe.clear();
+
 }
 
 
@@ -47,7 +88,11 @@ void Engine::DrawTriangle() {
 	*/
 
 	//Vertex shader
-	CreateShader();
+	CreateShader("TriangleOne/Shader/BaseVertexShader.glsl",0);  // simplifier le chemin
+
+	CreateShader("TriangleOne/Shader/BaseFragmentShader.glsl", 1);
+
+	CreateShaderProg();
 }
 
 
