@@ -74,6 +74,9 @@ void Engine::CreateShaderProg() {
 
 
 void Engine::DrawTriangle() {
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
 
 	//Vertex input
 	unsigned int VBO;
@@ -87,12 +90,23 @@ void Engine::DrawTriangle() {
 	GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
 	*/
 
+
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+
+
 	//Vertex shader
 	CreateShader("TriangleOne/Shader/BaseVertexShader.glsl",0);  // simplifier le chemin
 
 	CreateShader("TriangleOne/Shader/BaseFragmentShader.glsl", 1);
 
 	CreateShaderProg();
+
+	glUseProgram(shaderProgram);
+	glBindVertexArray(VAO);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 
@@ -136,14 +150,16 @@ int Engine::Run() {
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-	DrawTriangle();
+
 
 	while (!glfwWindowShouldClose(window))
 	{
 		ProcessInput(window);  // gere les inputs 
 
-
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		DrawTriangle();
+
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
