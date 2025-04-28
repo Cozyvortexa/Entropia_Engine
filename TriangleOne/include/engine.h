@@ -7,7 +7,8 @@
 #include <sstream>
 
 #include <Module.h>
-//#include <Render.h>
+#include <RenderModule.h>
+#include <window.h>
 
 #include <iostream>
 #include <vector>
@@ -20,14 +21,6 @@ public:
 
 	int Run();
 
-	static void Framebuffer_size_callback(GLFWwindow* window, int width, int height);
-	void ProcessInput(GLFWwindow* window);
-	void DrawTriangle();
-	void CreateShader(std::string path, int methode);
-
-	void CreateShaderProg();
-
-
 	Engine* Init();
 	void CreateModules();
 	void Update();
@@ -39,14 +32,11 @@ private:
 	int WIDHT = 800;
 	int HEIGHT = 600;
 	static Engine* instance;
+	Window* window = nullptr;
 
 	std::vector<Module*> modules;
 	std::vector<unsigned int> shaderListe;
 	unsigned int shaderProgram;
 
-	template<typename ModuleType> ModuleType* CreateModule() {
-		ModuleType* module = new ModuleType();
-		modules.push_back(module);
-		return module;
-	}
+	template<typename ModuleType> ModuleType* CreateModule();
 };

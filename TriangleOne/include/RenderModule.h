@@ -10,29 +10,34 @@
 #include <iostream>
 #include <vector>
 
+#include "RenderModule.h"
+#include "window.h"
 
 
-class Render : public Module {
+
+class RenderModule : public Module {
 public:
+	RenderModule();
 
-	static void Framebuffer_size_callback(GLFWwindow* window, int width, int height);
-	void ProcessInput(GLFWwindow* window);
+	static RenderModule* GetInstance();
+
+
 	void DrawTriangle();
 	void CreateShader(std::string path, int methode);
 
 	void CreateShaderProg();
 
 
-	void Update() override;
 	void Init() override;
+	void Update() override;
 	void Shutdown() override;
 
 private:
-	int WIDHT = 800;
-	int HEIGHT = 600;
 
 	GLFWwindow* window = nullptr;
 
+	static RenderModule* instance;
+
 	std::vector<unsigned int> shaderListe;
-	unsigned int shaderProgram;
+	unsigned int shaderProgram = NULL;
 };

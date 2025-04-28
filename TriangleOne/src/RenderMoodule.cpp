@@ -1,10 +1,21 @@
-#include <Render.h>
+#include <RenderModule.h>
 
 float vertices[] = {
 	-0.5f, -0.5f, 0.0f,
 	0.5f, -0.5f, 0.0f,
 	0.0f, 0.5f, 0.0f
 };
+
+RenderModule* RenderModule::instance = nullptr;
+
+RenderModule::RenderModule() {
+	instance = this;
+}
+
+RenderModule* RenderModule::GetInstance() {
+	return instance;
+}
+
 
 std::string ReadFileToString(const std::string& filePath) {
 	std::ifstream file(filePath);
@@ -18,7 +29,7 @@ std::string ReadFileToString(const std::string& filePath) {
 	return buffer.str();
 }
 
-void Render::CreateShader(std::string path, int methode) {  // methode a transformer en enum
+void RenderModule::CreateShader(std::string path, int methode) {  // methode a transformer en enum
 	std::string vertexCode = ReadFileToString(path);
 	const char* codeCStr = vertexCode.c_str();
 
@@ -46,7 +57,7 @@ void Render::CreateShader(std::string path, int methode) {  // methode a transfo
 	shaderListe.push_back(shader);
 }
 
-void Render::CreateShaderProg() {
+void RenderModule::CreateShaderProg() {
 	shaderProgram = glCreateProgram();
 	for (auto& shader : shaderListe) {
 		glAttachShader(shaderProgram, shader);
@@ -71,7 +82,7 @@ void Render::CreateShaderProg() {
 
 }
 
-void Render::DrawTriangle() {
+void RenderModule::DrawTriangle() {
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -107,54 +118,23 @@ void Render::DrawTriangle() {
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
-void Render::Framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-	glViewport(0, 0, width, height);
-}
 
-void Render::ProcessInput(GLFWwindow* window)
-{
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-}
+void RenderModule::Init() {
+	Window* windowClass = Window::GetInstance();
 
-
-void Render::Init() {
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	window = glfwCreateWindow(WIDHT, HEIGHT, "LearnOpenGL", NULL, NULL);
-	if (window == NULL)
-	{
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		abort();
+	window = windowClass->GetWindow();
+	if (window == nullptr) {
+		std::cout << "ici chef" << std::endl;
 	}
-
-
-	glfwMakeContextCurrent(window);
-
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		abort();
-	}
-	glfwSetFramebufferSizeCallback(window, Framebuffer_size_callback); // Pour adapter le viewport si la fenetre est resize pendant le court du programme 
-	glViewport(0, 0, WIDHT, HEIGHT);
-
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 }
 
-void Render::Update() {
+void RenderModule::Update() {
 
 	//while (!glfwWindowShouldClose(window))
 	//{
 
 	//}
 
-	ProcessInput(window);  // gere les inputs 
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -165,6 +145,6 @@ void Render::Update() {
 	glfwPollEvents();
 }
 
-void Render::Shutdown() {
-	glfwTerminate();
+void RenderModule::Shutdown() {
+
 }
