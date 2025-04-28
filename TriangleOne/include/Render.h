@@ -1,24 +1,19 @@
 #pragma once
-
 #include <glad/glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "Module.h"
+
 #include <fstream>
 #include <sstream>
-
-#include <Module.h>
-//#include <Render.h>
 
 #include <iostream>
 #include <vector>
 
 
-class Engine {
-public:
-	Engine();
-	~Engine();
 
-	int Run();
+class Render : public Module {
+public:
 
 	static void Framebuffer_size_callback(GLFWwindow* window, int width, int height);
 	void ProcessInput(GLFWwindow* window);
@@ -28,25 +23,16 @@ public:
 	void CreateShaderProg();
 
 
-	Engine* Init();
-	void CreateModules();
-	void Update();
-	void Render();
-	void Shutdown();
-
+	void Update() override;
+	void Init() override;
+	void Shutdown() override;
 
 private:
 	int WIDHT = 800;
 	int HEIGHT = 600;
-	static Engine* instance;
 
-	std::vector<Module*> modules;
+	GLFWwindow* window = nullptr;
+
 	std::vector<unsigned int> shaderListe;
 	unsigned int shaderProgram;
-
-	template<typename ModuleType> ModuleType* CreateModule() {
-		ModuleType* module = new ModuleType();
-		modules.push_back(module);
-		return module;
-	}
 };

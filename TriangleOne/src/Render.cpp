@@ -1,14 +1,10 @@
-#include "engine.h"
-
-Engine* Engine::instance = nullptr;
-
+#include <Render.h>
 
 float vertices[] = {
 	-0.5f, -0.5f, 0.0f,
 	0.5f, -0.5f, 0.0f,
 	0.0f, 0.5f, 0.0f
 };
-
 
 std::string ReadFileToString(const std::string& filePath) {
 	std::ifstream file(filePath);
@@ -22,15 +18,7 @@ std::string ReadFileToString(const std::string& filePath) {
 	return buffer.str();
 }
 
-Engine::Engine() {
-	if (instance != nullptr) { throw std::runtime_error("Engine instance already exists!"); }
-
-	instance = this;
-}
-
-Engine::~Engine() {};
-
-void Engine::CreateShader(std::string path, int methode) {  // methode a transformer en enum
+void Render::CreateShader(std::string path, int methode) {  // methode a transformer en enum
 	std::string vertexCode = ReadFileToString(path);
 	const char* codeCStr = vertexCode.c_str();
 
@@ -38,7 +26,7 @@ void Engine::CreateShader(std::string path, int methode) {  // methode a transfo
 	if (methode == 1) {
 		shader = glCreateShader(GL_FRAGMENT_SHADER);
 	}
-	else{
+	else {
 		shader = glCreateShader(GL_VERTEX_SHADER);
 	}
 
@@ -58,7 +46,7 @@ void Engine::CreateShader(std::string path, int methode) {  // methode a transfo
 	shaderListe.push_back(shader);
 }
 
-void Engine::CreateShaderProg() {
+void Render::CreateShaderProg() {
 	shaderProgram = glCreateProgram();
 	for (auto& shader : shaderListe) {
 		glAttachShader(shaderProgram, shader);
@@ -83,8 +71,7 @@ void Engine::CreateShaderProg() {
 
 }
 
-
-void Engine::DrawTriangle() {
+void Render::DrawTriangle() {
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -109,7 +96,7 @@ void Engine::DrawTriangle() {
 
 
 	//Vertex shader
-	CreateShader("TriangleOne/Shader/BaseVertexShader.glsl",0);  // simplifier le chemin
+	CreateShader("TriangleOne/Shader/BaseVertexShader.glsl", 0);  // simplifier le chemin
 
 	CreateShader("TriangleOne/Shader/BaseFragmentShader.glsl", 1);
 
@@ -120,32 +107,30 @@ void Engine::DrawTriangle() {
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
-
-void Engine::Framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void Render::Framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 }
 
-void Engine::ProcessInput(GLFWwindow* window)
+void Render::ProcessInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
 
 
-int Engine::Run() {
-
+void Render::Init() {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(WIDHT, HEIGHT, "LearnOpenGL", NULL, NULL);
+	window = glfwCreateWindow(WIDHT, HEIGHT, "LearnOpenGL", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
-		return -1;
+		abort();
 	}
 
 
@@ -154,66 +139,32 @@ int Engine::Run() {
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
-		return -1;
+		abort();
 	}
 	glfwSetFramebufferSizeCallback(window, Framebuffer_size_callback); // Pour adapter le viewport si la fenetre est resize pendant le court du programme 
 	glViewport(0, 0, WIDHT, HEIGHT);
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+}
+
+void Render::Update() {
+
+	//while (!glfwWindowShouldClose(window))
+	//{
+
+	//}
+
+	ProcessInput(window);  // gere les inputs 
+
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	DrawTriangle();
 
 
+	glfwSwapBuffers(window);
+	glfwPollEvents();
+}
 
-	while (!glfwWindowShouldClose(window))
-	{
-		ProcessInput(window);  // gere les inputs 
-
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		DrawTriangle();
-
-
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
+void Render::Shutdown() {
 	glfwTerminate();
-	return 0;
-}
-
-void Engine::CreateModules() {
-	CreateModule<Module>();
-
-	std::cout << "CreateModules done\n";
-}
-
-Engine* Engine::Init() {
-	std::cout << "Init Starting" << std::endl;
-
-	for (Module* module : modules) {
-		module->Init();
-	}
-
-	std::cout << "Init Done" << std::endl;
-	return this;
-}
-
-void Engine::Update() {
-
-	for (Module* module : modules) {
-		module->Update();
-	}
-}
-
-void Engine::Render() {
-
-	for (Module* module : modules) {
-		module->Render();
-	}
-}
-
-void Engine::Shutdown() {
-
-	for (Module* module : modules) {
-		module->Shutdown();
-		delete module;
-	}
 }

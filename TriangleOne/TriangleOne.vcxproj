@@ -139,6 +139,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\engine.h" />
+    <ClInclude Include="include\Module.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\BaseFragmentShader.glsl" />
