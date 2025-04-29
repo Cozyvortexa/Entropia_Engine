@@ -128,14 +128,7 @@ void RenderModule::Init() {
 	}
 }
 
-void RenderModule::Update() {
-
-	//while (!glfwWindowShouldClose(window))
-	//{
-
-	//}
-
-
+void RenderModule::Render() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	DrawTriangle();
@@ -146,5 +139,5 @@ void RenderModule::Update() {
 }
 
 void RenderModule::Shutdown() {
-
+	std::cout << "Shuting down RenderModule" << std::endl;
 }

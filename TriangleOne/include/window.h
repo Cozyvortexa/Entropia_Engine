@@ -14,6 +14,7 @@ public:
 
 	static void Framebuffer_size_callback(GLFWwindow* window, int width, int height);
 	void ProcessInput(GLFWwindow* window);
+	bool ShouldClose();
 
 	GLFWwindow* GetWindow() { return window; }
 

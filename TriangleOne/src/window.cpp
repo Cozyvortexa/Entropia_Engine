@@ -49,13 +49,16 @@ void Window::Init() {
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 }
 
+bool Window::ShouldClose() {
+	if (!glfwWindowShouldClose(window)) {
+		return true;
+	}
+	return false;
+}
 
 
 void Window::Update() {
 	ProcessInput(window);  // gere les inputs 
-	//if (!glfwWindowShouldClose(window)){
-
-	//}
 }
 
 

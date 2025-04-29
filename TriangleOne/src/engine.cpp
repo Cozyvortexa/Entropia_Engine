@@ -8,12 +8,6 @@ Engine::Engine() {
 	instance = this;
 }
 
-template<typename ModuleType> ModuleType* Engine::CreateModule() {
-	ModuleType* module = new ModuleType();
-	modules.push_back(module);
-	return module;
-}
-
 Engine::~Engine() {};
 
 int Engine::Run() {
@@ -21,12 +15,20 @@ int Engine::Run() {
 	CreateModules();
 	Init();
 
-	while (true) {
+	while (window->ShouldClose()) {
 		Update();
 		Render();
-
 	}
+	Shutdown();
+	return 0;
 }
+
+template<typename ModuleType> ModuleType* Engine::CreateModule() {
+	ModuleType* module = new ModuleType();
+	modules.push_back(module);
+	return module;
+}
+
 
 void Engine::CreateModules() {
 	window = CreateModule<Window>();
