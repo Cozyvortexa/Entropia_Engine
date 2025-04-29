@@ -6,6 +6,17 @@ float vertices[] = {
 	0.0f, 0.5f, 0.0f
 };
 
+float verticesRec[] = {
+0.5f, 0.5f, 0.0f, // top right
+0.5f, -0.5f, 0.0f, // bottom right
+-0.5f, -0.5f, 0.0f, // bottom left
+-0.5f, 0.5f, 0.0f // top left
+};
+unsigned int indices[] = { // note that we start from 0!
+0, 1, 3, // first triangle
+1, 2, 3 // second triangle
+};
+
 RenderModule* RenderModule::instance = nullptr;
 
 RenderModule::RenderModule() {
@@ -83,12 +94,12 @@ void RenderModule::CreateShaderProg() {
 }
 
 void RenderModule::DrawTriangle() {
-	unsigned int VAO;
+	unsigned int VAO;  // Vertex Array Object
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
 	//Vertex input
-	unsigned int VBO;
+	unsigned int VBO;  // Vertex Buffer Object
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -99,12 +110,8 @@ void RenderModule::DrawTriangle() {
 	GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
 	*/
 
-
-
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-
-
 
 	//Vertex shader
 	CreateShader("TriangleOne/Shader/BaseVertexShader.glsl", 0);  // simplifier le chemin
@@ -118,21 +125,60 @@ void RenderModule::DrawTriangle() {
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
+void RenderModule::DrawRectangle() {
+	unsigned int VAO;  // Vertex Array Object
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	unsigned int EBO;  // Element Buffer Object
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	unsigned int VBO;  // Vertex Buffer Object
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesRec), verticesRec, GL_STATIC_DRAW);
+
+	/*
+	GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
+	GL_STATIC_DRAW: the data is set only once and used many times.
+	GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
+	*/
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	//Vertex shader
+	CreateShader("TriangleOne/Shader/BaseVertexShader.glsl", 0);  // simplifier le chemin
+
+	CreateShader("TriangleOne/Shader/BaseFragmentShader.glsl", 1);
+
+	CreateShaderProg();
+
+	glUseProgram(shaderProgram);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBindVertexArray(VAO);
+
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
 
 void RenderModule::Init() {
 	Window* windowClass = Window::GetInstance();
 
 	window = windowClass->GetWindow();
 	if (window == nullptr) {
-		std::cout << "ici chef" << std::endl;
+		std::cout << "Reference de la window imposible a recuperer" << std::endl;
+		abort();
 	}
 }
 
 void RenderModule::Render() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	DrawTriangle();
-
+	//DrawTriangle();
+	DrawRectangle();
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();

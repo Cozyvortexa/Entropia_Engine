@@ -23,6 +23,8 @@ public:
 
 
 	void DrawTriangle();
+	void DrawRectangle();
+
 	void CreateShader(std::string path, int methode);
 
 	void CreateShaderProg();
