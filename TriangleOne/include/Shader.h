@@ -1,0 +1,35 @@
+#pragma once
+#include <glad/glad/glad.h> // include glad to get the required OpenGL headers
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+class Shader
+{
+public:
+	Shader(const char* vertexPath, const char* fragmentPath);
+
+
+	void Use();
+
+	void setBool(const std::string& name, bool value) const
+	{
+		glUniform1i(glGetUniformLocation(shaderID, name.c_str()), (int)value);
+	}
+	void setInt(const std::string& name, int value) const
+	{
+		glUniform1i(glGetUniformLocation(shaderID, name.c_str()), value);
+	}
+	void setFloat(const std::string& name, float value) const
+	{
+		glUniform1f(glGetUniformLocation(shaderID, name.c_str()), value);
+	}
+
+
+	unsigned int shaderID = NULL;
+
+private:
+	std::string ReadFile(const char* shaderPath);
+	int AssertShader(unsigned int& shader);
+};
+

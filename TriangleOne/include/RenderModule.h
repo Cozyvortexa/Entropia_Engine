@@ -10,7 +10,7 @@
 #include <iostream>
 #include <vector>
 
-#include "RenderModule.h"
+#include "Shader.h"
 #include "window.h"
 
 
@@ -21,21 +21,15 @@ public:
 
 	static RenderModule* GetInstance();
 
-
 	void DrawTriangle();
 	void DrawRectangle();
-
-	void CreateShader(std::string path, int methode);
-
-	void CreateShaderProg();
-
 
 	void Init() override;
 	void Render() override;
 	void Shutdown() override;
 
 private:
-
+	Shader* shader = nullptr;
 	GLFWwindow* window = nullptr;
 
 	static RenderModule* instance;
