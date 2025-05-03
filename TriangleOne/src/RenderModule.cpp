@@ -17,6 +17,12 @@ unsigned int indices[] = { // note that we start from 0!
 1, 2, 3 // second triangle
 };
 
+float texCoords[] = {
+0.0f, 0.0f, // lower-left corner
+1.0f, 0.0f, // lower-right corner
+0.5f, 1.0f // top-center corner
+};
+
 RenderModule* RenderModule::instance = nullptr;
 
 RenderModule::RenderModule() {
@@ -25,6 +31,17 @@ RenderModule::RenderModule() {
 
 RenderModule* RenderModule::GetInstance() {
 	return instance;
+}
+
+void RenderModule::Texture() {
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
 }
 
 void RenderModule::DrawTriangle() {

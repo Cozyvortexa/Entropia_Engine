@@ -23,6 +23,7 @@ public:
 
 	void DrawTriangle();
 	void DrawRectangle();
+	void Texture();
 
 	void Init() override;
 	void Render() override;
@@ -35,5 +36,4 @@ private:
 	static RenderModule* instance;
 
 	std::vector<unsigned int> shaderListe;
-	unsigned int shaderProgram = NULL;
 };
