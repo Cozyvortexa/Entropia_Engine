@@ -12,7 +12,7 @@
 
 #include "Shader.h"
 #include "window.h"
-
+#include "Texture.h"
 
 
 class RenderModule : public Module {
@@ -23,13 +23,13 @@ public:
 
 	void DrawTriangle();
 	void DrawRectangle();
-	void Texture();
 
 	void Init() override;
 	void Render() override;
 	void Shutdown() override;
 
 private:
+	Texture* texture = nullptr;
 	Shader* shader = nullptr;
 	GLFWwindow* window = nullptr;
 
