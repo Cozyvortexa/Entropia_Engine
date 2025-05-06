@@ -14,6 +14,10 @@
 #include "window.h"
 #include "Texture.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 
 class RenderModule : public Module {
 public:
@@ -36,4 +40,8 @@ private:
 	static RenderModule* instance;
 
 	std::vector<unsigned int> shaderListe;
+
+	glm::mat4 view = glm::mat4(1.0f);
+	glm::mat4 projection = glm::mat4(1.0f);
+	glm::mat4 model = glm::mat4(1.0f);
 };
