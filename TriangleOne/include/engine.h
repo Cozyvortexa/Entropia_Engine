@@ -9,6 +9,7 @@
 #include <Module.h>
 #include <RenderModule.h>
 #include <window.h>
+#include <Time.hpp>
 
 #include <iostream>
 #include <vector>

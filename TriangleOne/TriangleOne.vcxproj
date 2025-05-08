@@ -139,6 +139,7 @@
     <ClCompile Include="src\RenderModule.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\Time.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -147,6 +148,7 @@
     <ClInclude Include="include\RenderModule.h" />
     <ClInclude Include="include\Shader.h" />
     <ClInclude Include="include\Texture.h" />
+    <ClInclude Include="include\Time.hpp" />
     <ClInclude Include="include\window.h" />
   </ItemGroup>
   <ItemGroup>

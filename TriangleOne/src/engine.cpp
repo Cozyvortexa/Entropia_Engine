@@ -32,6 +32,7 @@ template<typename ModuleType> ModuleType* Engine::CreateModule() {
 
 void Engine::CreateModules() {
 	window = CreateModule<Window>();
+	CreateModule<Time>();
 	CreateModule<RenderModule>();
 
 	std::cout << "CreateModules done\n";
