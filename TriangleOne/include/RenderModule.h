@@ -27,6 +27,7 @@ public:
 
 	void DrawTriangle();
 	void DrawRectangle();
+	glm::mat4 Camera();
 
 	void Init() override;
 	void Render() override;
@@ -41,7 +42,6 @@ private:
 
 	std::vector<unsigned int> shaderListe;
 
-	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 projection = glm::mat4(1.0f);
 	glm::mat4 model = glm::mat4(1.0f);
 };
