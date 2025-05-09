@@ -186,72 +186,6 @@ void RenderModule::DrawRectangle() {
 	glDeleteBuffers(1, &VBO);
 }
 
-glm::mat4 RenderModule::Camera() {
-	//glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-
-	//glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-	//glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
-
-	//glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-	//glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-
-	//glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
-
-	glm::mat4 view;
-	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-	return view;
-}
-
-
-
-void RenderModule::MouseCallback(GLFWwindow* window, double xpos, double ypos) {
-
-	if (firstMouse)
-	{
-		lastX = xpos;
-		lastY = ypos;
-		firstMouse = false;
-	}
-
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos;
-	lastX = xpos;
-	lastY = ypos;
-	const float sensitivity = 0.1f;
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
-	yaw += xoffset;
-	pitch += yoffset;
-
-	// Blocage de la hauteur pour eviter les curse mouvement
-	if (pitch > 89.0f)
-		pitch = 89.0f;
-	if (pitch < -89.0f)
-		pitch = -89.0f;
-
-	//Calcul de la nouvelle direction
-	glm::vec3 direction;
-	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	direction.y = sin(glm::radians(pitch));
-	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	cameraFront = glm::normalize(direction);
-
-}
-
-void RenderModule::ProcessInput(GLFWwindow* window)
-{
-	float deltaTime = Time::GetDeltaTime();
-		const float cameraSpeed = 9.0f * deltaTime; 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		cameraPos += cameraSpeed * cameraFront;
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		cameraPos -= cameraSpeed * cameraFront;
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-}
 
 void RenderModule::Init() {
 	Window* windowClass = Window::GetInstance();
@@ -271,9 +205,11 @@ void RenderModule::Init() {
 
 	//Camera 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	mainCamera = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 }
 
-void RenderModule::Render() {
+void RenderModule::Render()
+ {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 100.0f);  // 800, 600 car flm de faire un guetteur vers window
@@ -281,15 +217,13 @@ void RenderModule::Render() {
 	DrawTriangle();
 	//DrawRectangle();
 
-	glfwSetCursorPosCallback(window, MouseCallback);
-	Camera();
-	ProcessInput(window);
+	mainCamera->ProcessInput(window);
 	
 	unsigned int modelLoc = glGetUniformLocation(shader->shaderID, "model");
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
 	unsigned int projLoc = glGetUniformLocation(shader->shaderID, "view");
-	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(Camera()));
+	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(mainCamera->GetViewMatrix()));
 
 	unsigned int projectionLoc = glGetUniformLocation(shader->shaderID, "projection");
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));

@@ -18,13 +18,16 @@ public:
 
 	GLFWwindow* GetWindow() { return window; }
 
+	static int GetWidth(){ return WIDHT; }
+	static int GetHeight() { return HEIGHT; }
+
 	void Init() override;
 	void Update() override;
 	void Shutdown() override;
 
 private:
-	int WIDHT = 800;
-	int HEIGHT = 600;
+	inline static int WIDHT = 800;
+	inline static int HEIGHT = 600;
 
 	static Window* instance;
 

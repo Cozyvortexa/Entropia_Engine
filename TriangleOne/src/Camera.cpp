@@ -1,0 +1,78 @@
+#include "Camera.h"
+
+
+void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
+	Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));  // Recupere l'instance de camera actuellement lie
+	if (camera) {
+		camera->ProcessCameraMouseInput(xpos, ypos);
+	}
+	else {
+		std::cout << "Camera non lie dans Camera.cpp" << std::endl;
+	}
+}
+
+
+Camera::Camera(glm::vec3 Pos) {
+	cameraPos = Pos;
+	Window* windowClass = Window::GetInstance();
+
+	window = windowClass->GetWindow();
+	glfwSetWindowUserPointer(window, this);  // Lie la cam a la fenetre
+	glfwSetCursorPosCallback(window, MouseCallback);  // Pour permetre le mouvement de la cam
+}
+
+void Camera::ProcessCameraMouseInput(double xpos, double ypos) {
+
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos;
+
+	lastX = xpos;
+	lastY = ypos;
+
+	const float sensitivity = 0.1f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	// Blocage de la hauteur pour eviter les curse mouvement
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	//Calcul de la nouvelle direction
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
+}
+
+glm::mat4 Camera::GetViewMatrix() {
+	glm::mat4 view;
+	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+	return view;
+}
+
+void Camera::ProcessInput(GLFWwindow* window)
+{
+	float deltaTime = Time::GetDeltaTime();
+	const float cameraSpeed = 9.0f * deltaTime;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		cameraPos += cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		cameraPos -= cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+}
