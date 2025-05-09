@@ -3,6 +3,7 @@
 #include "Module.h"
 #include "Windows.h"
 #include <GLFW/glfw3.h>
+#include "iostream"
 
 
 class Time : public Module {  // Oui c'est un hpp, time.h existe deja ( utiliser dans une lib )
@@ -12,6 +13,7 @@ public:
 	static Time* GetInstance();
 
 	void Update() override;
+	void Shutdown() override;
 	static float GetDeltaTime() { return deltaTime; }
 
 private:

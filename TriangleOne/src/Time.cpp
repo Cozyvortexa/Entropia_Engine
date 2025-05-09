@@ -18,3 +18,6 @@ void Time::Update() {
 	lastFrame = currentFrame;
 }
 
+void Time::Shutdown() {
+	std::cout << "Shuting down TimeModule" << std::endl;
+}

@@ -30,11 +30,13 @@ public:
 	void DrawRectangle();
 	glm::mat4 Camera();
 
-	void processInput(GLFWwindow* window);
+	void ProcessInput(GLFWwindow* window);
 
 	void Init() override;
 	void Render() override;
 	void Shutdown() override;
+
+	void MouseCallback(GLFWwindow* window, double xpos, double ypos);
 
 private:
 	Texture* texture = nullptr;
@@ -48,7 +50,18 @@ private:
 	glm::mat4 projection = glm::mat4(1.0f);
 	glm::mat4 model = glm::mat4(1.0f);
 
+
+
 	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+	inline static glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	//Rotation
+	inline static float yaw = -90.0f;
+	inline static float pitch = 0.0f;
+
+	inline static float lastX = 400, lastY = 300;
+	inline static bool firstMouse = true;
 };

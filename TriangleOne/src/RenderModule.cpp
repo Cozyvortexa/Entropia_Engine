@@ -64,16 +64,16 @@ float texCoords[] = {
 };
 
 glm::vec3 cubePositions[] = {
-glm::vec3(0.0f, 0.0f, 0.0f),
-glm::vec3(2.0f, 5.0f, -15.0f),
-glm::vec3(-1.5f, -2.2f, -2.5f),
-glm::vec3(-3.8f, -2.0f, -12.3f),
-glm::vec3(2.4f, -0.4f, -3.5f),
-glm::vec3(-1.7f, 3.0f, -7.5f),
-glm::vec3(1.3f, -2.0f, -2.5f),
-glm::vec3(1.5f, 2.0f, -2.5f),
-glm::vec3(1.5f, 0.2f, -1.5f),
-glm::vec3(-1.3f, 1.0f, -1.5f)
+	glm::vec3(0.0f, 0.0f, 0.0f),
+	glm::vec3(2.0f, 5.0f, -15.0f),
+	glm::vec3(-1.5f, -2.2f, -2.5f),
+	glm::vec3(-3.8f, -2.0f, -12.3f),
+	glm::vec3(2.4f, -0.4f, -3.5f),
+	glm::vec3(-1.7f, 3.0f, -7.5f),
+	glm::vec3(1.3f, -2.0f, -2.5f),
+	glm::vec3(1.5f, 2.0f, -2.5f),
+	glm::vec3(1.5f, 0.2f, -1.5f),
+	glm::vec3(-1.3f, 1.0f, -1.5f)
 };
 
 RenderModule* RenderModule::instance = nullptr;
@@ -186,7 +186,7 @@ void RenderModule::DrawRectangle() {
 	glDeleteBuffers(1, &VBO);
 }
 
-glm::mat4  RenderModule::Camera() {
+glm::mat4 RenderModule::Camera() {
 	//glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 
 	//glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -202,10 +202,47 @@ glm::mat4  RenderModule::Camera() {
 	return view;
 }
 
-void RenderModule::processInput(GLFWwindow* window)
+
+
+void RenderModule::MouseCallback(GLFWwindow* window, double xpos, double ypos) {
+
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos;
+	lastX = xpos;
+	lastY = ypos;
+	const float sensitivity = 0.1f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	// Blocage de la hauteur pour eviter les curse mouvement
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	//Calcul de la nouvelle direction
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
+
+}
+
+void RenderModule::ProcessInput(GLFWwindow* window)
 {
 	float deltaTime = Time::GetDeltaTime();
-		const float cameraSpeed = 0.05f; // adjust accordingly
+		const float cameraSpeed = 9.0f * deltaTime; 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		cameraPos += cameraSpeed * cameraFront;
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -232,6 +269,8 @@ void RenderModule::Init() {
 
 	glEnable(GL_DEPTH_TEST);
 
+	//Camera 
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 void RenderModule::Render() {
@@ -242,7 +281,9 @@ void RenderModule::Render() {
 	DrawTriangle();
 	//DrawRectangle();
 
-	processInput(window);
+	glfwSetCursorPosCallback(window, MouseCallback);
+	Camera();
+	ProcessInput(window);
 	
 	unsigned int modelLoc = glGetUniformLocation(shader->shaderID, "model");
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
