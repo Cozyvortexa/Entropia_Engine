@@ -20,6 +20,9 @@ public:
 
 	void ProcessInput(GLFWwindow* window);
 
+	void ProcessMouseScroll(double xoffset, float yoffset);
+
+	float GetZoom() { return zoom; };
 
 private:
 	GLFWwindow* window = nullptr;
@@ -34,6 +37,7 @@ private:
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 
+	float zoom = 45.0f;  // valeur de zoom par default 
 	//Rotation
 	float yaw = -90.0f;
 	float pitch = 0.0f;

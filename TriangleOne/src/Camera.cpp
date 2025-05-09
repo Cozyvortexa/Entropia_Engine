@@ -11,6 +11,16 @@ void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	}
 }
 
+void ScrollCallback(GLFWwindow* window, double xoffset, double ypos) {
+	Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));  // Recupere l'instance de camera actuellement lie
+	if (camera) {
+		camera->ProcessMouseScroll(xoffset, ypos);
+	}
+	else {
+		std::cout << "Camera non lie dans Camera.cpp (ScrollCallBack)" << std::endl;
+	}
+}
+
 
 Camera::Camera(glm::vec3 Pos) {
 	cameraPos = Pos;
@@ -19,6 +29,7 @@ Camera::Camera(glm::vec3 Pos) {
 	window = windowClass->GetWindow();
 	glfwSetWindowUserPointer(window, this);  // Lie la cam a la fenetre
 	glfwSetCursorPosCallback(window, MouseCallback);  // Pour permetre le mouvement de la cam
+	glfwSetScrollCallback(window, ScrollCallback);
 }
 
 void Camera::ProcessCameraMouseInput(double xpos, double ypos) {
@@ -75,4 +86,14 @@ void Camera::ProcessInput(GLFWwindow* window)
 		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+}
+
+
+void Camera::ProcessMouseScroll(double xoffset, float yoffset){
+
+	zoom -= (float)yoffset;
+	if (zoom < 1.0f)
+		zoom = 1.0f;
+	if (zoom > 45.0f)
+		zoom = 45.0f;
 }

@@ -198,9 +198,6 @@ void RenderModule::Init() {
 	shader = new Shader("TriangleOne/Shader/BaseVertexShader.glsl", "TriangleOne/Shader/BaseFragmentShader.glsl");
 	texture = new Texture("Assets/woodPng.png");
 
-
-	projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-
 	glEnable(GL_DEPTH_TEST);
 
 	//Camera 
@@ -219,13 +216,14 @@ void RenderModule::Render()
 
 	mainCamera->ProcessInput(window);
 	
-	unsigned int modelLoc = glGetUniformLocation(shader->shaderID, "model");
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+	//unsigned int modelLoc = glGetUniformLocation(shader->shaderID, "model");
+	//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
 	unsigned int projLoc = glGetUniformLocation(shader->shaderID, "view");
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(mainCamera->GetViewMatrix()));
 
 	unsigned int projectionLoc = glGetUniformLocation(shader->shaderID, "projection");
+	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 	glfwSwapBuffers(window);
