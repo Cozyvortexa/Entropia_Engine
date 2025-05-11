@@ -86,6 +86,12 @@ void Camera::ProcessInput(GLFWwindow* window)
 		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+
+	//Mouvement supp
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+		cameraPos += glm::vec3(0.0f, -1.0f, 0.0f) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+		cameraPos += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
 }
 
 
