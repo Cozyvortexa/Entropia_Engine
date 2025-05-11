@@ -34,6 +34,11 @@ public:
 	void setVec3(const std::string& name, glm::vec3 value) 
 	{
 		glUniform3fv(glGetUniformLocation(shaderID, name.c_str()), 1, glm::value_ptr(value));
+
+		GLint loc = glGetUniformLocation(shaderID, name.c_str());
+		if (loc == -1) {
+			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
+		}
 	}
 
 	void setMatrix(const std::string& name, glm::mat4 matrix)

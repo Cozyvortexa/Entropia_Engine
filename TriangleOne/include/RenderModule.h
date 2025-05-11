@@ -30,6 +30,7 @@ public:
 	void DrawMultipleCube();
 	void DrawRectangle();
 	void DrawLight();
+	void DrawCubeAffectedByLight();
 
 
 	void Init() override;
