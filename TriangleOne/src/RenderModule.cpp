@@ -45,22 +45,60 @@ float vertices[] = {
 };
 
 float verticesRec[] = {
-
+//Pos				//Color				//Tex
 0.5f, 0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0,  // top right
 0.5f, -0.5f, 0.0f,    0.0f, 1.0f, 0.0f,  1.0f, 0.0f,   // bottom right
 -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,  // bottom left
 -0.5f, 0.5f, 0.0f,    0.0f, 1.0f, 0.0f,  0.0f, 1.0f   // top left
 };
 
+float verticesLightRec[] = {
+-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+
+-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+-0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+
+-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+-0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+
+-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+-0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+-0.5f, 0.5f, -0.5f, 0.0f, 1.0f
+};
+
 unsigned int indices[] = { // note that we start from 0!
 0, 1, 3, // first triangle
 1, 2, 3 // second triangle
-};
-
-float texCoords[] = {
-0.0f, 0.0f, // lower-left corner
-1.0f, 0.0f, // lower-right corner
-0.5f, 1.0f // top-center corner
 };
 
 glm::vec3 cubePositions[] = {
@@ -86,7 +124,7 @@ RenderModule* RenderModule::GetInstance() {
 	return instance;
 }
 
-void RenderModule::DrawTriangle() {
+void RenderModule::DrawMultipleCube() {
 	unsigned int VAO;  // Vertex Array Object
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -186,6 +224,43 @@ void RenderModule::DrawRectangle() {
 	glDeleteBuffers(1, &VBO);
 }
 
+void RenderModule::DrawLight(){
+	unsigned int lightVAO;
+	glGenVertexArrays(1, &lightVAO);
+	glBindVertexArray(lightVAO);
+
+	unsigned int VBO;  // Vertex Buffer Object
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesLightRec), verticesLightRec, GL_STATIC_DRAW);
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	// set the vertex attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	shaderLight->Use();
+
+	glBindVertexArray(lightVAO);
+
+	shaderLight->setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+	shaderLight->setVec3("lightColor", glm:: vec3(1.0f, 1.0f, 1.0f));
+
+
+
+
+	GLuint modelLoc = glGetUniformLocation(shader->shaderID, "model");
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(_model));
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	glDeleteVertexArrays(1, &lightVAO);
+	glDeleteBuffers(1, &VBO);
+}
 
 void RenderModule::Init() {
 	Window* windowClass = Window::GetInstance();
@@ -196,6 +271,7 @@ void RenderModule::Init() {
 		abort();
 	}
 	shader = new Shader("TriangleOne/Shader/BaseVertexShader.glsl", "TriangleOne/Shader/BaseFragmentShader.glsl");
+	shaderLight = new Shader("TriangleOne/Shader/LightVertexShader.glsl", "TriangleOne/Shader/LightFragShader.glsl");
 	texture = new Texture("Assets/woodPng.png");
 
 	glEnable(GL_DEPTH_TEST);
@@ -203,6 +279,8 @@ void RenderModule::Init() {
 	//Camera 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	mainCamera = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+	lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
 }
 
 void RenderModule::Render()
@@ -211,7 +289,7 @@ void RenderModule::Render()
 
 	//glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 100.0f);  // 800, 600 car flm de faire un guetteur vers window
 
-	DrawTriangle();
+	DrawMultipleCube();
 	//DrawRectangle();
 
 	mainCamera->ProcessInput(window);
@@ -219,12 +297,12 @@ void RenderModule::Render()
 	//unsigned int modelLoc = glGetUniformLocation(shader->shaderID, "model");
 	//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-	unsigned int projLoc = glGetUniformLocation(shader->shaderID, "view");
-	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(mainCamera->GetViewMatrix()));
 
-	unsigned int projectionLoc = glGetUniformLocation(shader->shaderID, "projection");
+	shader->setMatrix("view", mainCamera->GetViewMatrix());
+
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
-	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+	shader->setMatrix("projection", projection);
+
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();

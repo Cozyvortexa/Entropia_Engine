@@ -72,5 +72,7 @@
   <ItemGroup>
     <None Include="Shader\BaseVertexShader.glsl" />
     <None Include="Shader\BaseFragmentShader.glsl" />
+    <None Include="Shader\LightFragShader.glsl" />
+    <None Include="Shader\LightVertexShader.glsl" />
   </ItemGroup>
 </Project>

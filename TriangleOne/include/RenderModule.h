@@ -27,8 +27,9 @@ public:
 
 	static RenderModule* GetInstance();
 
-	void DrawTriangle();
+	void DrawMultipleCube();
 	void DrawRectangle();
+	void DrawLight();
 
 
 	void Init() override;
@@ -39,6 +40,7 @@ public:
 private:
 	Texture* texture = nullptr;
 	Shader* shader = nullptr;
+	Shader* shaderLight = nullptr;
 	GLFWwindow* window = nullptr;
 	Camera* mainCamera = nullptr;
 
@@ -46,6 +48,9 @@ private:
 
 	std::vector<unsigned int> shaderListe;
 
-	glm::mat4 model = glm::mat4(1.0f);
+	glm::mat4 _model = glm::mat4(1.0f);
+
+
+	glm::vec3 lightPos;
 
 };
