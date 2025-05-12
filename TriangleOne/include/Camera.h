@@ -24,6 +24,8 @@ public:
 
 	float GetZoom() { return zoom; };
 
+	glm::vec3 GetPos() { return cameraPos; }
+
 private:
 	GLFWwindow* window = nullptr;
 
