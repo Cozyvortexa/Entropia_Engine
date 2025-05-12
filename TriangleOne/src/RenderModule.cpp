@@ -303,10 +303,15 @@ void RenderModule::DrawCubeAffectedByLight() {
 
 	shader->setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
 	shader->setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-	shader->setVec3("lightPos", lightPos);
-	shader->setVec3("viewPos", mainCamera->GetPos());
+	glm::vec3 lightPosView = glm::vec3(mainCamera->GetViewMatrix() * glm::vec4(lightPos, 1.0));  // on passe les coordonée de la lumiere (Pos monde) en pos view
+	shader->setVec3("lightPosView", lightPosView);
+
+	// coordonée de lumiere en viewSpace
+	glm::mat3 normalViewMatrix = glm::transpose(glm::inverse(glm::mat3(mainCamera->GetViewMatrix() * _model)));
+	shader->setMatrix("normalViewMatrix", normalViewMatrix);
 
 
+	// les trois matrices
 	shader->setMatrix("model", _model);
 
 	shader->setMatrix("view", mainCamera->GetViewMatrix());
