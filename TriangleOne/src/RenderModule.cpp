@@ -301,8 +301,17 @@ void RenderModule::DrawCubeAffectedByLight() {
 
 	shader->Use();
 
-	shader->setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
-	shader->setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+	//Materiaux
+	shader->setVec3("material.ambient", glm::vec3(0.19225f, 0.19225f, 0.19225f));
+	shader->setVec3("material.diffuse", glm::vec3(0.50754f, 0.50754f, 0.50754f));
+	shader->setVec3("material.specular", glm::vec3(0.508273f, 0.508273f, 0.508273f));
+	shader->setFloat("material.shininess", 51.2f);
+
+	//Light
+	shader->setVec3("light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+	shader->setVec3("light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darkened
+	shader->setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
 	glm::vec3 lightPosView = glm::vec3(mainCamera->GetViewMatrix() * glm::vec4(lightPos, 1.0));  // on passe les coordonée de la lumiere (Pos monde) en pos view
 	shader->setVec3("lightPosView", lightPosView);
 
