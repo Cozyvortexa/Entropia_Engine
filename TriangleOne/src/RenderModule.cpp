@@ -298,13 +298,24 @@ void RenderModule::DrawCubeAffectedByLight() {
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
+	//PosTexture
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture->getTexture());
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, textureSpecular->getTexture());
+
 
 	shader->Use();
 
 	//Materiaux
-	shader->setVec3("material.ambient", glm::vec3(0.19225f, 0.19225f, 0.19225f));
-	shader->setVec3("material.diffuse", glm::vec3(0.50754f, 0.50754f, 0.50754f));
-	shader->setVec3("material.specular", glm::vec3(0.508273f, 0.508273f, 0.508273f));
+	//shader->setVec3("material.ambient", glm::vec3(0.19225f, 0.19225f, 0.19225f));
+	//shader->setVec3("material.diffuse", glm::vec3(0.50754f, 0.50754f, 0.50754f));
+	shader->setInt("material.diffuse", 0);
+	shader->setInt("material.specular", 1);
 	shader->setFloat("material.shininess", 51.2f);
 
 	//Light
@@ -390,7 +401,9 @@ void RenderModule::Init() {
 	}
 	shader = new Shader("TriangleOne/Shader/BaseVertexShader.glsl", "TriangleOne/Shader/BaseFragmentShader.glsl");
 	shaderLight = new Shader("TriangleOne/Shader/LightVertexShader.glsl", "TriangleOne/Shader/LightFragShader.glsl");
-	texture = new Texture("Assets/woodPng.png");
+
+	texture = new Texture("Assets/image.png");
+	textureSpecular = new Texture("Assets/imageSpecular.png");
 
 	glEnable(GL_DEPTH_TEST);
 

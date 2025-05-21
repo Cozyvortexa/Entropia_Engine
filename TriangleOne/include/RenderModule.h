@@ -40,6 +40,7 @@ public:
 
 private:
 	Texture* texture = nullptr;
+	Texture* textureSpecular = nullptr;
 	Shader* shader = nullptr;
 	Shader* shaderLight = nullptr;
 	GLFWwindow* window = nullptr;
