@@ -23,14 +23,14 @@ uniform Material material;
 
 struct Light {
 
-vec3 position;
+//vec3 position;
+vec3 direction;
 vec3 ambient;
 vec3 diffuse;
 vec3 specular;
 };
 uniform Light light;
 
-uniform vec3 lightPosView;
 
 in vec3 normal;
 in vec3 FragPosView;
@@ -41,20 +41,20 @@ out vec4 FragColor;
 
 void main()
 {
-	vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords)); 
+	vec3 ambient = light.ambient * texture(material.diffuse, TexCoords).rgb; 
 
 	vec3 norm = normalize(normal);  // Tout est normaliser, on veut uniquement la direction
-	vec3 lightDir = normalize(lightPosView - FragPosView);  // Distance entre la lumiere et la normal du vertex
+	vec3 lightDir = normalize(-light.direction);  // Distance entre la lumiere et la normal du vertex
 
 	float diff = max(dot(norm, lightDir), 0.0);  // Calcul de l'angle entre la normal et le vec distance 
-	vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
+	vec3 diffuse = light.diffuse * diff * texture(material.diffuse, TexCoords).rgb;
 
 	
 	vec3 viewDir = normalize( - FragPosView);  // vecteur du vertex vers camera
 	vec3 reflectDir = reflect(-lightDir, norm); // on inverse lightDir car c'est pas la bonne direction
 
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);  // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
-	vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
+	vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
 
 
 	vec3 result = ambient + diffuse + specular;
