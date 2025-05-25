@@ -324,8 +324,12 @@ void RenderModule::DrawCubeAffectedByLight() {
 	shader->setVec3("light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darkened
 	shader->setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
 
-	//glm::vec3 lightPosView = glm::vec3(mainCamera->GetViewMatrix() * glm::vec4(lightPos, 1.0));  // on passe les coordonée de la lumiere (Pos monde) en pos view
-	//shader->setVec3("lightPosView", lightPosView);
+	shader->setFloat("light.constant", 1.0f);
+	shader->setFloat("light.linear", 0.09f);
+	shader->setFloat("light.quadratic", 0.032f);
+
+	glm::vec3 lightPosView = glm::vec3(mainCamera->GetViewMatrix() * glm::vec4(lightPos, 1.0));  // on passe les coordonée de la lumiere (Pos monde) en pos view
+	shader->setVec3("light.viewPosition", lightPosView);
 
 	// coordonée de lumiere en viewSpace
 	//glm::mat3 normalViewMatrix = glm::transpose(glm::inverse(glm::mat3(mainCamera->GetViewMatrix() * _model)));
@@ -338,8 +342,101 @@ void RenderModule::DrawCubeAffectedByLight() {
 	shader->setMatrix("view", mainCamera->GetViewMatrix());
 	shader->setMatrix("projection", projection);
 
-	glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
-	shader->setVec3("light.direction", glm::mat3(mainCamera->GetViewMatrix()) * worldLightDir);
+	//glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
+	//shader->setVec3("light.direction", glm::mat3(mainCamera->GetViewMatrix()) * worldLightDir);
+
+	glBindVertexArray(VAO);
+	for (unsigned int i = 0; i < 10; i++)
+	{
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, cubePositions[i]);
+		float angle = 20.0f * i;
+		model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+		shader->setMatrix("model", model);
+
+		// coordonée de lumiere en viewSpace
+		glm::mat3 normalViewMatrix = glm::transpose(glm::inverse(glm::mat3(mainCamera->GetViewMatrix() * model)));
+		shader->setMatrix("normalViewMatrix", normalViewMatrix);
+
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
+
+
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+}
+
+void RenderModule::DrawCubeFlashLight() {
+	unsigned int VAO;  // Vertex Array Object
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	//Vertex input
+	unsigned int VBO;  // Vertex Buffer Object
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesNormal), verticesNormal, GL_STATIC_DRAW);
+
+	/*
+	GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
+	GL_STATIC_DRAW: the data is set only once and used many times.
+	GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
+	*/
+
+	//Position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	//Normal
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	//PosTexture
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture->getTexture());
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, textureSpecular->getTexture());
+
+
+	shader->Use();
+
+	//Materiaux
+	//shader->setVec3("material.ambient", glm::vec3(0.19225f, 0.19225f, 0.19225f));
+	//shader->setVec3("material.diffuse", glm::vec3(0.50754f, 0.50754f, 0.50754f));
+	shader->setInt("material.diffuse", 0);
+	shader->setInt("material.specular", 1);
+	shader->setFloat("material.shininess", 32.0f);
+
+	//Light
+	shader->setVec3("light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+	shader->setVec3("light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darkened
+	shader->setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
+	shader->setFloat("light.constant", 1.0f);
+	shader->setFloat("light.linear", 0.09f);
+	shader->setFloat("light.quadratic", 0.032f);
+
+	glm::vec3 lightPosView = glm::vec3(mainCamera->GetViewMatrix() * glm::vec4(lightPos, 1.0));  // on passe les coordonée de la lumiere (Pos monde) en pos view
+	shader->setVec3("light.viewPosition", lightPosView);
+
+	// coordonée de lumiere en viewSpace
+	//glm::mat3 normalViewMatrix = glm::transpose(glm::inverse(glm::mat3(mainCamera->GetViewMatrix() * _model)));
+	//shader->setMatrix("normalViewMatrix", normalViewMatrix);
+
+
+	// les trois matrices
+	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
+	shader->setMatrix("model", _model);
+	shader->setMatrix("view", mainCamera->GetViewMatrix());
+	shader->setMatrix("projection", projection);
+
+	//glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
+	//shader->setVec3("light.direction", glm::mat3(mainCamera->GetViewMatrix()) * worldLightDir);
 
 	glBindVertexArray(VAO);
 	for (unsigned int i = 0; i < 10; i++)
@@ -432,8 +529,9 @@ void RenderModule::Render()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//DrawMultipleCube();
-	//DrawLight();
-	DrawCubeAffectedByLight();
+	DrawLight();
+	DrawCubeFlashLight();
+	//DrawCubeAffectedByLight();
 	//DrawRectangle();
 
 	mainCamera->ProcessInput(window);

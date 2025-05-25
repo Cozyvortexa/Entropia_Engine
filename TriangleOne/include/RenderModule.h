@@ -31,6 +31,7 @@ public:
 	void DrawRectangle();
 	void DrawLight();
 	void DrawCubeAffectedByLight();
+	void DrawCubeFlashLight();
 
 
 	void Init() override;
