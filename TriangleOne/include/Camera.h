@@ -26,6 +26,8 @@ public:
 
 	glm::vec3 GetPos() { return cameraPos; }
 
+	glm::vec3 GetFront() { return cameraFront; }
+
 private:
 	GLFWwindow* window = nullptr;
 

@@ -29,9 +29,9 @@ public:
 
 	void DrawMultipleCube();
 	void DrawRectangle();
-	void DrawLight();
+	void DrawLight(int indice);
 	void DrawCubeAffectedByLight();
-	void DrawCubeFlashLight();
+	void DrawCubeAffectedByFlashLight();
 
 
 	void Init() override;
@@ -53,7 +53,8 @@ private:
 
 	glm::mat4 _model = glm::mat4(1.0f);
 
-
 	glm::vec3 lightPos;
+
+	std::vector<glm::vec3> pointLightPositions;
 
 };
