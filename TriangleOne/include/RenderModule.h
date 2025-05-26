@@ -33,6 +33,9 @@ public:
 	void DrawCubeAffectedByLight();
 	void DrawCubeAffectedByFlashLight();
 
+	void FactoPointLight(Shader* lightShader, int i);
+	void FactoDirLight(Shader* lightShader, glm::vec3 worldLightPos);
+
 
 	void Init() override;
 	void Render() override;

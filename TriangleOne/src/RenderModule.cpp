@@ -169,6 +169,26 @@ RenderModule* RenderModule::GetInstance() {
 	return instance;
 }
 
+void RenderModule::FactoPointLight(Shader* lightShader, int i) {
+	glm::vec3 viewPosition = mainCamera->GetViewMatrix() * glm::vec4(pointLightPositions[i], 1.0f);
+	lightShader->setVec3("pointLights[" + std::to_string(i) + "].viewPosition", viewPosition);
+
+	lightShader->setVec3("pointLights[" + std::to_string(i) + "].ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+	lightShader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
+	lightShader->setVec3("pointLights[" + std::to_string(i) + "].specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
+	lightShader->setFloat("pointLights[" + std::to_string(i) + "].constant", 1.0f);
+	lightShader->setFloat("pointLights[" + std::to_string(i) + "].linear", 0.09f);
+	lightShader->setFloat("pointLights[" + std::to_string(i) + "].quadratic", 0.032f);
+}
+
+void RenderModule::FactoDirLight(Shader* lightShader,glm::vec3 worldLightPos) {
+	shader->setVec3("dirLight.direction", glm::mat3(mainCamera->GetViewMatrix()) * worldLightPos);
+	shader->setVec3("dirLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+	shader->setVec3("dirLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
+	shader->setVec3("dirLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+}
+
 void RenderModule::DrawMultipleCube() {
 	unsigned int VAO;  // Vertex Array Object
 	glGenVertexArrays(1, &VAO);
@@ -422,27 +442,12 @@ void RenderModule::DrawCubeAffectedByFlashLight() {
 	//shader->setFloat("light.quadratic", 0.032f);
 
 	//Point Lights
-	for (int i = 0; i < pointLightPositions.size();i++) 
-	{
-		glm::vec3 viewPosition = mainCamera->GetViewMatrix() * glm::vec4(pointLightPositions[i], 1.0f);
-		shader->setVec3("pointLights[" + std::to_string(i) + "].viewPosition", viewPosition);
-
-		shader->setVec3("pointLights[" + std::to_string(i) + "].ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-		shader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
-		shader->setVec3("pointLights[" + std::to_string(i) + "].specular", glm::vec3(1.0f, 1.0f, 1.0f));
-
-		shader->setFloat("pointLights[" + std::to_string(i) + "].constant", 1.0f);
-		shader->setFloat("pointLights[" + std::to_string(i) + "].linear", 0.09f);
-		shader->setFloat("pointLights[" + std::to_string(i) + "].quadratic", 0.032f);
-
-	}
+	for (int i = 0; i < pointLightPositions.size(); i++)
+		FactoPointLight(shader, i);
 
 	//Directional Light
 	glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
-	shader->setVec3("dirLight.direction", glm::mat3(mainCamera->GetViewMatrix()) * worldLightDir);
-	shader->setVec3("dirLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-	shader->setVec3("dirLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
-	shader->setVec3("dirLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+	FactoDirLight(shader, worldLightDir);
 
 
 
