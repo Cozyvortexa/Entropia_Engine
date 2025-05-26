@@ -34,6 +34,7 @@ public:
 	void DrawCubeAffectedByFlashLight();
 
 	void FactoPointLight(Shader* lightShader, int i);
+	void FactoSpotLight(Shader* lightShader, int i);
 	void FactoDirLight(Shader* lightShader, glm::vec3 worldLightPos);
 
 

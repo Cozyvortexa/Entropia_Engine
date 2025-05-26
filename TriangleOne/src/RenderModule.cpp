@@ -183,10 +183,26 @@ void RenderModule::FactoPointLight(Shader* lightShader, int i) {
 }
 
 void RenderModule::FactoDirLight(Shader* lightShader,glm::vec3 worldLightPos) {
-	shader->setVec3("dirLight.direction", glm::mat3(mainCamera->GetViewMatrix()) * worldLightPos);
-	shader->setVec3("dirLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-	shader->setVec3("dirLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
-	shader->setVec3("dirLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+	lightShader->setVec3("dirLight.direction", glm::mat3(mainCamera->GetViewMatrix()) * worldLightPos);
+	lightShader->setVec3("dirLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+	lightShader->setVec3("dirLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
+	lightShader->setVec3("dirLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+}
+
+void RenderModule::FactoSpotLight(Shader* lightShader, int i) {
+	lightShader->setVec3("spotLight.viewPosition", glm::vec3(0.0f, 0.0f, 0.0f));
+
+	lightShader->setVec3("spotLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+	lightShader->setVec3("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
+	lightShader->setVec3("spotLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
+	lightShader->setFloat("spotLight.constant", 1.0f);
+	lightShader->setFloat("spotLight.linear", 0.09f);
+	lightShader->setFloat("spotLight.quadratic", 0.032f);
+
+	lightShader->setVec3("spotLight.direction", mainCamera->GetFront());
+	lightShader->setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+	lightShader->setFloat("spotLight.outerCutOff", glm::cos(glm::radians(17.5f)));
 }
 
 void RenderModule::DrawMultipleCube() {
@@ -449,13 +465,7 @@ void RenderModule::DrawCubeAffectedByFlashLight() {
 	glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
 	FactoDirLight(shader, worldLightDir);
 
-
-
-	//Pas besoins de passer la pos de la cam, les calcul sont fait en viewspace
-	//shader->setVec3("light.direction", mainCamera->GetFront());
-	//shader->setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
-	//shader->setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
-
+	FactoSpotLight(shader, 0);
 
 
 	//glm::vec3 lightPosView = glm::vec3(mainCamera->GetViewMatrix() * glm::vec4(lightPos, 1.0));  // on passe les coordonée de la lumiere (Pos monde) en pos view

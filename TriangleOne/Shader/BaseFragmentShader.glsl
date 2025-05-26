@@ -1,62 +1,3 @@
-//#version 330 core
-//struct Material {
-//
-//	sampler2D diffuse;
-//	sampler2D specular;
-//	float shininess;
-//};
-//uniform Material material;
-//
-//struct Light {
-//	vec3 viewPosition;
-//
-//	vec3 ambient;
-//	vec3 diffuse;
-//	vec3 specular;
-//
-//	float constant;
-//	float linear;
-//	float quadratic;
-//};
-//uniform Light light;
-//
-//
-//in vec3 normal;
-//in vec3 FragPosView;
-//in vec2 TexCoords;
-//
-//out vec4 FragColor;
-//
-//
-//void main()
-//{
-//	vec3 ambient = light.ambient * texture(material.diffuse, TexCoords).rgb; 
-//
-//	vec3 norm = normalize(normal);  // Tout est normaliser, on veut uniquement la direction
-//	vec3 lightDir = normalize(light.viewPosition - FragPosView);  // Distance entre la lumiere et la normal du vertex
-//
-//	float diff = max(dot(norm, lightDir), 0.0);  // Calcul de l'angle entre la normal et le vec distance 
-//	vec3 diffuse = light.diffuse * diff * texture(material.diffuse, TexCoords).rgb;
-//
-//
-//	vec3 viewDir = normalize( - FragPosView);  // vecteur du vertex vers camera
-//	vec3 reflectDir = reflect(-lightDir, norm); // on inverse lightDir car c'est pas la bonne direction
-//
-//	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);  // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
-//	vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
-//
-//
-//	float distance = length(light.viewPosition - FragPosView);
-//	float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
-//
-//	ambient *= attenuation;
-//	diffuse *= attenuation;
-//	specular *= attenuation;
-//
-//	vec3 result = ambient + diffuse + specular;
-//	FragColor = vec4(result, 1.0);
-//}
-
 #version 330 core
 struct Material {
 
@@ -67,7 +8,7 @@ struct Material {
 uniform Material material;
 
 struct SpotLight {
-//	vec3 viewPosition;
+	vec3 viewPosition;
 	vec3 direction;
 	float cutOff;
 	float outerCutOff;
@@ -80,8 +21,7 @@ struct SpotLight {
 	float linear;
 	float quadratic;
 };
-#define NR_SPOT_LIGHTS 1
-uniform SpotLight spotLights[NR_SPOT_LIGHTS];
+uniform SpotLight spotLight;
 
 struct PointLight {
 	vec3 viewPosition;
@@ -128,7 +68,7 @@ void main()
 		result += CalcPointLight(pointLights[i], norm, FragPosView, viewDir);
 	}
 	
-
+	result += CalcSpotLight(spotLight, norm, FragPosView, viewDir);
 
 	FragColor = vec4(result, 1.0);
 }
@@ -180,10 +120,10 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPosView, vec3 viewDi
 
 vec3 CalcSpotLight(SpotLight light,vec3 normal, vec3 fragPosView, vec3 viewDir)
 {
-	vec3 lightDir = normalize(- FragPosView);  // Direction entre la source de lumiere et la normal du vertex
+	vec3 lightDir = normalize(light.viewPosition - FragPosView);  // Direction entre la source de lumiere et la normal du vertex
 
 	//
-	float theta = dot(lightDir, normalize(-light.direction));
+	float theta = dot(lightDir, normalize(light.viewPosition -light.direction));
 	float epsilon = light.cutOff - light.outerCutOff;
 	float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
 	//
