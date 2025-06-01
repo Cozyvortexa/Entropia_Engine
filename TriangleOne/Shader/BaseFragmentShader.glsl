@@ -1,5 +1,10 @@
 #version 330 core
 struct Material {
+	
+	sampler2D diffuseText[8];
+	sampler2D SpecularText[8];
+	int diffuseNbr;
+	int specularNbr;
 
 	sampler2D diffuse;
 	sampler2D specular;
