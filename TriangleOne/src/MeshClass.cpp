@@ -64,7 +64,6 @@ void Mesh::Draw(Shader* shader)
 
 		glBindTexture(GL_TEXTURE_2D, textures[i].id);
 	}
-
 	shader->setInt("diffuseNbr", diffuseNbr);
 	shader->setInt("specularNbr", specularNbr);
 	glActiveTexture(GL_TEXTURE0);

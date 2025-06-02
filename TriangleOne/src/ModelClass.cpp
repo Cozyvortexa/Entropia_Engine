@@ -76,8 +76,6 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 
 
 		std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-		for (Texture text : specularMaps)
-			text.textureType = Texture::Specular;
 		textures.insert(textures.end(), specularMaps.begin(),specularMaps.end());
 	}
 
@@ -109,6 +107,9 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 			
 			texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), directory);
 			texture.path = str.C_Str();
+
+			if (typeName == "texture_specular")
+				texture.textureType = Texture::Specular;
 
 			textures.push_back(texture);
 			textures_loaded.push_back(texture);

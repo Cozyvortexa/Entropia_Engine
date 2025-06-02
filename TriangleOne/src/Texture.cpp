@@ -43,6 +43,7 @@ unsigned int TextureClass::LoadTextureFromFile(std::string name, std::string dir
 	int _nrChannels;
 
 	std::string totalPath = directory + "/" + name;
+	stbi_set_flip_vertically_on_load(true);
 
 	unsigned char* data = stbi_load(totalPath.c_str(), &_width, &_height, &_nrChannels, 0);
 	if (!data) {

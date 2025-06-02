@@ -576,7 +576,6 @@ void RenderModule::Init() {
 
 	modelMesh = new Model("Assets/tryModel/backpack.obj");
 
-	std::cout << "passer" << std::endl;
 }
 
 void RenderModule::Render()
@@ -588,13 +587,28 @@ void RenderModule::Render()
 
 
 	shader->Use();
+
+	//Temp
+	shader->setFloat("material.shininess", 32.0f);
+
+	for (int i = 0; i < pointLightPositions.size(); i++)
+		FactoPointLight(shader, i);
+
+	//Directional Light
+	glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
+	FactoDirLight(shader, worldLightDir);
+
+	FactoSpotLight(shader, 0);
+
+
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
 	shader->setMatrix("model", _model);
 	shader->setMatrix("view", mainCamera->GetViewMatrix());
 	shader->setMatrix("projection", projection);
+	//
 
 	modelMesh->Draw(shader);
-
+		
 
 	mainCamera->ProcessInput(window);
 	

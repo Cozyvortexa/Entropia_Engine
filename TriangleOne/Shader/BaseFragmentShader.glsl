@@ -182,7 +182,7 @@ vec4 CalcFinalDiffuse(){
 
 vec4 CalcFinalSpecular(){
 	vec4 finalSpecular = texture(material.specularText[0], TexCoords);
-	if (specularNbr == 0)
+	if (specularNbr == 0 )
 		return finalSpecular;
 
 	for (int i = 1; i < specularNbr; i++)
