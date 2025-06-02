@@ -581,8 +581,8 @@ void RenderModule::Init() {
 void RenderModule::Render()
  {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//for (int i = 0; i < pointLightPositions.size();i++)
-	//	DrawLight(i);
+	for (int i = 0; i < pointLightPositions.size();i++)
+		DrawLight(i);
 	//DrawCubeAffectedByFlashLight();
 
 
@@ -598,7 +598,7 @@ void RenderModule::Render()
 	glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
 	FactoDirLight(shader, worldLightDir);
 
-	FactoSpotLight(shader, 0);
+	//FactoSpotLight(shader, 0);
 
 
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);

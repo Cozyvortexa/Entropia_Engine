@@ -72,17 +72,26 @@ void main()
 	vec4 finalDiffuse = CalcFinalDiffuse();
 	vec4 finalSpecular = CalcFinalSpecular();
 
+	vec3 nullVec = vec3(0,0,0);
 
 	vec3 norm = normalize(normal);
 	vec3 viewDir = normalize(- FragPosView);
-	vec3 result = CalcDirLight(dirLight, norm, viewDir, finalDiffuse, finalSpecular);
+	vec3 result = nullVec;
+
+	if (dirLight.ambient != nullVec && dirLight.diffuse != nullVec && dirLight.specular != nullVec ){
+		result +=  CalcDirLight(dirLight, norm, viewDir, finalDiffuse, finalSpecular);
+	}
+
 
 	for (int i = 0; i < NR_POINT_LIGHTS; i++)
 	{
-		result += CalcPointLight(pointLights[i], norm, FragPosView, viewDir, finalDiffuse, finalSpecular);
+		if (pointLights[i].ambient != nullVec && pointLights[i].diffuse != nullVec && pointLights[i].specular != nullVec){  // On aplique pas le calcul si les lumiere sont eteint
+			result += CalcPointLight(pointLights[i], norm, FragPosView, viewDir, finalDiffuse, finalSpecular);
+		}
 	}
-
-	result += CalcSpotLight(spotLight, norm, FragPosView, viewDir, finalDiffuse, finalSpecular);
+	if (spotLight.ambient != nullVec && spotLight.diffuse != nullVec && spotLight.specular != nullVec ){
+		result += CalcSpotLight(spotLight, norm, FragPosView, viewDir, finalDiffuse, finalSpecular);
+	}
 
 	FragColor = vec4(result, 1.0);
 }
