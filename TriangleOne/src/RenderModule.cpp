@@ -557,8 +557,8 @@ void RenderModule::Init() {
 	shader = new Shader("TriangleOne/Shader/BaseVertexShader.glsl", "TriangleOne/Shader/BaseFragmentShader.glsl");
 	shaderLight = new Shader("TriangleOne/Shader/LightVertexShader.glsl", "TriangleOne/Shader/LightFragShader.glsl");
 
-	texture = new Texture("Assets/image.png");
-	textureSpecular = new Texture("Assets/imageSpecular.png");
+	texture = new TextureClass("Assets/image.png");
+	textureSpecular = new TextureClass("Assets/imageSpecular.png");
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -572,18 +572,29 @@ void RenderModule::Init() {
 	pointLightPositions.push_back(glm::vec3(2.3f, -3.3f, -4.0f));
 	pointLightPositions.push_back(glm::vec3(-4.0f, 2.0f, -12.0f));
 	pointLightPositions.push_back(glm::vec3(0.0f, 0.0f, -3.0f));
+
+
+	modelMesh = new Model("Assets/tryModel/backpack.obj");
+
+	std::cout << "passer" << std::endl;
 }
 
 void RenderModule::Render()
  {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//for (int i = 0; i < pointLightPositions.size();i++)
+	//	DrawLight(i);
+	//DrawCubeAffectedByFlashLight();
 
-	//DrawMultipleCube();
-	for (int i = 0; i < pointLightPositions.size();i++)
-		DrawLight(i);
-	DrawCubeAffectedByFlashLight();
-	//DrawCubeAffectedByLight();
-	//DrawRectangle();
+
+	shader->Use();
+	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
+	shader->setMatrix("model", _model);
+	shader->setMatrix("view", mainCamera->GetViewMatrix());
+	shader->setMatrix("projection", projection);
+
+	modelMesh->Draw(shader);
+
 
 	mainCamera->ProcessInput(window);
 	

@@ -17,6 +17,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "ModelClass.h"
 
 
 class RenderModule : public Module {
@@ -42,8 +43,8 @@ public:
 
 
 private:
-	Texture* texture = nullptr;
-	Texture* textureSpecular = nullptr;
+	TextureClass* texture = nullptr;
+	TextureClass* textureSpecular = nullptr;
 	Shader* shader = nullptr;
 	Shader* shaderLight = nullptr;
 	GLFWwindow* window = nullptr;
@@ -59,4 +60,5 @@ private:
 
 	std::vector<glm::vec3> pointLightPositions;
 
+	Model* modelMesh = nullptr;
 };

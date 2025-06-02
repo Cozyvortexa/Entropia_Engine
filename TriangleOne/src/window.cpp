@@ -27,7 +27,7 @@ void Window::Init() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	window = glfwCreateWindow(WIDHT, HEIGHT, "LearnOpenGL", NULL, NULL);
+	window = glfwCreateWindow(WIDHT, HEIGHT, "CrashShieldEngine", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;

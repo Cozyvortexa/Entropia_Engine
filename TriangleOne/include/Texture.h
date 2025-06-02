@@ -5,11 +5,13 @@
 #include "stbImage/stb_image.h"
 
 
-class Texture {
+class TextureClass {
 public:
-	Texture(const char* texturePath);
+	TextureClass(const char* texturePath);
 
 	unsigned int getTexture() { return texture; }
+
+	static unsigned int LoadTextureFromFile(std::string path, std::string directory);
 private:
 	unsigned int texture;
 	int width;

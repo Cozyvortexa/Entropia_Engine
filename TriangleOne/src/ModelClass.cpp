@@ -4,14 +4,13 @@ void Model::LoadModel(std::string path) {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
-		!scene->mRootNode)
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
 		//std::cout << "ERROR::ASSIMP::" << import.GetErrorString() << std::endl;
 		std::cout << "ERROR::ASSIMP::" << std::endl;
 		return;
 	}
-	directory = path.substr(0, path.find_last_of(' / '));
+	directory = path.substr(0, path.find_last_of("/"));
 	ProcessNode(scene->mRootNode, scene);
 
 }
@@ -57,22 +56,70 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 		else
 			vertex.TexCoords = glm::vec2(0.0f, 0.0f);
 
-		//Indices
-		for (unsigned int i = 0; i < mesh->mNumFaces; i++)
-		{
-			aiFace face = mesh->mFaces[i];
-			for (unsigned int j = 0; j < face.mNumIndices; j++)
-				indices.push_back(face.mIndices[j]);
-		}
 
 		vertices.push_back(vertex);
 	}
-	// process indices
-	//[...]
-	//	// process material
-	//	if (mesh->mMaterialIndex >= 0)
-	//	{
-	//		[...]
-	//	}
+	//Indices
+	for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+	{
+		aiFace face = mesh->mFaces[i];
+		for (unsigned int j = 0; j < face.mNumIndices; j++)
+			indices.push_back(face.mIndices[j]);
+	}
+
+	if (mesh->mMaterialIndex >= 0)
+	{
+		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+		std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+
+
+		std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+		for (Texture text : specularMaps)
+			text.textureType = Texture::Specular;
+		textures.insert(textures.end(), specularMaps.begin(),specularMaps.end());
+	}
+
 	return Mesh(vertices, indices, textures);
 }
+
+std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
+{
+	std::vector<Texture> textures;
+	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
+	{
+		aiString str;
+		mat->GetTexture(type, i, &str);
+		bool skip = false;
+
+		for (unsigned int j = 0; j < textures_loaded.size(); j++)
+		{
+			if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)  // Verifie si la texture a deja etait charger
+			{
+				textures.push_back(textures_loaded[j]);
+				skip = true;
+				break;
+			}
+		}
+
+		if (!skip) 
+		{
+			Texture texture;
+			
+			texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), directory);
+			texture.path = str.C_Str();
+
+			textures.push_back(texture);
+			textures_loaded.push_back(texture);
+		}
+
+	}
+	return textures;
+}
+
+void Model::Draw(Shader* shader) {
+	for (Mesh mesh : meshes)
+		mesh.Draw(shader);
+}
+

@@ -24,6 +24,11 @@ public:
 	void setInt(const std::string& name, int value) const
 	{
 		glUniform1i(glGetUniformLocation(shaderID, name.c_str()), value);
+
+		GLint loc = glGetUniformLocation(shaderID, name.c_str());
+		if (loc == -1) {
+			std::cerr << "Uniform: " << name << std::endl;
+		}
 	}
 	void setFloat(const std::string& name, float value) const
 	{

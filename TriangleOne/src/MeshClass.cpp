@@ -38,10 +38,11 @@ void Mesh::SetupMesh()
 	glBindVertexArray(0);
 }
 
-void Mesh::Draw(Shader& shader)
+void Mesh::Draw(Shader* shader)
 {
-	unsigned int diffuseNbr = 0;
-	unsigned int specularNbr = 0;
+	int diffuseNbr = 0;
+	int specularNbr = 0;
+
 	for (unsigned int i = 0; i < textures.size(); i++)
 	{
 		glActiveTexture(GL_TEXTURE0 + i);
@@ -51,19 +52,21 @@ void Mesh::Draw(Shader& shader)
 		if (textures[i].textureType == Texture::Type::Diffuse) 
 		{
 			number = std::to_string(diffuseNbr++);
-			shader.setFloat(("material.diffuseText["+ number + "]"), i);
+			shader->setInt("material.diffuseText[" + number + "]", i);
 		}
 
 		else if (textures[i].textureType == Texture::Type::Specular) 
 		{
 			number = std::to_string(specularNbr++);
-			shader.setFloat(("material.specularText[" + number + "]"), i);
+			shader->setInt("material.specularText[" + number + "]", i);
 		}
-		shader.setFloat("material.diffuseNbr",diffuseNbr);
-		shader.setFloat("material.specularNbr",specularNbr);
+
 
 		glBindTexture(GL_TEXTURE_2D, textures[i].id);
 	}
+
+	shader->setInt("diffuseNbr", diffuseNbr);
+	shader->setInt("specularNbr", specularNbr);
 	glActiveTexture(GL_TEXTURE0);
 
 	// draw mesh
