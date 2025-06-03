@@ -72,24 +72,23 @@ void main()
 	vec4 finalDiffuse = CalcFinalDiffuse();
 	vec4 finalSpecular = CalcFinalSpecular();
 
-	vec3 nullVec = vec3(0,0,0);
 
 	vec3 norm = normalize(normal);
 	vec3 viewDir = normalize(- FragPosView);
-	vec3 result = nullVec;
+	vec3 result = vec3(0,0,0);
 
-	if (dirLight.ambient != nullVec && dirLight.diffuse != nullVec && dirLight.specular != nullVec ){
+	if (length(dirLight.ambient + dirLight.diffuse + dirLight.specular ) > 0.001){
 		result +=  CalcDirLight(dirLight, norm, viewDir, finalDiffuse, finalSpecular);
 	}
 
-
 	for (int i = 0; i < NR_POINT_LIGHTS; i++)
 	{
-		if (pointLights[i].ambient != nullVec && pointLights[i].diffuse != nullVec && pointLights[i].specular != nullVec){  // On aplique pas le calcul si les lumiere sont eteint
+		if (length(pointLights[i].ambient + pointLights[i].diffuse + pointLights[i].specular )> 0.001  ){  // On aplique pas le calcul si les lumiere sont eteint
 			result += CalcPointLight(pointLights[i], norm, FragPosView, viewDir, finalDiffuse, finalSpecular);
 		}
 	}
-	if (spotLight.ambient != nullVec && spotLight.diffuse != nullVec && spotLight.specular != nullVec ){
+
+	if (length(spotLight.ambient + spotLight.diffuse + spotLight.specular) > 0.001 ){
 		result += CalcSpotLight(spotLight, norm, FragPosView, viewDir, finalDiffuse, finalSpecular);
 	}
 
@@ -143,12 +142,12 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPosView, vec3 viewDi
 
 vec3 CalcSpotLight(SpotLight light,vec3 normal, vec3 fragPosView, vec3 viewDir,vec4 finalDiffuse, vec4 finalSpecular)
 {
-	vec3 lightDir = normalize(light.viewPosition - FragPosView);  // Direction entre la source de lumiere et la normal du vertex
+	vec3 lightDir = normalize(- FragPosView);  // Direction entre la source de lumiere et la normal du vertex
 
 	//
-	float theta = dot(lightDir, normalize(light.viewPosition -light.direction));
-	float epsilon = light.cutOff - light.outerCutOff;
-	float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+    float theta = dot(lightDir, normalize(-light.direction)); 
+    float epsilon = light.cutOff - light.outerCutOff;
+    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
 	//
 	
 	float diff = max(dot(normal, lightDir), 0.0);  // Calcul de l'angle entre la normal et le vec distance 
@@ -164,12 +163,12 @@ vec3 CalcSpotLight(SpotLight light,vec3 normal, vec3 fragPosView, vec3 viewDir,v
 	vec3 specular = light.specular * spec * finalSpecular.rgb;
 
 	// attenuation
-	float distance = length(- FragPosView);
+	float distance = length(light.viewPosition - FragPosView);
 	float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-	ambient *= attenuation;
-	diffuse *= intensity;
-	specular *= intensity;
+	ambient *= attenuation * intensity;
+	diffuse *= attenuation * intensity;
+	specular *= attenuation * intensity;
 
 	return ( ambient + diffuse + specular );
 }
@@ -183,7 +182,7 @@ vec4 CalcFinalDiffuse(){
 
 	for (int i = 1; i < diffuseNbr; i++)
 	{
-		finalDiffuse = mix(finalDiffuse , texture(material.diffuseText[i], TexCoords), 0.5);
+		finalDiffuse += texture(material.diffuseText[i], TexCoords);
 	}
 
 	return finalDiffuse;
@@ -196,7 +195,7 @@ vec4 CalcFinalSpecular(){
 
 	for (int i = 1; i < specularNbr; i++)
 	{
-		finalSpecular = mix(finalSpecular , texture(material.specularText[i], TexCoords), 0.5);
+		finalSpecular += texture(material.specularText[i], TexCoords);
 	}
 
 	return finalSpecular;

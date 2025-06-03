@@ -190,7 +190,7 @@ void RenderModule::FactoDirLight(Shader* lightShader,glm::vec3 worldLightPos) {
 }
 
 void RenderModule::FactoSpotLight(Shader* lightShader, int i) {
-	lightShader->setVec3("spotLight.viewPosition", glm::vec3(0.0f, 0.0f, 0.0f));
+	lightShader->setVec3("spotLight.viewPosition", glm::vec3(0, 0, 0));
 
 	lightShader->setVec3("spotLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
 	lightShader->setVec3("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
@@ -201,8 +201,8 @@ void RenderModule::FactoSpotLight(Shader* lightShader, int i) {
 	lightShader->setFloat("spotLight.quadratic", 0.032f);
 
 	lightShader->setVec3("spotLight.direction", mainCamera->GetFront());
-	lightShader->setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-	lightShader->setFloat("spotLight.outerCutOff", glm::cos(glm::radians(17.5f)));
+	lightShader->setFloat("spotLight.cutOff", glm::cos(glm::radians(17.5f)));
+	lightShader->setFloat("spotLight.outerCutOff", glm::cos(glm::radians(25.0f)));
 }
 
 void RenderModule::DrawMultipleCube() {
@@ -581,8 +581,8 @@ void RenderModule::Init() {
 void RenderModule::Render()
  {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	for (int i = 0; i < pointLightPositions.size();i++)
-		DrawLight(i);
+	//for (int i = 0; i < pointLightPositions.size();i++)
+	//	DrawLight(i);
 	//DrawCubeAffectedByFlashLight();
 
 
@@ -591,14 +591,14 @@ void RenderModule::Render()
 	//Temp
 	shader->setFloat("material.shininess", 32.0f);
 
-	for (int i = 0; i < pointLightPositions.size(); i++)
-		FactoPointLight(shader, i);
+	//for (int i = 0; i < pointLightPositions.size(); i++)
+	//	FactoPointLight(shader, i);
 
-	//Directional Light
-	glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
-	FactoDirLight(shader, worldLightDir);
 
-	//FactoSpotLight(shader, 0);
+	//glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
+	//FactoDirLight(shader, worldLightDir);
+
+	FactoSpotLight(shader, 0);
 
 
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
