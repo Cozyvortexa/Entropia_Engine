@@ -58,6 +58,7 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec4 finalDiffuse, 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec4 finalDiffuse, vec4 finalSpecular);
 vec3 CalcSpotLight(SpotLight light,vec3 normal, vec3 fragPosView, vec3 viewDir, vec4 finalDiffuse, vec4 finalSpecular);
 
+void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular);
 
 
 in vec3 normal;
@@ -71,7 +72,7 @@ void main()
 {
 	vec4 finalDiffuse = CalcFinalDiffuse();
 	vec4 finalSpecular = CalcFinalSpecular();
-
+	CheckOpacity(finalDiffuse, finalSpecular);
 
 	vec3 norm = normalize(normal);
 	vec3 viewDir = normalize(- FragPosView);
@@ -199,4 +200,9 @@ vec4 CalcFinalSpecular(){
 	}
 
 	return finalSpecular;
+}
+
+void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular){
+	if(	finalDiffuse.a +  finalSpecular.a < 0.1)
+		discard;
 }

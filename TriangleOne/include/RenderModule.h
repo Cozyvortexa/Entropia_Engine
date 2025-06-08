@@ -27,7 +27,6 @@ public:
 	static RenderModule* GetInstance();
 
 	void DrawMultipleCube();
-	void DrawRectangle();
 	void DrawLight(int indice);
 	void DrawCubeAffectedByLight();
 	void DrawCubeAffectedByFlashLight();

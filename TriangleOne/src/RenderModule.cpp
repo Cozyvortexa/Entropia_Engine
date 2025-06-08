@@ -192,7 +192,7 @@ void RenderModule::FactoDirLight(Shader* lightShader,glm::vec3 worldLightPos) {
 void RenderModule::FactoSpotLight(Shader* lightShader, int i) {
 	lightShader->setVec3("spotLight.viewPosition", glm::vec3(0, 0, 0));
 
-	lightShader->setVec3("spotLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+	lightShader->setVec3("spotLight.ambient", glm::vec3(0.5f, 0.5f, 0.5f));
 	lightShader->setVec3("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
 	lightShader->setVec3("spotLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
 
@@ -251,59 +251,6 @@ void RenderModule::DrawMultipleCube() {
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	}
-
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-}
-
-void RenderModule::DrawRectangle() {
-	unsigned int VAO;  // Vertex Array Object
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-
-	unsigned int EBO;  // Element Buffer Object
-	glGenBuffers(1, &EBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	unsigned int VBO;  // Vertex Buffer Object
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesRec), verticesRec, GL_STATIC_DRAW);
-
-	/*
-	GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
-	GL_STATIC_DRAW: the data is set only once and used many times.
-	GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
-	*/
-
-	////glm::mat4 trans = glm::mat4(1.0f);
-	////trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
-
-	////unsigned int transformLoc = glGetUniformLocation(shader->shaderID, "transform");
-	////glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-
-	//Position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	//Color
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	//PosTexture
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	glBindTexture(GL_TEXTURE_2D, texture->getTexture());
-	shader->Use();
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-
-	glBindVertexArray(VAO);
-
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
 
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
@@ -560,7 +507,24 @@ void RenderModule::Init() {
 	texture = new TextureClass("Assets/image.png");
 	textureSpecular = new TextureClass("Assets/imageSpecular.png");
 
+	//Depth testing
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+
+	//Blending     //ya pas de blending mm avec c'est ligne au cas ou 
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	//Face culling     //fonctionne bizzarement ( faudrait chek l'ordre de dessin des vertex)
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_BACK);
+	//glFrontFace(GL_CCW);
+
+
+
+
+	//MSAA
+	glEnable(GL_MULTISAMPLE);
 
 	//Camera 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -575,14 +539,15 @@ void RenderModule::Init() {
 
 
 	modelMesh = new Model("Assets/tryModel/backpack.obj");
+	//modelMesh = new Model("Assets/doubleTry/red-renault-carwreck.fbx");
 
 }
 
 void RenderModule::Render()
  {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//for (int i = 0; i < pointLightPositions.size();i++)
-	//	DrawLight(i);
+	for (int i = 0; i < pointLightPositions.size();i++)
+		DrawLight(i);
 	//DrawCubeAffectedByFlashLight();
 
 
@@ -591,12 +556,12 @@ void RenderModule::Render()
 	//Temp
 	shader->setFloat("material.shininess", 32.0f);
 
-	//for (int i = 0; i < pointLightPositions.size(); i++)
-	//	FactoPointLight(shader, i);
+	for (int i = 0; i < pointLightPositions.size(); i++)
+		FactoPointLight(shader, i);
 
 
-	//glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
-	//FactoDirLight(shader, worldLightDir);
+	glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
+	FactoDirLight(shader, worldLightDir);
 
 	FactoSpotLight(shader, 0);
 
