@@ -316,8 +316,62 @@ void RenderModule::DrawTextureOnScreen() {
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 
-	//glDeleteVertexArrays(1, &quadVAO);
-	//glDeleteBuffers(1, &quadVBO);
+	glEnable(GL_DEPTH_TEST);
+}
+
+void RenderModule::InitQuadVao() {
+	//Init fbo
+	glGenFramebuffers(1, &framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+
+	//Init texture depth
+	glGenTextures(1, &finalTxtOutput);
+	glBindTexture(GL_TEXTURE_2D, finalTxtOutput);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, Window::GetWidth(), Window::GetHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, finalTxtOutput, 0);
+	//
+
+	//Init texture color
+	glGenTextures(1, &finalTxtColorOutput);
+	glBindTexture(GL_TEXTURE_2D, finalTxtColorOutput);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Window::GetWidth(), Window::GetHeight(), 0, GL_RGB, GL_FLOAT, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, finalTxtColorOutput, 0);
+	//
+
+	//Assert
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Basic Fortnite emote.txt" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	//Init quadVAO
+	glGenVertexArrays(1, &quadVAO);
+	glBindVertexArray(quadVAO);
+
+	glGenBuffers(1, &quadVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+	//Position
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	//Texture
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	glBindVertexArray(0);
 }
 
 void RenderModule::Init() {
@@ -334,9 +388,6 @@ void RenderModule::Init() {
 
 	texture = new TextureClass("Assets/image.png");
 	textureSpecular = new TextureClass("Assets/imageSpecular.png");
-
-	//Depth testing
-	//glEnable(GL_DEPTH_TEST);
 
 	//Blending     //ya pas de blending mm avec c'est ligne au cas ou 
 	//glEnable(GL_BLEND);
@@ -367,64 +418,7 @@ void RenderModule::Init() {
 	//modelMesh = new Model("Assets/doubleTry/red-renault-carwreck.fbx");
 
 
-	//Init fbo
-	glGenFramebuffers(1, &framebuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-	//Init texture depth
-	glGenTextures(1, &finalTxtOutput);
-	glBindTexture(GL_TEXTURE_2D, finalTxtOutput);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, Window::GetWidth(), Window::GetHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, finalTxtOutput, 0);
-
-
-	//Init texture color
-	glGenTextures(1, &finalTxtColorOutput);
-	glBindTexture(GL_TEXTURE_2D, finalTxtColorOutput);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Window::GetWidth(), Window::GetHeight(), 0, GL_RGB, GL_FLOAT, NULL);
-
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, finalTxtColorOutput, 0);
-
-
-
-
-
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Basic Fortnite emote.txt" << std::endl;
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-
-	glGenVertexArrays(1, &quadVAO);
-	glBindVertexArray(quadVAO);
-
-	glGenBuffers(1, &quadVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-
-	//Position
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	//Texture
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	glBindVertexArray(0);
+	InitQuadVao();
 }
 
 void RenderModule::Render()
@@ -449,7 +443,6 @@ void RenderModule::Render()
 	FactoDirLight(shader, worldLightDir);
 
 	FactoSpotLight(shader, 0);
-	//
 
 
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
@@ -466,11 +459,9 @@ void RenderModule::Render()
 
 	DrawTextureOnScreen();
 
-
-
+	// A deplacer dans un input manager
 	mainCamera->ProcessInput(window);
 	
-
 	glfwSwapBuffers(window);
 	glfwPollEvents();
 }
