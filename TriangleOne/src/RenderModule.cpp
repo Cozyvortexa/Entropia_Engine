@@ -101,6 +101,62 @@ float quadVertices[] = {
 	 1.0f, -1.0f,     1.0f, 0.0f
 };
 
+float skyboxVertices[] = {
+	// positions          
+	-1.0f,  1.0f, -1.0f,
+	-1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	-1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f
+};
+
+
+std::vector<std::string> faces =
+{
+	"Assets/SkyBox/mountain/right.jpg",
+	"Assets/SkyBox/mountain/left.jpg",
+	"Assets/SkyBox/mountain/top.jpg",
+	"Assets/SkyBox/mountain/bottom.jpg",
+	"Assets/SkyBox/mountain/front.jpg",
+	"Assets/SkyBox/mountain/back.jpg"
+};
+
 
 glm::vec3 cubePositions[] = {
 	glm::vec3(0.0f, 0.0f, 0.0f),
@@ -192,10 +248,10 @@ void RenderModule::DrawCubeAffectedByFlashLight() {
 
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture->getTexture());
+	//glBindTexture(GL_TEXTURE_2D, texture->getTexture());
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, textureSpecular->getTexture());
+	//glBindTexture(GL_TEXTURE_2D, textureSpecular->getTexture());
 
 
 	shader->Use();
@@ -303,6 +359,7 @@ void RenderModule::DrawLight(int indice){
 
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &VBO);
+	glBindVertexArray(0);
 }
 
 void RenderModule::DrawTextureOnScreen() {
@@ -315,7 +372,7 @@ void RenderModule::DrawTextureOnScreen() {
 	glBindTexture(GL_TEXTURE_2D, finalTxtColorOutput);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-
+	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -374,6 +431,47 @@ void RenderModule::InitQuadVao() {
 	glBindVertexArray(0);
 }
 
+void RenderModule::InitSkyBox() {
+	cubemapTexture = TextureClass::LoadCubeMapFromFile(faces);
+	//Init quadVAO
+	glGenVertexArrays(1, &skyboxVAO);
+	glBindVertexArray(skyboxVAO);
+
+	glGenBuffers(1, &skyboxVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
+
+	//Position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+
+	glBindVertexArray(0);
+}
+
+void RenderModule::DrawSkyBox(glm::mat4 projectionMatrix) {
+	glDepthFunc(GL_LEQUAL);
+	glDepthMask(GL_FALSE);
+
+	skyboxShader->Use();
+
+	skyboxShader->setMatrix("projection", projectionMatrix);
+	skyboxShader->setMatrix("view", glm::mat4(glm::mat3(mainCamera->GetViewMatrix())));
+
+
+	glBindVertexArray(skyboxVAO);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LESS);
+
+	glBindVertexArray(0);
+
+}
+
 void RenderModule::Init() {
 	Window* windowClass = Window::GetInstance();
 
@@ -385,9 +483,8 @@ void RenderModule::Init() {
 	shader = new Shader("TriangleOne/Shader/BaseVertexShader.glsl", "TriangleOne/Shader/BaseFragmentShader.glsl");
 	shaderLight = new Shader("TriangleOne/Shader/LightVertexShader.glsl", "TriangleOne/Shader/LightFragShader.glsl");
 	ppShader = new Shader("TriangleOne/Shader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessFrag.glsl");
+	skyboxShader = new Shader("TriangleOne/Shader/SkyBoxVertex.glsl", "TriangleOne/Shader/SkyBoxFrag.glsl");
 
-	texture = new TextureClass("Assets/image.png");
-	textureSpecular = new TextureClass("Assets/imageSpecular.png");
 
 	//Blending     //ya pas de blending mm avec c'est ligne au cas ou 
 	//glEnable(GL_BLEND);
@@ -417,8 +514,9 @@ void RenderModule::Init() {
 	modelMesh = new Model("Assets/tryModel/backpacka.obj");
 	//modelMesh = new Model("Assets/doubleTry/red-renault-carwreck.fbx");
 
-
 	InitQuadVao();
+
+	InitSkyBox();
 }
 
 void RenderModule::Render()
@@ -426,6 +524,7 @@ void RenderModule::Render()
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
+
 
 	for (int i = 0; i < pointLightPositions.size();i++)
 		DrawLight(i);
@@ -438,12 +537,10 @@ void RenderModule::Render()
 	//Light
 	for (int i = 0; i < pointLightPositions.size(); i++)
 		FactoPointLight(shader, i);
+
 	glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
-
 	FactoDirLight(shader, worldLightDir);
-
 	FactoSpotLight(shader, 0);
-
 
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
 	shader->setMatrix("model", _model);
@@ -453,6 +550,7 @@ void RenderModule::Render()
 
 
 	modelMesh->Draw(shader);
+	DrawSkyBox(projection);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 

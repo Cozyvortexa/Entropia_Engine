@@ -36,6 +36,8 @@ public:
 	void FactoSpotLight(Shader* lightShader, int i);
 	void FactoDirLight(Shader* lightShader, glm::vec3 worldLightPos);
 
+	void InitSkyBox();
+	void DrawSkyBox(glm::mat4 projectionMatrix);
 
 	void Init() override;
 	void Render() override;
@@ -43,11 +45,10 @@ public:
 
 
 private:
-	TextureClass* texture = nullptr;
-	TextureClass* textureSpecular = nullptr;
 	Shader* shader = nullptr;
 	Shader* shaderLight = nullptr;
 	Shader* ppShader = nullptr;
+	Shader* skyboxShader = nullptr;
 	GLFWwindow* window = nullptr;
 	Camera* mainCamera = nullptr;
 
@@ -69,4 +70,8 @@ private:
 
 	unsigned int quadVAO;  
 	unsigned int quadVBO;  
+
+	unsigned int cubemapTexture;
+	unsigned int skyboxVAO;
+	unsigned int skyboxVBO;
 };
