@@ -26,9 +26,7 @@ public:
 
 	static RenderModule* GetInstance();
 
-	void DrawMultipleCube();
 	void DrawLight(int indice);
-	void DrawCubeAffectedByLight();
 	void DrawCubeAffectedByFlashLight();
 	void DrawTextureOnScreen();
 
