@@ -13,6 +13,7 @@ Window* Window::GetInstance() {
 void Window::Framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 }
 
 void Window::ProcessInput(GLFWwindow* window)

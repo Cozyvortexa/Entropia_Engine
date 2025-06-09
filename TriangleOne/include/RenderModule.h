@@ -30,6 +30,7 @@ public:
 	void DrawLight(int indice);
 	void DrawCubeAffectedByLight();
 	void DrawCubeAffectedByFlashLight();
+	void DrawTextureOnScreen();
 
 	void FactoPointLight(Shader* lightShader, int i);
 	void FactoSpotLight(Shader* lightShader, int i);
@@ -46,6 +47,7 @@ private:
 	TextureClass* textureSpecular = nullptr;
 	Shader* shader = nullptr;
 	Shader* shaderLight = nullptr;
+	Shader* ppShader = nullptr;
 	GLFWwindow* window = nullptr;
 	Camera* mainCamera = nullptr;
 
@@ -60,4 +62,11 @@ private:
 	std::vector<glm::vec3> pointLightPositions;
 
 	Model* modelMesh = nullptr;
+
+	unsigned int framebuffer;
+	GLuint finalTxtColorOutput;
+	GLuint finalTxtOutput;
+
+	unsigned int quadVAO;  
+	unsigned int quadVBO;  
 };

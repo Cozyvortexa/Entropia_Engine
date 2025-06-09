@@ -86,5 +86,7 @@
     <None Include="Shader\BaseFragmentShader.glsl" />
     <None Include="Shader\LightFragShader.glsl" />
     <None Include="Shader\LightVertexShader.glsl" />
+    <None Include="Shader\PostProcessVertex.glsl" />
+    <None Include="Shader\PostProcessFrag.glsl" />
   </ItemGroup>
 </Project>

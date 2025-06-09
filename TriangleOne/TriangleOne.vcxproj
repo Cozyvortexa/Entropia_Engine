@@ -164,6 +164,8 @@
     <None Include="Shader\BaseVertexShader.glsl" />
     <None Include="Shader\LightFragShader.glsl" />
     <None Include="Shader\LightVertexShader.glsl" />
+    <None Include="Shader\PostProcessFrag.glsl" />
+    <None Include="Shader\PostProcessVertex.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -141,6 +141,17 @@ float verticesNormal[] = {
 	-0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f
 };
 
+float quadVertices[] = {
+	// Position      // Text
+	-1.0f,  1.0f,     0.0f, 1.0f,
+	 1.0f, -1.0f,     1.0f, 0.0f,
+	-1.0f, -1.0f,     0.0f, 0.0f,
+
+	-1.0f,  1.0f,     0.0f, 1.0f,
+	 1.0f,  1.0f,     1.0f, 1.0f,
+	 1.0f, -1.0f,     1.0f, 0.0f
+};
+
 unsigned int indices[] = { // note that we start from 0!
 0, 1, 3, // first triangle
 1, 2, 3 // second triangle
@@ -493,6 +504,21 @@ void RenderModule::DrawLight(int indice){
 	glDeleteBuffers(1, &VBO);
 }
 
+void RenderModule::DrawTextureOnScreen() {
+
+	ppShader->Use();
+	glBindVertexArray(quadVAO);
+
+	glDisable(GL_DEPTH_TEST);
+	glBindTexture(GL_TEXTURE_2D, finalTxtOutput);
+	glBindTexture(GL_TEXTURE_2D, finalTxtColorOutput);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+
+	//glDeleteVertexArrays(1, &quadVAO);
+	//glDeleteBuffers(1, &quadVBO);
+}
+
 void RenderModule::Init() {
 	Window* windowClass = Window::GetInstance();
 
@@ -503,13 +529,13 @@ void RenderModule::Init() {
 	}
 	shader = new Shader("TriangleOne/Shader/BaseVertexShader.glsl", "TriangleOne/Shader/BaseFragmentShader.glsl");
 	shaderLight = new Shader("TriangleOne/Shader/LightVertexShader.glsl", "TriangleOne/Shader/LightFragShader.glsl");
+	ppShader = new Shader("TriangleOne/Shader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessFrag.glsl");
 
 	texture = new TextureClass("Assets/image.png");
 	textureSpecular = new TextureClass("Assets/imageSpecular.png");
 
 	//Depth testing
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
+	//glEnable(GL_DEPTH_TEST);
 
 	//Blending     //ya pas de blending mm avec c'est ligne au cas ou 
 	//glEnable(GL_BLEND);
@@ -518,13 +544,11 @@ void RenderModule::Init() {
 	//Face culling     //fonctionne bizzarement ( faudrait chek l'ordre de dessin des vertex)
 	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_BACK);
-	//glFrontFace(GL_CCW);
-
-
+	//glFrontFace(GL_CW);
 
 
 	//MSAA
-	glEnable(GL_MULTISAMPLE);
+	//glEnable(GL_MULTISAMPLE);
 
 	//Camera 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -538,32 +562,93 @@ void RenderModule::Init() {
 	pointLightPositions.push_back(glm::vec3(0.0f, 0.0f, -3.0f));
 
 
-	modelMesh = new Model("Assets/tryModel/backpack.obj");
+	modelMesh = new Model("Assets/tryModel/backpacka.obj");
 	//modelMesh = new Model("Assets/doubleTry/red-renault-carwreck.fbx");
 
+
+	//Init fbo
+	glGenFramebuffers(1, &framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+	//Init texture depth
+	glGenTextures(1, &finalTxtOutput);
+	glBindTexture(GL_TEXTURE_2D, finalTxtOutput);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, Window::GetWidth(), Window::GetHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, finalTxtOutput, 0);
+
+
+	//Init texture color
+	glGenTextures(1, &finalTxtColorOutput);
+	glBindTexture(GL_TEXTURE_2D, finalTxtColorOutput);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Window::GetWidth(), Window::GetHeight(), 0, GL_RGB, GL_FLOAT, NULL);
+
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, finalTxtColorOutput, 0);
+
+
+
+
+
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Basic Fortnite emote.txt" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+
+	glGenVertexArrays(1, &quadVAO);
+	glBindVertexArray(quadVAO);
+
+	glGenBuffers(1, &quadVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+	//Position
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	//Texture
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	glBindVertexArray(0);
 }
 
 void RenderModule::Render()
  {
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+
 	for (int i = 0; i < pointLightPositions.size();i++)
 		DrawLight(i);
 	//DrawCubeAffectedByFlashLight();
-
 
 	shader->Use();
 
 	//Temp
 	shader->setFloat("material.shininess", 32.0f);
-
+	//Light
 	for (int i = 0; i < pointLightPositions.size(); i++)
 		FactoPointLight(shader, i);
-
-
 	glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
+
 	FactoDirLight(shader, worldLightDir);
 
 	FactoSpotLight(shader, 0);
+	//
 
 
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
@@ -572,8 +657,15 @@ void RenderModule::Render()
 	shader->setMatrix("projection", projection);
 	//
 
+
 	modelMesh->Draw(shader);
-		
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+
+	DrawTextureOnScreen();
+
+
 
 	mainCamera->ProcessInput(window);
 	
