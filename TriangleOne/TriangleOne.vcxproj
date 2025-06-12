@@ -166,6 +166,8 @@
     <None Include="Shader\LightVertexShader.glsl" />
     <None Include="Shader\PostProcessFrag.glsl" />
     <None Include="Shader\PostProcessVertex.glsl" />
+    <None Include="Shader\ReflexionFrag.glsl" />
+    <None Include="Shader\ReflexionVertex.glsl" />
     <None Include="Shader\SkyBoxFrag.glsl" />
     <None Include="Shader\SkyBoxVertex.glsl" />
   </ItemGroup>

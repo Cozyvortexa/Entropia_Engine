@@ -27,7 +27,7 @@ public:
 	static RenderModule* GetInstance();
 
 	void DrawLight(int indice);
-	void DrawCubeAffectedByFlashLight();
+	void DrawMirorCube();
 	void DrawTextureOnScreen();
 
 	void InitQuadVao();
@@ -49,6 +49,7 @@ private:
 	Shader* shaderLight = nullptr;
 	Shader* ppShader = nullptr;
 	Shader* skyboxShader = nullptr;
+	Shader* reflectShader = nullptr;
 	GLFWwindow* window = nullptr;
 	Camera* mainCamera = nullptr;
 
@@ -74,4 +75,7 @@ private:
 	unsigned int cubemapTexture;
 	unsigned int skyboxVAO;
 	unsigned int skyboxVBO;
+
+	unsigned int reflectVAO;
+	unsigned int reflectVBO;
 };

@@ -90,5 +90,7 @@
     <None Include="Shader\PostProcessFrag.glsl" />
     <None Include="Shader\SkyBoxFrag.glsl" />
     <None Include="Shader\SkyBoxVertex.glsl" />
+    <None Include="Shader\ReflexionVertex.glsl" />
+    <None Include="Shader\ReflexionFrag.glsl" />
   </ItemGroup>
 </Project>
