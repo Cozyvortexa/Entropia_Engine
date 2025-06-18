@@ -230,10 +230,14 @@ void RenderModule::DrawMirorCube() {
 	reflectShader->setMatrix("view", mainCamera->GetViewMatrix());
 	reflectShader->setMatrix("projection", projection);
 
-	//reflectShader->setInt("skybox", cubemapTexture);
 
 	// oui c'est pas en screenspace
 	reflectShader->setVec3("cameraPos", mainCamera->GetPos());
+
+	glActiveTexture(GL_TEXTURE0);
+	reflectShader->setInt("skybox", 0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+
 
 	glBindVertexArray(reflectVAO);
 
@@ -241,8 +245,6 @@ void RenderModule::DrawMirorCube() {
 	//reflectShader->setMatrix("normalViewMatrix", normalViewMatrix);
 
 	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
 	glBindVertexArray(0);
 }
 
@@ -295,9 +297,14 @@ void RenderModule::DrawTextureOnScreen() {
 	glBindVertexArray(quadVAO);
 
 	glDisable(GL_DEPTH_TEST);
-	glBindTexture(GL_TEXTURE_2D, finalTxtOutput);
-	glBindTexture(GL_TEXTURE_2D, finalTxtColorOutput);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, finalTxtOutput);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, finalTxtColorOutput);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBlitFramebuffer(0, 0, Window::GetWidth(), Window::GetHeight(), 0, 0, Window::GetWidth(), Window::GetHeight(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
@@ -311,26 +318,20 @@ void RenderModule::InitQuadVao() {
 
 	//Init texture depth
 	glGenTextures(1, &finalTxtOutput);
-	glBindTexture(GL_TEXTURE_2D, finalTxtOutput);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, Window::GetWidth(), Window::GetHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, finalTxtOutput);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_DEPTH_COMPONENT24, Window::GetWidth(), Window::GetHeight(), GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, finalTxtOutput, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, finalTxtOutput, 0);
 	//
 
 	//Init texture color
 	glGenTextures(1, &finalTxtColorOutput);
-	glBindTexture(GL_TEXTURE_2D, finalTxtColorOutput);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Window::GetWidth(), Window::GetHeight(), 0, GL_RGB, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, finalTxtColorOutput);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, Window::GetWidth(), Window::GetHeight(), GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, finalTxtColorOutput, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, finalTxtColorOutput, 0);
 	//
 
 	//Assert
@@ -425,7 +426,7 @@ void RenderModule::Init() {
 
 
 	//MSAA
-	//glEnable(GL_MULTISAMPLE);
+	glEnable(GL_MULTISAMPLE);
 
 	//Camera 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -479,9 +480,8 @@ void RenderModule::Render()
 
 	shader->Use();
 
-	//Temp
 	shader->setFloat("material.shininess", 32.0f);
-	//Light
+
 	for (int i = 0; i < pointLightPositions.size(); i++)
 		FactoPointLight(shader, i);
 
