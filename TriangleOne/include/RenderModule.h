@@ -65,6 +65,8 @@ private:
 
 	Model* modelMesh = nullptr;
 
+	int sample = 4;
+
 	unsigned int framebuffer;
 	GLuint finalTxtColorOutput;
 	GLuint finalTxtOutput;

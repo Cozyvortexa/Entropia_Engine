@@ -6,10 +6,12 @@ void Model::LoadModel(std::string path) {
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
-		//std::cout << "ERROR::ASSIMP::" << import.GetErrorString() << std::endl;
-		std::cout << "ERROR::ASSIMP::" << std::endl;
+		std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
 		return;
 	}
+	std::cout << "Embedded textures: " << scene->mNumTextures << std::endl;
+	std::cout << "Number of meshes: " << scene->mNumMeshes << std::endl;
+	std::cout << "Number of materials: " << scene->mNumMaterials << std::endl;
 	directory = path.substr(0, path.find_last_of("/"));
 	ProcessNode(scene->mRootNode, scene);
 
@@ -71,18 +73,18 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	{
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-		std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+		std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", scene);
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
 
-		std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+		std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", scene);
 		textures.insert(textures.end(), specularMaps.begin(),specularMaps.end());
 	}
 
 	return Mesh(vertices, indices, textures);
 }
 
-std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
+std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName, const aiScene* scene)
 {
 	std::vector<Texture> textures;
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
@@ -105,14 +107,21 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 		{
 			Texture texture;
 			
-			texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), directory);
-			texture.path = str.C_Str();
+			if (str.C_Str()[0] == '*') {  // texture embarquer detecter
+				int texIndex = atoi(str.C_Str() + 1);
+				aiTexture* EmbeddedTex = scene->mTextures[texIndex];
+				texture.id = TextureClass::LoadEmbeddedTexture(EmbeddedTex);
+			}
+			else 
+				texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), directory);
 
+			texture.path = str.C_Str();
 			if (typeName == "texture_specular")
 				texture.textureType = Texture::Specular;
 
 			textures.push_back(texture);
 			textures_loaded.push_back(texture);
+
 		}
 
 	}

@@ -319,7 +319,7 @@ void RenderModule::InitQuadVao() {
 	//Init texture depth
 	glGenTextures(1, &finalTxtOutput);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, finalTxtOutput);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_DEPTH_COMPONENT24, Window::GetWidth(), Window::GetHeight(), GL_TRUE);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample, GL_DEPTH_COMPONENT24, Window::GetWidth(), Window::GetHeight(), GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, finalTxtOutput, 0);
@@ -328,7 +328,7 @@ void RenderModule::InitQuadVao() {
 	//Init texture color
 	glGenTextures(1, &finalTxtColorOutput);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, finalTxtColorOutput);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, Window::GetWidth(), Window::GetHeight(), GL_TRUE);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample, GL_RGB, Window::GetWidth(), Window::GetHeight(), GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, finalTxtColorOutput, 0);
@@ -440,8 +440,9 @@ void RenderModule::Init() {
 	pointLightPositions.push_back(glm::vec3(0.0f, 0.0f, -3.0f));
 
 
-	modelMesh = new Model("Assets/tryModel/backpacka.obj");
-	//modelMesh = new Model("Assets/doubleTry/red-renault-carwreck.fbx");
+	modelMesh = new Model("Assets/ImpScene/house_on_the_hill.glb");
+	//modelMesh = new Model("Assets/tryModel/backpacka.obj");
+
 
 	InitQuadVao();
 
@@ -472,7 +473,7 @@ void RenderModule::Render()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 
-	DrawMirorCube();
+	//DrawMirorCube();
 
 	for (int i = 0; i < pointLightPositions.size();i++)
 		DrawLight(i);
@@ -496,7 +497,7 @@ void RenderModule::Render()
 	//
 
 
-	//modelMesh->Draw(shader);
+	modelMesh->Draw(shader);
 	DrawSkyBox(projection);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT);

@@ -31,5 +31,7 @@ private:
 
 	static Window* instance;
 
+	int sample = 4;
+
 	GLFWwindow* window = nullptr;
 };
