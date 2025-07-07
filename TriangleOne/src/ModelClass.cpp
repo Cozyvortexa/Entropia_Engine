@@ -9,9 +9,9 @@ void Model::LoadModel(std::string path) {
 		std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
 		return;
 	}
-	std::cout << "Embedded textures: " << scene->mNumTextures << std::endl;
-	std::cout << "Number of meshes: " << scene->mNumMeshes << std::endl;
-	std::cout << "Number of materials: " << scene->mNumMaterials << std::endl;
+	//std::cout << "Embedded textures: " << scene->mNumTextures << std::endl;
+	//std::cout << "Number of meshes: " << scene->mNumMeshes << std::endl;
+	//std::cout << "Number of materials: " << scene->mNumMaterials << std::endl;
 	directory = path.substr(0, path.find_last_of("/"));
 	ProcessNode(scene->mRootNode, scene);
 

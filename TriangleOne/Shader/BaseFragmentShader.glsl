@@ -1,6 +1,5 @@
 #version 330 core
 struct Material {
-	
 	sampler2D diffuseText[8];
 	sampler2D specularText[8];
 
@@ -143,7 +142,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPosView, vec3 viewDi
 
 vec3 CalcSpotLight(SpotLight light,vec3 normal, vec3 fragPosView, vec3 viewDir,vec4 finalDiffuse, vec4 finalSpecular)
 {
-	vec3 lightDir = normalize(- FragPosView);  // Direction entre la source de lumiere et la normal du vertex
+	vec3 lightDir = normalize(light.viewPosition - FragPosView);  // Direction entre la source de lumiere et la normal du vertex
 
 	//
     float theta = dot(lightDir, normalize(-light.direction)); 

@@ -30,26 +30,37 @@ public:
 	void DrawMirorCube();
 	void DrawTextureOnScreen();
 
+	void DrawScene(Shader* shader);
+
 	void InitQuadVao();
 
 	void FactoPointLight(Shader* lightShader, int i);
 	void FactoSpotLight(Shader* lightShader, int i);
 	void FactoDirLight(Shader* lightShader, glm::vec3 worldLightPos);
+	void FactoMainShader();
 
 	void InitSkyBox();
 	void DrawSkyBox(glm::mat4 projectionMatrix);
+
+	void InitShadowMap();
+
+	void DrawShadowMap();
+	void RenderShadowMap();
+
+	glm::mat4  DrawShadowDir();
+
 
 	void Init() override;
 	void Render() override;
 	void Shutdown() override;
 
-
 private:
-	Shader* shader = nullptr;
+	Shader* _shader = nullptr;
 	Shader* shaderLight = nullptr;
 	Shader* ppShader = nullptr;
 	Shader* skyboxShader = nullptr;
 	Shader* reflectShader = nullptr;
+	Shader* depthShader = nullptr;
 	GLFWwindow* window = nullptr;
 	Camera* mainCamera = nullptr;
 
@@ -64,6 +75,7 @@ private:
 	std::vector<glm::vec3> pointLightPositions;
 
 	Model* modelMesh = nullptr;
+	Model* modelMesh2 = nullptr;
 
 	int sample = 4;
 
@@ -71,13 +83,20 @@ private:
 	GLuint finalTxtColorOutput;
 	GLuint finalTxtOutput;
 
+	//Final render
 	unsigned int quadVAO;  
 	unsigned int quadVBO;  
 
+	//Skybox
 	unsigned int cubemapTexture;
 	unsigned int skyboxVAO;
 	unsigned int skyboxVBO;
 
+	//Reflect
 	unsigned int reflectVAO;
 	unsigned int reflectVBO;
+
+	//Shadow
+	unsigned int depthMapFBO;
+	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 };

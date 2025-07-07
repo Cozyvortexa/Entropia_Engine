@@ -202,7 +202,8 @@ void RenderModule::FactoDirLight(Shader* lightShader,glm::vec3 worldLightPos) {
 }
 
 void RenderModule::FactoSpotLight(Shader* lightShader, int i) {
-	lightShader->setVec3("spotLight.viewPosition", glm::vec3(0, 0, 0));
+	glm::vec3 viewPosition = mainCamera->GetViewMatrix() * glm::vec4(0.0f, 0.0f, -3.0f, 1.0f);
+	lightShader->setVec3("spotLight.viewPosition", viewPosition);
 
 	lightShader->setVec3("spotLight.ambient", glm::vec3(0.5f, 0.5f, 0.5f));
 	lightShader->setVec3("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
@@ -212,10 +213,36 @@ void RenderModule::FactoSpotLight(Shader* lightShader, int i) {
 	lightShader->setFloat("spotLight.linear", 0.09f);
 	lightShader->setFloat("spotLight.quadratic", 0.032f);
 
-	lightShader->setVec3("spotLight.direction", mainCamera->GetFront());
+	lightShader->setVec3("spotLight.direction", mainCamera->GetViewMatrix() * glm::vec4(0.0f, 0.0f, 1.0f,0.0f));
 	lightShader->setFloat("spotLight.cutOff", glm::cos(glm::radians(17.5f)));
 	lightShader->setFloat("spotLight.outerCutOff", glm::cos(glm::radians(25.0f)));
 }
+
+void RenderModule::FactoMainShader() {
+	_shader->setFloat("material.shininess", 32.0f);
+
+	//for (int i = 0; i < pointLightPositions.size(); i++)
+	//	FactoPointLight(shader, i);
+
+	glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
+	FactoDirLight(_shader, worldLightDir);
+	FactoSpotLight(_shader, 0);
+
+	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
+	_shader->setMatrix("model", glm::rotate(_model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+	_shader->setMatrix("view", mainCamera->GetViewMatrix());
+	_shader->setMatrix("projection", projection);
+}
+
+glm::mat4 RenderModule::DrawShadowDir() {
+	float near_plane = 1.0f, far_plane = 7.5f;
+	glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+
+	glm::mat4 lightView = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // changer le lookAt
+
+	return lightProjection * lightView;
+}
+
 
 void RenderModule::DrawMirorCube() {
 	reflectShader->Use();
@@ -283,7 +310,6 @@ void RenderModule::DrawLight(int indice){
 
 	glBindVertexArray(lightVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
-
 
 
 	glDeleteVertexArrays(1, &lightVAO);
@@ -400,22 +426,75 @@ void RenderModule::DrawSkyBox(glm::mat4 projectionMatrix) {
 
 }
 
+void RenderModule::InitShadowMap() {
+	glGenFramebuffers(1, &depthMapFBO);
+
+	unsigned int depthMap;
+
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH,SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void RenderModule::DrawShadowMap() {
+	depthShader->Use();
+	depthShader->setMatrix("lightSpaceMatrix", DrawShadowDir());
+
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	DrawScene(_shader);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void RenderModule::DrawScene(Shader* shader) {
+	//DrawMirorCube();
+
+	for (int i = 0; i < pointLightPositions.size(); i++)
+		DrawLight(i);
+
+	shader->Use();
+	FactoMainShader();
+
+	modelMesh->Draw(shader);
+	shader->setMatrix("model", glm::translate(_model, glm::vec3(0.0f, 0.5f, 0.0f)));
+	modelMesh2->Draw(shader);
+	//DrawSkyBox(projection);
+}
+
+
 void RenderModule::Init() {
 	Window* windowClass = Window::GetInstance();
 
 	window = windowClass->GetWindow();
 	if (window == nullptr) {
-		std::cout << "Reference de la window imposible a recuperer" << std::endl;
+		std::cout << "Reference de la window impossible a recuperer" << std::endl;
 		abort();
 	}
-	shader = new Shader("TriangleOne/Shader/BaseVertexShader.glsl", "TriangleOne/Shader/BaseFragmentShader.glsl");
+	_shader = new Shader("TriangleOne/Shader/BaseVertexShader.glsl", "TriangleOne/Shader/BaseFragmentShader.glsl");
 	shaderLight = new Shader("TriangleOne/Shader/LightVertexShader.glsl", "TriangleOne/Shader/LightFragShader.glsl");
 	ppShader = new Shader("TriangleOne/Shader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessFrag.glsl");
 	skyboxShader = new Shader("TriangleOne/Shader/SkyBoxVertex.glsl", "TriangleOne/Shader/SkyBoxFrag.glsl");
 	reflectShader = new Shader("TriangleOne/Shader/ReflexionVertex.glsl", "TriangleOne/Shader/ReflexionFrag.glsl");
+	//depthShader = new Shader("TriangleOne/Shader/DepthMapVertex.glsl", "TriangleOne/Shader/DepthMapFrag.glsl");
 
 
-	//Blending     //ya pas de blending mm avec c'est ligne au cas ou 
+	//Blending     //ya pas de blending mm avec cette ligne au cas ou 
 	//glEnable(GL_BLEND);
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -434,14 +513,15 @@ void RenderModule::Init() {
 
 	lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
 
-	pointLightPositions.push_back(glm::vec3(0.7f, 0.2f, 2.0f));
-	pointLightPositions.push_back(glm::vec3(2.3f, -3.3f, -4.0f));
-	pointLightPositions.push_back(glm::vec3(-4.0f, 2.0f, -12.0f));
+	//pointLightPositions.push_back(glm::vec3(0.7f, 0.2f, 2.0f));
+	//pointLightPositions.push_back(glm::vec3(2.3f, -3.3f, -4.0f));
+	//pointLightPositions.push_back(glm::vec3(-4.0f, 2.0f, -12.0f));
 	pointLightPositions.push_back(glm::vec3(0.0f, 0.0f, -3.0f));
 
 
-	modelMesh = new Model("Assets/ImpScene/house_on_the_hill.glb");
-	//modelMesh = new Model("Assets/tryModel/backpacka.obj");
+	modelMesh = new Model("Assets/ImpScene/towel_laying_flat_on_the_ground.glb");
+	modelMesh2 = new Model("Assets/ImpScene/cc0_-_magic_cube.glb");
+	//modelMesh2 = new Model("Assets/tryModel/backpacka.obj");
 
 
 	InitQuadVao();
@@ -473,35 +553,10 @@ void RenderModule::Render()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 
-	//DrawMirorCube();
+	DrawScene(_shader);
 
-	for (int i = 0; i < pointLightPositions.size();i++)
-		DrawLight(i);
-	//DrawCubeAffectedByFlashLight();
-
-	shader->Use();
-
-	shader->setFloat("material.shininess", 32.0f);
-
-	for (int i = 0; i < pointLightPositions.size(); i++)
-		FactoPointLight(shader, i);
-
-	glm::vec3 worldLightDir = glm::vec3(-0.2f, -1.0f, -0.3f);
-	FactoDirLight(shader, worldLightDir);
-	FactoSpotLight(shader, 0);
-
-	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
-	shader->setMatrix("model", _model);
-	shader->setMatrix("view", mainCamera->GetViewMatrix());
-	shader->setMatrix("projection", projection);
-	//
-
-
-	modelMesh->Draw(shader);
-	DrawSkyBox(projection);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
-
 
 	DrawTextureOnScreen();
 
