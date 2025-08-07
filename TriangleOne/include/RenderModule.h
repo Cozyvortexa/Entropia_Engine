@@ -30,14 +30,11 @@ public:
 	void DrawMirorCube();
 	void DrawTextureOnScreen();
 
-	void DrawScene(Shader* shader);
-
 	void InitQuadVao();
 
 	void FactoPointLight(Shader* lightShader, int i);
 	void FactoSpotLight(Shader* lightShader, int i);
-	void FactoDirLight(Shader* lightShader, glm::vec3 worldLightPos);
-	void FactoMainShader();
+	void FactoDirLight(Shader* lightShader);
 
 	void InitSkyBox();
 	void DrawSkyBox(glm::mat4 projectionMatrix);
@@ -45,9 +42,8 @@ public:
 	void InitShadowMap();
 
 	void DrawShadowMap();
-	void RenderShadowMap();
 
-	glm::mat4  DrawShadowDir();
+	glm::mat4 DrawShadowDir();
 
 
 	void Init() override;
@@ -83,6 +79,8 @@ private:
 	GLuint finalTxtColorOutput;
 	GLuint finalTxtOutput;
 
+	glm::vec3 worldLightDir = glm::vec3(-2.0f, 4.0f, -1.0f);
+
 	//Final render
 	unsigned int quadVAO;  
 	unsigned int quadVBO;  
@@ -98,5 +96,6 @@ private:
 
 	//Shadow
 	unsigned int depthMapFBO;
-	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+	unsigned int depthMap;
+	const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 };

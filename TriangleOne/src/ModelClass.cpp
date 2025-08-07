@@ -95,6 +95,7 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 
 		for (unsigned int j = 0; j < textures_loaded.size(); j++)
 		{
+			//std::string fullPath = directory + "/" + std::string(str.C_Str());
 			if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)  // Verifie si la texture a deja etait charger
 			{
 				textures.push_back(textures_loaded[j]);
@@ -113,7 +114,7 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 				texture.id = TextureClass::LoadEmbeddedTexture(EmbeddedTex);
 			}
 			else 
-				texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), directory);
+				texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), directory, typeName == "texture_diffuse");
 
 			texture.path = str.C_Str();
 			if (typeName == "texture_specular")
@@ -131,5 +132,9 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 void Model::Draw(Shader* shader) {
 	for (Mesh mesh : meshes)
 		mesh.Draw(shader);
+}
+void Model::LiteDraw(Shader* shader){ 
+	for (Mesh mesh : meshes)
+		mesh.LiteDraw(shader);
 }
 
