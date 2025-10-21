@@ -19,6 +19,10 @@
 
 #include "ModelClass.h"
 
+#include "Light.h"
+#include "GameObject.h"
+
+
 
 class RenderModule : public Module {
 public:
@@ -34,16 +38,17 @@ public:
 
 	void FactoPointLight(Shader* lightShader, int i);
 	void FactoSpotLight(Shader* lightShader, int i);
-	void FactoDirLight(Shader* lightShader);
 
 	void InitSkyBox();
 	void DrawSkyBox(glm::mat4 projectionMatrix);
 
 	void InitShadowMap();
 
+	void InitCubeMap();
+
 	void DrawShadowMap();
 
-	glm::mat4 DrawShadowDir();
+	void DrawShadowPoint();
 
 
 	void Init() override;
@@ -57,8 +62,12 @@ private:
 	Shader* skyboxShader = nullptr;
 	Shader* reflectShader = nullptr;
 	Shader* depthShader = nullptr;
+	Shader* depthShaderCubeMap = nullptr;
+
 	GLFWwindow* window = nullptr;
 	Camera* mainCamera = nullptr;
+
+	Light* dirLight = nullptr;
 
 	static RenderModule* instance;
 
@@ -66,20 +75,18 @@ private:
 
 	glm::mat4 _model = glm::mat4(1.0f);
 
-	glm::vec3 lightPos;
+	//glm::vec3 lightPos;
 
 	std::vector<glm::vec3> pointLightPositions;
 
-	Model* modelMesh = nullptr;
-	Model* modelMesh2 = nullptr;
+	GameObject* house = nullptr;
+	GameObject* cube = nullptr;
 
 	int sample = 4;
 
 	unsigned int framebuffer;
 	GLuint finalTxtColorOutput;
 	GLuint finalTxtOutput;
-
-	glm::vec3 worldLightDir = glm::vec3(-2.0f, 4.0f, -1.0f);
 
 	//Final render
 	unsigned int quadVAO;  
@@ -98,4 +105,8 @@ private:
 	unsigned int depthMapFBO;
 	unsigned int depthMap;
 	const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
+	float far_plane = 30.0;
+	//Shadow cube
+	unsigned int depthCubeMapFBO;
+	unsigned int depthCubemap;
 };

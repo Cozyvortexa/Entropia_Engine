@@ -73,18 +73,22 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	{
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-		std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", scene);
+		std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, scene);
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
 
-		std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", scene);
+		std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, scene);
 		textures.insert(textures.end(), specularMaps.begin(),specularMaps.end());
+
+
+		std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_NORMALS, scene);
+		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 	}
 
 	return Mesh(vertices, indices, textures);
 }
 
-std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName, const aiScene* scene)
+std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene)
 {
 	std::vector<Texture> textures;
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
@@ -114,11 +118,21 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 				texture.id = TextureClass::LoadEmbeddedTexture(EmbeddedTex);
 			}
 			else 
-				texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), directory, typeName == "texture_diffuse");
+				texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), directory);
 
 			texture.path = str.C_Str();
-			if (typeName == "texture_specular")
-				texture.textureType = Texture::Specular;
+
+			switch (type) {  // la texture est charger meme si elle ne serra pas utiliser
+				case aiTextureType_DIFFUSE:
+					texture.textureType = Texture::Diffuse;
+					break;
+				case aiTextureType_SPECULAR:
+					texture.textureType = Texture::Specular;
+					break;
+				case aiTextureType_NORMALS:
+					texture.textureType = Texture::Normal;
+					break;
+			}
 
 			textures.push_back(texture);
 			textures_loaded.push_back(texture);

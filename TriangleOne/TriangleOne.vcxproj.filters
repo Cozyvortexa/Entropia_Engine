@@ -48,6 +48,12 @@
     <ClCompile Include="src\ModelClass.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\Light.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GameObject.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\engine.h">
@@ -80,6 +86,12 @@
     <ClInclude Include="include\ModelClass.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\Light.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameObject.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\BaseVertexShader.glsl" />
@@ -96,5 +108,8 @@
     <None Include="Shader\DepthMapVertex.glsl" />
     <None Include="Shader\ShadowVertex.glsl" />
     <None Include="Shader\ShadowFrag.glsl" />
+    <None Include="Shader\ShadowCubeVertex.glsl" />
+    <None Include="Shader\ShadowCubeFrag.glsl" />
+    <None Include="Shader\ShadowCubeGeometry.glsl" />
   </ItemGroup>
 </Project>

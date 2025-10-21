@@ -42,6 +42,57 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 	glDeleteShader(shaderFrag);
 }
 
+Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath) {
+
+	std::string vertexCode = ReadFile(vertexPath); 
+	const char* vShaderCode = vertexCode.c_str();
+
+	std::string fragmentCode = ReadFile(fragmentPath);  
+	const char* fShaderCode = fragmentCode.c_str();
+
+	std::string geometryCode = ReadFile(geometryPath);  
+	const char* gShaderCode = geometryCode.c_str();
+
+	unsigned int shaderVertex = glCreateShader(GL_VERTEX_SHADER);  
+	glShaderSource(shaderVertex, 1, &vShaderCode, NULL);
+	glCompileShader(shaderVertex);
+
+	unsigned int shaderFrag = glCreateShader(GL_FRAGMENT_SHADER);  
+	glShaderSource(shaderFrag, 1, &fShaderCode, NULL);
+	glCompileShader(shaderFrag);
+
+	unsigned int shaderGeometrie = glCreateShader(GL_GEOMETRY_SHADER);  
+	glShaderSource(shaderGeometrie, 1, &gShaderCode, NULL);
+	glCompileShader(shaderGeometrie);
+
+
+	if (AssertShader(shaderVertex) || AssertShader(shaderFrag) || AssertShader(shaderGeometrie))  
+		throw std::invalid_argument("Chemin incorrect entrer dans le constructeur");
+
+	shaderID = glCreateProgram();
+
+	glAttachShader(shaderID, shaderVertex);  
+	glAttachShader(shaderID, shaderGeometrie);
+	glAttachShader(shaderID, shaderFrag);
+
+	glLinkProgram(shaderID);
+
+
+	//Assert du shaderProgram
+	int success;
+	char infoLog[512];
+	glGetProgramiv(shaderID, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shaderID, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::PROG::CREATION_FAILED\n" << infoLog << std::endl;
+		throw std::invalid_argument("ShaderProg");
+	}
+
+	glDeleteShader(shaderVertex);
+	glDeleteShader(shaderFrag);
+	glDeleteShader(shaderGeometrie);
+}
+
 void Shader::Use()
 {
 	glUseProgram(shaderID);

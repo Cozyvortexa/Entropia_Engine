@@ -2,8 +2,10 @@
 struct Material {
 	sampler2D diffuseText[8];
 	sampler2D specularText[8];
+	sampler2D normalText;
 
 	float shininess;
+	bool haveNormalText;
 };
 uniform Material material;
 
@@ -48,7 +50,10 @@ struct DirLight{
 };
 uniform DirLight dirLight;
 
+//Shadow
 uniform sampler2D shadowMap;
+uniform samplerCube shadowCubeMap;
+uniform float far_plane;
 
 uniform vec3 viewPos;
 
@@ -61,7 +66,8 @@ void CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, 
 
 void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular);
 
-float ShadowCalculation();
+float ShadowDirLight();
+float ShadowPointLight(PointLight light);
 
 in vec3 FragPos;
 in vec3 normal;
@@ -81,17 +87,23 @@ void main()
 	vec3 viewDir = normalize(viewPos - FragPos);
 	vec3 _ambient, _diffuse, _specular = vec3(0,0,0);
 
+	float shadow = 0.0;
+
+
 	vec3 norm = normalize(normal);
+
 
 
 	if (length(dirLight.ambient + dirLight.diffuse + dirLight.specular ) > 0.001){
 		CalcDirLight(dirLight, viewDir, norm, finalDiffuse, finalSpecular, _ambient, _diffuse, _specular );
+		shadow += ShadowDirLight();
 	}
 
 	for (int i = 0; i < NR_POINT_LIGHTS; i++)
 	{
-		if (length(pointLights[i].ambient + pointLights[i].diffuse + pointLights[i].specular )> 0.001  ){  // On aplique pas le calcul si les lumiere sont eteint
+		if (length(pointLights[i].ambient + pointLights[i].diffuse + pointLights[i].specular )> 0.001  ){  // On aplique pas le calcul si les lumiere sont eteinte
 			CalcPointLight(pointLights[i], viewDir, norm, finalDiffuse, finalSpecular, _ambient, _diffuse, _specular);
+				shadow += ShadowPointLight(pointLights[i]);
 		}
 	}
 
@@ -103,7 +115,7 @@ void main()
 //	vec3 diffuseColor = pow(finalDiffuse.rgb, vec3(gamma));
 //	_diffuse += diffuseColor;
 //
-	float shadow = ShadowCalculation();
+
 	vec3 lighting = _ambient + (1.0 - shadow) * (_diffuse +  _specular);
 
 
@@ -115,6 +127,11 @@ void main()
 
 void CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular,   inout vec3 _ambient, inout vec3 _diffuse, inout vec3 _specular)
 {
+	if (material.haveNormalText){  // Application de la normal map si elle existe 
+		norm = texture(material.normalText, TexCoords).rgb;
+		norm = normalize(normal * 2.0 - 1.0);
+	}
+
 	vec3 lightDir = normalize(-light.direction);
 	// diffuse shading
 	float diff = max(dot(norm, lightDir), 0.0);
@@ -139,7 +156,7 @@ void CalcPointLight(PointLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse,
 {
 	vec3 lightDir = normalize(light.position - FragPos);  // Direction de la lumiere vers la normal du vertex
 
-	float diff = max(dot(norm, lightDir), 0.0);  // Calcul de l'angle entre la normal et le vec distance 
+	float diff = max(dot(lightDir, norm), 0.0);  // Calcul de l'angle entre la normal et le vec distance 
 
 	vec3 reflectDir = reflect(-lightDir, norm); // on inverse lightDir car c'est pas la bonne direction
 
@@ -230,7 +247,7 @@ void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular){
 		discard;
 }
 
-float ShadowCalculation(){
+float ShadowDirLight(){
 
 	vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
 	projCoords = projCoords * 0.5 + 0.5;
@@ -245,19 +262,61 @@ float ShadowCalculation(){
 	vec3 lightDir = normalize(-dirLight.direction );
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
 
-
+	//PCF marche en verifiant les pixel voisin... askip
 	float shadow = 0.0;
 	vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
 	for(int x = -1; x <= 1; ++x)
 	{
 		for(int y = -1; y <= 1; ++y)
 		{
-			float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) *
-			texelSize).r;
+			float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
 			shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
 		}
 	}
 	shadow /= 9.0;
+
+	return shadow;
+}
+
+float ShadowPointLight(PointLight light){
+	vec3 sampleOffsetDirections[20] = vec3[]
+	(
+		vec3( 1, 1, 1), vec3( 1, -1, 1), vec3(-1, -1, 1), vec3(-1, 1, 1),
+		vec3( 1, 1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
+		vec3( 1, 1, 0), vec3( 1, -1, 0), vec3(-1, -1, 0), vec3(-1, 1, 0),
+		vec3( 1, 0, 1), vec3(-1, 0, 1), vec3( 1, 0, -1), vec3(-1, 0, -1),
+		vec3( 0, 1, 1), vec3( 0, -1, 1), vec3( 0, -1, -1), vec3( 0, 1, -1)
+	);
+
+	float shadow = 0.0;
+	float bias = 0.05;
+	float samples = 4.0;
+	float offset = 0.1;
+	float viewDistance = length(viewPos- FragPos);
+
+	vec3 fragToLight = FragPos - light.position;
+	float currentDepth = length(fragToLight);
+
+	float diskRadius = (1.0 + (viewDistance / far_plane)) / 25.0;
+	for(int i = 0; i < samples; ++i)
+	{
+		float closestDepth = texture(shadowCubeMap, fragToLight + sampleOffsetDirections[i] * diskRadius).r;
+		closestDepth *= far_plane; // undo mapping [0;1]
+		if(currentDepth - bias > closestDepth)
+		shadow += 1.0;
+	}
+	shadow /= samples;
+
+//closestDepth *= far_plane; // undo mapping [0;1]
+//
+//	vec3 fragToLight = FragPos - light.position;
+//	float closestDepth = texture(shadowCubeMap, fragToLight).r;
+//	closestDepth *= far_plane;
+//
+//	float currentDepth = length(fragToLight);
+//
+//
+//	float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
 	return shadow;
 }

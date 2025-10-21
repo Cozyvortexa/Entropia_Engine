@@ -137,7 +137,9 @@
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\engine.cpp" />
+    <ClCompile Include="src\GameObject.cpp" />
     <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MeshClass.cpp" />
     <ClCompile Include="src\ModelClass.cpp" />
@@ -150,6 +152,8 @@
   <ItemGroup>
     <ClInclude Include="include\Camera.h" />
     <ClInclude Include="include\engine.h" />
+    <ClInclude Include="include\GameObject.h" />
+    <ClInclude Include="include\Light.h" />
     <ClInclude Include="include\MeshClass.h" />
     <ClInclude Include="include\ModelClass.h" />
     <ClInclude Include="include\Module.h" />
@@ -170,6 +174,9 @@
     <None Include="Shader\PostProcessVertex.glsl" />
     <None Include="Shader\ReflexionFrag.glsl" />
     <None Include="Shader\ReflexionVertex.glsl" />
+    <None Include="Shader\ShadowCubeFrag.glsl" />
+    <None Include="Shader\ShadowCubeGeometry.glsl" />
+    <None Include="Shader\ShadowCubeVertex.glsl" />
     <None Include="Shader\ShadowFrag.glsl" />
     <None Include="Shader\ShadowVertex.glsl" />
     <None Include="Shader\SkyBoxFrag.glsl" />

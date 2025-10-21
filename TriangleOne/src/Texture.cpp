@@ -3,7 +3,7 @@
 #include <glad/glad/glad.h> 
 
 
-unsigned int TextureClass::LoadTextureFromFile(std::string name, std::string directory, bool areDiffuse) {
+unsigned int TextureClass::LoadTextureFromFile(std::string name, std::string directory) {
 	unsigned int textureID;
 	int width, height, nrChannels;
 
@@ -17,17 +17,11 @@ unsigned int TextureClass::LoadTextureFromFile(std::string name, std::string dir
 	}
 
 	GLenum format;
-	//Verif du format et la compatibiliter pour la correction gamma
-	if (areDiffuse) {
-		format = GL_SRGB;
-		if (nrChannels == 4)
-			format = GL_SRGB_ALPHA;
-	}
-	else {
-		format = GL_RGB;
-		if (nrChannels == 4)
-			format = GL_RGBA;
-	}
+
+	format = GL_RGB;
+	if (nrChannels == 4)
+		format = GL_RGBA;
+
 
 
 	//Blabla OpenGl

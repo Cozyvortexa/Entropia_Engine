@@ -10,7 +10,7 @@
 
 class TextureClass {
 public:
-	static unsigned int LoadTextureFromFile(std::string path, std::string directory, bool areDiffuse);
+	static unsigned int LoadTextureFromFile(std::string path, std::string directory);
 
 	static unsigned int LoadEmbeddedTexture(aiTexture* tex);
 

@@ -61,6 +61,12 @@ void Mesh::Draw(Shader* shader)
 			shader->setInt("material.specularText[" + number + "]", i);
 		}
 
+		else if (textures[i].textureType == Texture::Type::Normal) 
+		{
+			shader->setBool("material.normalText", i);
+			shader->setInt("material.haveNormalText", true);
+		}
+
 
 		glBindTexture(GL_TEXTURE_2D, textures[i].id);
 	}

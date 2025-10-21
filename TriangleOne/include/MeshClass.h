@@ -20,10 +20,12 @@ struct Vertex {
 
 struct Texture {
 	enum Type {
+		None,
 		Diffuse,
-		Specular
+		Specular,
+		Normal
 	};
-	Type textureType = Diffuse; // Valeur par default
+	Type textureType = None; // Valeur par default
 	unsigned int id;
 	std::string path;
 };
