@@ -185,7 +185,7 @@ void RenderModule::FactoPointLight(Shader* lightShader, int i) {
 	lightShader->setVec3("pointLights[" + std::to_string(i) + "].position", pointLightPositions[i]);
 
 	lightShader->setVec3("pointLights[" + std::to_string(i) + "].ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-	lightShader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
+	lightShader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", glm::vec3(5.0f, 5.0f, 5.0f));
 	lightShader->setVec3("pointLights[" + std::to_string(i) + "].specular", glm::vec3(0.5f, 0.5f, 0.5f));
 
 	lightShader->setFloat("pointLights[" + std::to_string(i) + "].constant", 1.0f);
@@ -225,7 +225,7 @@ void RenderModule::FactoSpotLight(Shader* lightShader, int i) {
 
 void RenderModule::DrawShadowPoint() {
 	float aspect = (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT;
-	float near_plane = 1.0f;
+	float near_plane = 0.1f;
 	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near_plane, far_plane);
 
 
@@ -248,9 +248,9 @@ void RenderModule::DrawShadowPoint() {
 		depthShaderCubeMap->Use();
 		depthShaderCubeMap->setFloat("far_plane", far_plane);
 
-		for (int i = 0; i < shadowTransforms.size(); i++)
+		for (int i = 0; i < shadowTransforms.size(); i++) {
 			depthShaderCubeMap->setMatrix("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
-
+		}
 
 		depthShaderCubeMap->setVec3("lightPos", lightPos);
 
@@ -380,8 +380,8 @@ void RenderModule::InitQuadVao() {
 	//
 
 	//Assert
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Basic Fortnite emote.txt" << std::endl;
+	if (!glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "L'Init du quadVao a echouer" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 

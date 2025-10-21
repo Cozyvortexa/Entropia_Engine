@@ -105,7 +105,7 @@ private:
 	unsigned int depthMapFBO;
 	unsigned int depthMap;
 	const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
-	float far_plane = 30.0;
+	float far_plane = 30.0f;
 	//Shadow cube
 	unsigned int depthCubeMapFBO;
 	unsigned int depthCubemap;

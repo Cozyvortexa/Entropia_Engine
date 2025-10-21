@@ -60,9 +60,9 @@ uniform vec3 viewPos;
 vec4 CalcFinalDiffuse();
 vec4 CalcFinalSpecular();
 
-void CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular,   inout vec3 _ambient,inout vec3 _diffuse, inout vec3 _specular);
-void CalcPointLight(PointLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular,   inout vec3 _ambient, inout vec3 _diffuse, inout vec3 _specular);
-void CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular,   inout vec3 _ambient, inout vec3 _diffuse, inout vec3 _specular);
+vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
+vec3 CalcPointLight(PointLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
+vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
 
 void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular);
 
@@ -87,28 +87,27 @@ void main()
 	vec3 viewDir = normalize(viewPos - FragPos);
 	vec3 _ambient, _diffuse, _specular = vec3(0,0,0);
 
-	float shadow = 0.0;
 
+	vec3 ambientLight = dirLight.ambient; // pourquoi pas   
+	vec3 final_lightning = ambientLight;
 
 	vec3 norm = normalize(normal);
 
 
 
 	if (length(dirLight.ambient + dirLight.diffuse + dirLight.specular ) > 0.001){
-		CalcDirLight(dirLight, viewDir, norm, finalDiffuse, finalSpecular, _ambient, _diffuse, _specular );
-		shadow += ShadowDirLight();
+		final_lightning += CalcDirLight(dirLight, viewDir, norm, finalDiffuse, finalSpecular); // Une seule lumiere dir dans la scene 
 	}
 
 	for (int i = 0; i < NR_POINT_LIGHTS; i++)
 	{
 		if (length(pointLights[i].ambient + pointLights[i].diffuse + pointLights[i].specular )> 0.001  ){  // On aplique pas le calcul si les lumiere sont eteinte
-			CalcPointLight(pointLights[i], viewDir, norm, finalDiffuse, finalSpecular, _ambient, _diffuse, _specular);
-				shadow += ShadowPointLight(pointLights[i]);
+			final_lightning += CalcPointLight(pointLights[i], viewDir, norm, finalDiffuse, finalSpecular);
 		}
 	}
 
 	if (length(spotLight.ambient + spotLight.diffuse + spotLight.specular) > 0.001 ){
-		CalcSpotLight(spotLight, viewDir, norm, finalDiffuse, finalSpecular, _ambient, _diffuse, _specular);
+		final_lightning += CalcSpotLight(spotLight, viewDir, norm, finalDiffuse, finalSpecular);  // SpotLight non fonctionnelle ( casser intentionnellement ) 
 	}
 
 //	float gamma = 2.2;
@@ -116,7 +115,7 @@ void main()
 //	_diffuse += diffuseColor;
 //
 
-	vec3 lighting = _ambient + (1.0 - shadow) * (_diffuse +  _specular);
+	vec3 lighting = vec3(finalDiffuse) * final_lightning;
 
 
 	FragColor = vec4(lighting, 1.0);
@@ -125,7 +124,7 @@ void main()
 }
 
 
-void CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular,   inout vec3 _ambient, inout vec3 _diffuse, inout vec3 _specular)
+vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular)
 {
 	if (material.haveNormalText){  // Application de la normal map si elle existe 
 		norm = texture(material.normalText, TexCoords).rgb;
@@ -141,46 +140,46 @@ void CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, ve
 		float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess); 
 
 		// combine results
-		vec3 ambient = light.ambient * vec3(finalDiffuse);
+//		vec3 ambient = light.ambient * vec3(finalDiffuse);
 		vec3 diffuse = light.diffuse * diff * vec3(finalDiffuse);
 		vec3 specular = light.specular * spec * vec3(finalSpecular);
 
+		float shadow = ShadowDirLight();
+		vec3 light_contribution = (diffuse + specular) * (1.0 - shadow);
 
-		_ambient += ambient;
-		_diffuse += diffuse;
-		_specular += specular;
+		return light_contribution;
 	}
 }
 
-void CalcPointLight(PointLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular,   inout vec3 _ambient, inout vec3 _diffuse, inout vec3 _specular)
+vec3 CalcPointLight(PointLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular)
 {
 	vec3 lightDir = normalize(light.position - FragPos);  // Direction de la lumiere vers la normal du vertex
-
-	float diff = max(dot(lightDir, norm), 0.0);  // Calcul de l'angle entre la normal et le vec distance 
 
 	vec3 reflectDir = reflect(-lightDir, norm); // on inverse lightDir car c'est pas la bonne direction
 
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);  // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
 
-
-	vec3 ambient = light.ambient * finalDiffuse.rgb; 
-	vec3 diffuse = light.diffuse * diff * finalDiffuse.rgb;
+//	vec3 ambient = light.ambient * finalDiffuse.rgb; 
+	vec3 diffuse = light.diffuse * finalDiffuse.rgb;
 	vec3 specular = light.specular * spec * finalSpecular.rgb;
 
 	// attenuation
 	float distance = length(light.position - FragPos);
 	float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-	ambient *= attenuation;
+//	ambient *= attenuation;
 	diffuse *= attenuation;
 	specular *= attenuation;
 
-	_ambient += ambient;
-	_diffuse += diffuse;
-	_specular += specular;
+
+	float shadow = ShadowPointLight(light);
+	vec3 light_contribution = (diffuse + specular) * (1.0 - shadow);
+
+
+	return light_contribution;
 }
 
-void CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular,   inout vec3 _ambient, inout vec3 _diffuse, inout vec3 _specular)
+vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular)  // SpottLight non fonctionnelle
 {
 	vec3 lightDir = normalize(light.position - FragPos);  // Direction entre la source de lumiere et la normal du vertex
 
@@ -210,9 +209,10 @@ void CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, v
 	diffuse *= attenuation * intensity;
 	specular *= attenuation * intensity;
 
-	_ambient += ambient;
-	_diffuse += diffuse;
-	_specular += specular;
+//	float shadow = ShadowPointLight(light);
+//	vec3 light_contribution = (diffuse + specular) * (1.0 - shadow);
+	vec3 light_contribution = vec3(0);
+	return light_contribution;
 }
 
 vec4 CalcFinalDiffuse(){
@@ -289,7 +289,7 @@ float ShadowPointLight(PointLight light){
 	);
 
 	float shadow = 0.0;
-	float bias = 0.05;
+	float bias = 0.5;
 	float samples = 4.0;
 	float offset = 0.1;
 	float viewDistance = length(viewPos- FragPos);
