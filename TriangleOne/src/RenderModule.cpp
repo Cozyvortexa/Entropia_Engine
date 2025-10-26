@@ -643,8 +643,8 @@ void RenderModule::Render()
 	glActiveTexture(GL_TEXTURE15);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 
-	_shader->setInt("shadowCubeMap", 14);
-	glActiveTexture(GL_TEXTURE14);
+	_shader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTTENTIELLE
+	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
 	

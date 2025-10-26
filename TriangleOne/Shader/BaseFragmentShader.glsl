@@ -68,6 +68,7 @@ void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular);
 
 float ShadowDirLight();
 float ShadowPointLight(PointLight light);
+float ShadowSpotLight(SpotLight light);
 
 in vec3 FragPos;
 in vec3 normal;
@@ -209,8 +210,9 @@ vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, v
 	diffuse *= attenuation * intensity;
 	specular *= attenuation * intensity;
 
-//	float shadow = ShadowPointLight(light);
+//	float shadow = ShadowSpotLight();
 //	vec3 light_contribution = (diffuse + specular) * (1.0 - shadow);
+
 	vec3 light_contribution = vec3(0);
 	return light_contribution;
 }
@@ -319,4 +321,9 @@ float ShadowPointLight(PointLight light){
 //	float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
 	return shadow;
+}
+
+float ShadowSpotLight(SpotLight light){
+
+	return 0.0f;
 }

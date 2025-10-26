@@ -147,8 +147,8 @@ void Model::Draw(Shader* shader) {
 	for (Mesh mesh : meshes)
 		mesh.Draw(shader);
 }
-void Model::LiteDraw(Shader* shader){ 
+void Model::DrawWithoutTexture(Shader* shader){ 
 	for (Mesh mesh : meshes)
-		mesh.LiteDraw(shader);
+		mesh.DrawWithoutTexture(shader);
 }
 

@@ -22,7 +22,7 @@ void GameObject::DrawObject(Shader* shader, bool drawShadow) {
 	shader->setMatrix("model", model);
 
 	if (drawShadow)
-		modelMesh->LiteDraw(shader);
+		modelMesh->DrawWithoutTexture(shader);
 	else
 		modelMesh->Draw(shader);
 }
