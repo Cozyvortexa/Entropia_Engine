@@ -1,4 +1,4 @@
-#include "GameObject.h"
+#include "Entity/GameObject.h"
 
 
 GameObject::GameObject(std::string model) {

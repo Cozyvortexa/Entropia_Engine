@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <MeshClass.h>
+#include <Modules/RenderModule/MeshClass.h>
 #include <vector>
 
 #include <assimp/Importer.hpp>

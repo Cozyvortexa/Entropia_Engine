@@ -1,4 +1,4 @@
-#include <RenderModule.h>
+#include <Modules/RenderModule/RenderModule.h>
 
 
 float verticesLightRec[] = {
@@ -525,14 +525,14 @@ void RenderModule::Init() {
 		std::cout << "Reference de la window impossible a recuperer" << std::endl;
 		abort();
 	}
-	_shader = new Shader("TriangleOne/Shader/BaseVertexShader.glsl", "TriangleOne/Shader/BaseFragmentShader.glsl");
-	shaderLight = new Shader("TriangleOne/Shader/LightVertexShader.glsl", "TriangleOne/Shader/LightFragShader.glsl");
-	ppShader = new Shader("TriangleOne/Shader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessFrag.glsl");
-	skyboxShader = new Shader("TriangleOne/Shader/SkyBoxVertex.glsl", "TriangleOne/Shader/SkyBoxFrag.glsl");
-	reflectShader = new Shader("TriangleOne/Shader/ReflexionVertex.glsl", "TriangleOne/Shader/ReflexionFrag.glsl");
-	depthShader = new Shader("TriangleOne/Shader/DepthMapVertex.glsl", "TriangleOne/Shader/DepthMapFrag.glsl");
+	_shader = new Shader("TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
+	shaderLight = new Shader("TriangleOne/Shader/LightShader/Light/LightVertexShader.glsl", "TriangleOne/Shader/LightShader/Light/LightFragShader.glsl");
+	ppShader = new Shader("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
+	skyboxShader = new Shader("TriangleOne/Shader/MiscShader/SkyBoxVertex.glsl", "TriangleOne/Shader/MiscShader/SkyBoxFrag.glsl");
+	reflectShader = new Shader("TriangleOne/Shader/MiscShader/ReflexionVertex.glsl", "TriangleOne/Shader/MiscShader/ReflexionFrag.glsl");
+	depthShader = new Shader("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
 
-	depthShaderCubeMap = new Shader("TriangleOne/Shader/ShadowCubeVertex.glsl", "TriangleOne/Shader/ShadowCubeFrag.glsl", "TriangleOne/Shader/ShadowCubeGeometry.glsl");
+	depthShaderCubeMap = new Shader("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 
 
 	//Blending     //ya pas de blending mm avec cette ligne au cas ou 

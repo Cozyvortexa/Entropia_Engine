@@ -3,9 +3,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Shader.h"
+#include "Modules/RenderModule/Shader.h"
 
-#include "ModelClass.h"
+#include "Modules/RenderModule/ModelClass.h"
 
 class GameObject {
 public:

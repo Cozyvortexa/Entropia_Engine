@@ -1,4 +1,4 @@
-#include "Shader.h"
+#include "Modules/RenderModule/Shader.h"
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 
@@ -35,6 +35,8 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 	if (!success) {
 		glGetProgramInfoLog(shaderID, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::PROG::CREATION_FAILED\n" << infoLog << std::endl;
+		std::cout << "VertexPath :" << vertexPath << std::endl;
+		std::cout << "FragPath :" << fragmentPath << std::endl;
 		throw  std::invalid_argument("ShaderProg");
 	}
 
@@ -85,6 +87,9 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geo
 	if (!success) {
 		glGetProgramInfoLog(shaderID, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::PROG::CREATION_FAILED\n" << infoLog << std::endl;
+		std::cout << "VertexPath :" << vertexPath << std::endl;
+		std::cout << "FragPath :" << fragmentPath << std::endl;
+		std::cout << "GeometryPath :" << geometryPath << std::endl;
 		throw std::invalid_argument("ShaderProg");
 	}
 

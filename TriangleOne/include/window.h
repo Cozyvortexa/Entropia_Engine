@@ -3,7 +3,7 @@
 #include <glad/glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "Module.h"
+#include "Modules/Module.h"
 #include "iostream"
 
 class Window : public Module {

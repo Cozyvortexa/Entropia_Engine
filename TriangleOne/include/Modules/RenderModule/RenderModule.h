@@ -2,14 +2,14 @@
 #include <glad/glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "Module.h"
+#include "Modules/Module.h"
 
 #include <iostream>
 #include <vector>
 
 #include "Shader.h"
 #include "window.h"
-#include "Time.hpp"
+#include "Modules/TimeModule/Time.hpp"
 #include "Texture.h"
 #include "Camera.h"
 
@@ -19,8 +19,8 @@
 
 #include "ModelClass.h"
 
-#include "Light.h"
-#include "GameObject.h"
+#include "Entity/Light.h"
+#include "Entity/GameObject.h"
 
 
 

@@ -30,7 +30,7 @@ void Window::Init() {
 	//MSAA
 	glfwWindowHint(GLFW_SAMPLES, sample);
 
-	window = glfwCreateWindow(WIDHT, HEIGHT, "CrashShieldEngine", NULL, NULL);
+	window = glfwCreateWindow(WIDHT, HEIGHT, "Entropia Engine", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;

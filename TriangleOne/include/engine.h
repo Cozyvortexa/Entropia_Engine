@@ -6,10 +6,10 @@
 #include <fstream>
 #include <sstream>
 
-#include <Module.h>
-#include <RenderModule.h>
+#include <Modules/Module.h>
+#include <Modules/RenderModule/RenderModule.h>
 #include <window.h>
-#include <Time.hpp>
+#include <Modules/TimeModule/Time.hpp>
 
 #include <iostream>
 #include <vector>

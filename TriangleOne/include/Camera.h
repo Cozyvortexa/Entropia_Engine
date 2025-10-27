@@ -8,7 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "window.h"
-#include "Time.hpp"
+#include "Modules/TimeModule/Time.hpp"
 
 class Camera {
 public:
