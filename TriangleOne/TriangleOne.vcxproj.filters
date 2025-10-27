@@ -77,7 +77,7 @@
     <ClInclude Include="include\Modules\TimeModule\Time.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\Modules\RenderModule\Camera.h">
+    <ClInclude Include="include\Camera.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="include\Modules\RenderModule\MeshClass.h">

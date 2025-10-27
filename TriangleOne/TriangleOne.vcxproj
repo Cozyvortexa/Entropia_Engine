@@ -150,7 +150,7 @@
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Modules\RenderModule\Camera.h" />
+    <ClInclude Include="include\Camera.h" />
     <ClInclude Include="include\engine.h" />
     <ClInclude Include="include\Entity\GameObject.h" />
     <ClInclude Include="include\Entity\Light.h" />
