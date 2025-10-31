@@ -569,6 +569,8 @@ void RenderModule::Init() {
 	//modelMesh2 = new Model("Assets/tryModel/backpacka.obj");
 
 
+	lightSystem = new LightSystem();
+
 	glm::vec3 ambient = glm::vec3(0.3f, 0.3f, 0.3f);
 	glm::vec3 diffuse = glm::vec3(3.0f, 3.0f, 3.0f);
 	glm::vec3 specular = glm::vec3(0.0f, 0.0f, 0.0f);

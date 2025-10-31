@@ -136,9 +136,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="include\Entity\EntityComponent.h" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\engine.cpp" />
-    <ClCompile Include="src\Entity\GameObject.cpp" />
+    <ClCompile Include="src\Entity\Entity.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\Entity\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -153,8 +154,9 @@
   <ItemGroup>
     <ClInclude Include="include\Camera.h" />
     <ClInclude Include="include\engine.h" />
-    <ClInclude Include="include\Entity\GameObject.h" />
+    <ClInclude Include="include\Entity\Entity.h" />
     <ClInclude Include="include\Entity\Light.h" />
+    <ClInclude Include="include\Entity\LightSystem.h" />
     <ClInclude Include="include\Modules\RenderModule\MeshClass.h" />
     <ClInclude Include="include\Modules\RenderModule\ModelClass.h" />
     <ClInclude Include="include\Modules\Module.h" />

@@ -6,16 +6,17 @@
 #include <vector>
 
 #include "Modules/RenderModule/Shader.h"
+#include "Entity/EntityComponent.h"
 
-
-class Light {
+class Light : EntityComponent{
 public:
 	enum Type {
+		None,
 		DirectionalLight,
 		PointLight,
 		SpotLight
 	};
-	Type lightType = DirectionalLight;
+	Type lightType = None;
 	Light(glm::vec3 position, glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
 	Light(glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float constant, float linear, float quadratique);
 	//Light(glm::vec3 position, glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float constant, float linear, float quadratique, float cutOff, float outerCutOff);
