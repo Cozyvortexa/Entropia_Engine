@@ -1,4 +1,4 @@
-#include "Modules/RenderModule/Camera.h"
+#include "Camera.h"
 
 
 void MouseCallback(GLFWwindow* window, double xpos, double ypos) {

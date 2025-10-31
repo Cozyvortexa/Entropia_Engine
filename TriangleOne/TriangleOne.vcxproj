@@ -24,6 +24,7 @@
     <ProjectGuid>{ff6df3d1-3306-4f0f-9338-bb043f6a2d96}</ProjectGuid>
     <RootNamespace>TriangleOne</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>EntropiaEngine</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
