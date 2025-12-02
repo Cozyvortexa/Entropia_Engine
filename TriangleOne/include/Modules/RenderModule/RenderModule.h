@@ -19,10 +19,11 @@
 
 #include "ModelClass.h"
 
-#include "Entity/Light.h"
-#include "Entity/GameObject.h"
 
-#include "Entity/LightSystem.h"
+#include "Entity/Entity.h"
+
+#include "Entity/Components/Light.h"
+#include "Entity/Systemes/RenderSystem.h"
 
 
 
@@ -78,13 +79,13 @@ private:
 	glm::mat4 _model = glm::mat4(1.0f);
 
 	//Light
-	LightSystem* lightSystem = nullptr;
+	RenderSystem* renderSystem = nullptr;
 	//glm::vec3 lightPos;
 
 	std::vector<glm::vec3> pointLightPositions;
 
-	GameObject* house = nullptr;
-	GameObject* cube = nullptr;
+	Entity* house = nullptr;
+	Entity* cube = nullptr;
 
 	int sample = 4;
 

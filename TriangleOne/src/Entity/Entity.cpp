@@ -36,7 +36,7 @@ template<typename EntityComponent> std::shared_ptr<EntityComponent> Entity::Enti
 void Entity::EntityRemoveModules(std::shared_ptr<EntityComponent> module) {
 	for (int i = 0; i < entityComponentList.size(); i++) {
 		if (entityComponentList[i] == module) {
-			entityComponentList[i]->Shutdown();
+			//entityComponentList[i]->Shutdown();
 			entityComponentList.erase(entityComponentList.begin() + i);
 		}
 		return;

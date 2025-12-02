@@ -564,12 +564,12 @@ void RenderModule::Init() {
 
 
 	house = new GameObject("Assets/ImpScene/autumn_house.glb");
-	cube = new GameObject("Assets/ImpScene/cubeDebeguer.glb");
+	cube = new Entity("Assets/ImpScene/cubeDebeguer.glb");
 	cube->SetPosition(glm::vec3(10.0f, 6.0f, 0.0f));
 	//modelMesh2 = new Model("Assets/tryModel/backpacka.obj");
 
 
-	lightSystem = new LightSystem();
+	renderSystem = new RenderSystem();
 
 	glm::vec3 ambient = glm::vec3(0.3f, 0.3f, 0.3f);
 	glm::vec3 diffuse = glm::vec3(3.0f, 3.0f, 3.0f);
@@ -645,7 +645,7 @@ void RenderModule::Render()
 	glActiveTexture(GL_TEXTURE15);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 
-	_shader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTTENTIELLE
+	_shader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTENTIELLE
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 

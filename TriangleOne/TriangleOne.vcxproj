@@ -136,12 +136,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="include\Entity\EntityComponent.h" />
+    <ClCompile Include="include\Entity\Components\EntityComponent.h" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\Entity\Entity.cpp" />
+    <ClCompile Include="src\Entity\Components\MeshComponent.cpp" />
+    <ClCompile Include="src\Entity\Systemes\RenderSystem.cpp" />
     <ClCompile Include="src\glad.c" />
-    <ClCompile Include="src\Entity\Light.cpp" />
+    <ClCompile Include="src\Entity\Components\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Modules\RenderModule\MeshClass.cpp" />
     <ClCompile Include="src\Modules\RenderModule\ModelClass.cpp" />
@@ -149,14 +151,17 @@
     <ClCompile Include="src\Modules\RenderModule\Shader.cpp" />
     <ClCompile Include="src\Modules\RenderModule\Texture.cpp" />
     <ClCompile Include="src\Modules\TimeModule\Time.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Camera.h" />
     <ClInclude Include="include\engine.h" />
+    <ClInclude Include="include\Entity\Components\Transform.h" />
     <ClInclude Include="include\Entity\Entity.h" />
-    <ClInclude Include="include\Entity\Light.h" />
-    <ClInclude Include="include\Entity\LightSystem.h" />
+    <ClInclude Include="include\Entity\Components\Light.h" />
+    <ClInclude Include="include\Entity\Components\MeshComponent.h" />
+    <ClInclude Include="include\Entity\Systemes\RenderSystem.h" />
     <ClInclude Include="include\Modules\RenderModule\MeshClass.h" />
     <ClInclude Include="include\Modules\RenderModule\ModelClass.h" />
     <ClInclude Include="include\Modules\Module.h" />
@@ -164,6 +169,7 @@
     <ClInclude Include="include\Modules\RenderModule\Shader.h" />
     <ClInclude Include="include\Modules\RenderModule\Texture.h" />
     <ClInclude Include="include\Modules\TimeModule\Time.hpp" />
+    <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\window.h" />
   </ItemGroup>
   <ItemGroup>
