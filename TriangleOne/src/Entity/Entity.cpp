@@ -1,5 +1,8 @@
 #include "Entity/Entity.h"
 
+Entity::Entity() {
+	transform = this->EntityCreateModules<Transform>();
+}
 
 //GameObject::GameObject(std::string model) {
 //	modelMesh = new Model(model);
@@ -38,7 +41,10 @@ void Entity::EntityRemoveModules(std::shared_ptr<EntityComponent> module) {
 		if (entityComponentList[i] == module) {
 			//entityComponentList[i]->Shutdown();
 			entityComponentList.erase(entityComponentList.begin() + i);
+			return;
 		}
-		return;
+		else {
+			std::cout << "Component a retirer non trouver" << std::endl;
+		}
 	}
 }

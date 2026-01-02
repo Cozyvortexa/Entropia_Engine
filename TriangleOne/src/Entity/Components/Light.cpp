@@ -1,11 +1,15 @@
 #include <Entity/Components/Light.h>
 
 
-Light::Light(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular) {
+void Light::InitBaseLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular) {
 	position = _position;
 	ambient = _ambient;
 	diffuse = _diffuse;
 	specular = _specular;
+}
+
+Light::Light(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular) {
+	InitBaseLight(_position, _ambient, _diffuse, _specular);
 }
 
 //void Light::UseLight(Shader* shader) {
@@ -46,13 +50,23 @@ Light::Light(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::v
 //}
 
 PointLight::PointLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique) {
-	Light(_position, _ambient, _diffuse, _specular);
+	InitBaseLight(_position, _ambient, _diffuse, _specular);
 	constant = _constant;
 	linear = _linear;
 	quadratique = _quadratique;
 }
+SpotLight::SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _constant, float _linear, float _quadratique, float _cutOff, float _outercutOff) {
+	InitBaseLight(_position, _ambient, _diffuse, _specular);
+	constant = _constant;
+	linear = _linear;
+	quadratique = _quadratique;
+
+	cutOff = _cutOff;
+	outerCutOff = _outercutOff;
+	direction = _direction;
+}
 
 DirLight::DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction) {
-	Light(_position, _ambient, _diffuse, _specular);
+	InitBaseLight(_position, _ambient, _diffuse, _specular);
 	direction = _direction;
 }

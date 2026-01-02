@@ -9,6 +9,9 @@ class RenderSystem {
 public:
 	void RenderMesh();
 
+	void AddMeshComponent(std::shared_ptr<MeshComponent> modele);
+	//void RemoveMeshComponent(std::shared_ptr<MeshComponent> modele);
+
 private:
 	void UpdateLight(std::shared_ptr<Shader> shader);
 	std::vector<std::shared_ptr<MeshComponent>> modeleList;

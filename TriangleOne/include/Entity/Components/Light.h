@@ -26,14 +26,17 @@ public:
 
 	float intensity = 1.0f;
 	const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
+
+protected:
+	void InitBaseLight(glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
 };
 
-struct DirLight : Light {
+struct DirLight : public Light {
 	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction);
 	glm::vec3 direction;
 };
 
-struct PointLight : Light{
+struct PointLight : public Light{
 public:
 	PointLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique);
 	float constant;
@@ -41,8 +44,13 @@ public:
 	float quadratique;
 };
 
-class SpotLight : Light {
-	SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique);
+class SpotLight : public Light {
+public: 
+	SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _constant, float _linear, float _quadratique, float _cutOff, float _outercutOff);
+	float constant;
+	float linear;
+
+	float quadratique;
 	glm::vec3 direction;
 	float cutOff;
 	float outerCutOff;
