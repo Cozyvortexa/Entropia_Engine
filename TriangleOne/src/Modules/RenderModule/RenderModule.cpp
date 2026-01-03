@@ -498,24 +498,24 @@ void RenderModule::InitCubeMap() {
 	//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
-void RenderModule::DrawShadowMap() {  // Bug sur la window si resize
-	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-	depthShader->Use();
-	dirLight->UseShadow(depthShader);
-	//depthShader->setMatrix("view", mainCamera->GetViewMatrix());
-
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	
-	//glm::rotate(_model, glm::radians(90.0f), glm::vec3(1, 0, 0))
-	cube->DrawObject(depthShader, true);
-	house->DrawObject(depthShader, true);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
-}
+//void RenderModule::DrawShadowMap() {  // Bug sur la window si resize
+//	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+//	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+//	glClear(GL_DEPTH_BUFFER_BIT);
+//
+//	depthShader->Use();
+//	dirLight->UseShadow(depthShader);
+//	//depthShader->setMatrix("view", mainCamera->GetViewMatrix());
+//
+//	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+//	
+//	//glm::rotate(_model, glm::radians(90.0f), glm::vec3(1, 0, 0))
+//	cube->DrawObject(depthShader, true);
+//	house->DrawObject(depthShader, true);
+//
+//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
+//}
 
 void RenderModule::Init() {
 	Window* windowClass = Window::GetInstance();
@@ -587,22 +587,22 @@ void RenderModule::Init() {
 
 	InitCubeMap();
 
-	glGenVertexArrays(1, &reflectVAO);
-	glBindVertexArray(reflectVAO);
+	//glGenVertexArrays(1, &reflectVAO);
+	//glBindVertexArray(reflectVAO);
 
 
-	glGenBuffers(1, &reflectVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, reflectVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesNormal), verticesNormal, GL_STATIC_DRAW);
+	//glGenBuffers(1, &reflectVBO);
+	//glBindBuffer(GL_ARRAY_BUFFER, reflectVBO);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(verticesNormal), verticesNormal, GL_STATIC_DRAW);
 
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	//glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	//glEnableVertexAttribArray(1);
 
-	glBindVertexArray(0);
+	//glBindVertexArray(0);
 }
 
 void RenderModule::Render()

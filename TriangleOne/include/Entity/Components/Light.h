@@ -25,23 +25,51 @@ public:
 	glm::vec3 specular;
 
 	float intensity = 1.0f;
-	const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
+	unsigned int shadowWidth = 2048, shadowHeight = 2048;
 
 protected:
 	void InitBaseLight(glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
+	void InitShadowMap(unsigned int depthMapFBO, unsigned int depthMap);
+	void InitCubeMap(unsigned int depthCubeMapFBO, unsigned int depthCubemap);
 };
 
 struct DirLight : public Light {
-	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction);
+	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, std::shared_ptr<Shader> _depthShader);
 	glm::vec3 direction;
+	unsigned int depthMap;
+	unsigned int depthMapFBO;
+
+	//Shadow purpose
+	float near_plane = 1.0f, far_plane = 50.0f;
+	float orthoSize = 50.0f;
+	float distance;
+
+	glm::mat4 lightProjection;
+	glm::vec3 lightPos;
+	glm::mat4 lightView;
+	glm::mat4 lightMatrice;
+
+	std::shared_ptr<Shader> depthShader = nullptr;
+
 };
 
 struct PointLight : public Light{
 public:
-	PointLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique);
+	PointLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap);
 	float constant;
 	float linear;
 	float quadratique;
+
+	unsigned int depthCubeMapFBO;
+	unsigned int depthCubeMap;
+
+	//Shadow purpose
+	float aspect;
+	float near_plane;
+	float far_plane; 
+
+	std::shared_ptr<Shader> depthShaderCubeMap = nullptr;
+
 };
 
 class SpotLight : public Light {

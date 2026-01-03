@@ -2,6 +2,7 @@
 #include "Entity/Components/EntityComponent.h"
 #include "Entity/Components/Light.h"
 #include "Entity/Components/MeshComponent.h"
+#include "window.h"
 
 #include <vector>
 
@@ -14,6 +15,11 @@ public:
 
 private:
 	void UpdateLight(std::shared_ptr<Shader> shader);
+	void UpdateShadow(std::shared_ptr<Shader> shader, std::shared_ptr<MeshComponent> currentMesh);
+
+	void DrawShadowMap(std::shared_ptr<DirLight> currentLight, std::shared_ptr<MeshComponent> currentMesh);
+	void DrawShadowPoint(std::shared_ptr<PointLight> currentLight, std::shared_ptr<MeshComponent> currentMesh);
+
 	std::vector<std::shared_ptr<MeshComponent>> modeleList;
 
 	std::vector<std::shared_ptr<DirLight>> directionalLightList;
