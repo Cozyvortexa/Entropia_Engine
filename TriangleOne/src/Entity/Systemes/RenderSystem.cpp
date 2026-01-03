@@ -46,14 +46,14 @@ void RenderSystem::DrawShadowMap(std::shared_ptr<DirLight> currentLight, std::sh
 	glBindFramebuffer(GL_FRAMEBUFFER, currentLight->depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	depthShader->Use();
-	depthShader->setMatrix("lightSpaceMatrix", currentLight->lightMatrice);  //  Calculer a l'init de la light
+	currentLight->depthShader->Use();
+	currentLight->depthShader->setMatrix("lightSpaceMatrix", currentLight->lightMatrice);  //  Calculer a l'init de la light
 
 	//depthShader->setMatrix("view", mainCamera->GetViewMatrix());
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	//glm::rotate(_model, glm::radians(90.0f), glm::vec3(1, 0, 0))
 
-	currentMesh->modelMesh->DrawWithoutTexture(depthShader.get());
+	currentMesh->modelMesh->DrawWithoutTexture(currentLight->depthShader.get());
 
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
