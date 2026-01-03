@@ -137,6 +137,17 @@ void RenderSystem::RenderMesh() {
 			shader->Use();
 
 			UpdateLight(shader);  // Oui je sais, les light sont recalculer pour chaque modele
+
+			////Link shadowMap
+			shader->setInt("shadowMap", 15);
+			glActiveTexture(GL_TEXTURE15);
+			glBindTexture(GL_TEXTURE_2D, depthMap);
+
+			shader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTENTIELLE
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);  // Utilise samplerCubeArray dans le shader
+			////
+
 			currentModel->modelMesh->Draw(shader.get());  // Le reste du code utilise un poiteur brut d'ou le get
 		}
 
