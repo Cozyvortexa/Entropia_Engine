@@ -20,8 +20,8 @@
 #include "ModelClass.h"
 
 
+#include "Scene.h"
 #include "Entity/Entity.h"
-
 #include "Entity/Components/Light.h"
 #include "Entity/Systemes/RenderSystem.h"
 
@@ -49,9 +49,9 @@ public:
 
 	void InitCubeMap();
 
-	void DrawShadowMap();
+	//void DrawShadowMap();
 
-	void DrawShadowPoint();
+	//void DrawShadowPoint();
 
 
 	void Init() override;
@@ -59,7 +59,7 @@ public:
 	void Shutdown() override;
 
 private:
-	Shader* _shader = nullptr;
+	std::shared_ptr<Shader> mainShader = nullptr;
 	Shader* shaderLight = nullptr;
 	Shader* ppShader = nullptr;
 	Shader* skyboxShader = nullptr;
@@ -79,7 +79,7 @@ private:
 	glm::mat4 _model = glm::mat4(1.0f);
 
 	//Light
-	RenderSystem* renderSystem = nullptr;
+
 	//glm::vec3 lightPos;
 
 	std::vector<glm::vec3> pointLightPositions;
@@ -97,6 +97,12 @@ private:
 	unsigned int quadVAO;  
 	unsigned int quadVBO;  
 
+
+	std::shared_ptr<RenderSystem> renderSystem = nullptr;
+	std::shared_ptr<Scene> currentScene = nullptr;
+
+
+	//Legacy
 	//Skybox
 	unsigned int cubemapTexture;
 	unsigned int skyboxVAO;

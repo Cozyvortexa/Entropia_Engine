@@ -15,7 +15,7 @@ public:
 
 private:
 	void UpdateLight(std::shared_ptr<Shader> shader);
-	void UpdateShadow(std::shared_ptr<Shader> shader, std::shared_ptr<MeshComponent> currentMesh);
+	void UpdateShadow(std::shared_ptr<MeshComponent> currentMesh);
 
 	void DrawShadowMap(std::shared_ptr<DirLight> currentLight, std::shared_ptr<MeshComponent> currentMesh);
 	void DrawShadowPoint(std::shared_ptr<PointLight> currentLight, std::shared_ptr<MeshComponent> currentMesh);

@@ -3,13 +3,28 @@
 //#include "memory.h"
 #include "Entity/Systemes/RenderSystem.h"
 #include "Entity/Entity.h"
+#include <type_traits>
+
+#include "memory.h"
+#include <utility>
 
 class Scene {
 public:
 	Scene(std::shared_ptr<RenderSystem> newRenderSystme);
 	void RenderScene();
 
-	template<typename EntityComponent> std::shared_ptr<EntityComponent> AddComponent(std::shared_ptr<Entity> currentEntity);
+
+	template<typename T, typename... Args> std::shared_ptr<T> AddComponent(std::shared_ptr<Entity> currentEntity, Args&&... args) {
+		std::shared_ptr<T> component = currentEntity->EntityCreateModules<T>(std::forward<Args>(args)...);
+
+		if constexpr (std::is_same_v<T, MeshComponent>) {
+			renderSystem->AddMeshComponent(component);
+		}
+
+		return component;
+	}
+
+	std::shared_ptr<Entity> CreateNewEntity();
 
 private:
 	std::vector<std::shared_ptr<Entity>> listEntity;

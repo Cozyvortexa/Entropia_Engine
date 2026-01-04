@@ -62,8 +62,7 @@ void RenderSystem::DrawShadowMap(std::shared_ptr<DirLight> currentLight, std::sh
 
 void RenderSystem::DrawShadowPoint(std::shared_ptr<PointLight> currentLight, std::shared_ptr<MeshComponent> currentMesh) {
 	currentLight->aspect = (float)currentLight->shadowWidth / (float)currentLight->shadowHeight;
-	float near_plane = 0.1f;
-	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), currentLight->aspect, near_plane, currentLight->far_plane);
+	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), currentLight->aspect, currentLight->near_plane, currentLight->far_plane);
 
 
 	glViewport(0, 0, currentLight->shadowWidth, currentLight->shadowHeight);
@@ -95,12 +94,12 @@ void RenderSystem::DrawShadowPoint(std::shared_ptr<PointLight> currentLight, std
 	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
 }
 
-void RenderSystem::UpdateShadow(std::shared_ptr<Shader> shader, std::shared_ptr<MeshComponent> currentMesh) {
+void RenderSystem::UpdateShadow(std::shared_ptr<MeshComponent> currentMesh) {
 
 	if (!currentMesh->castShadow) {
 		return;
 	}
-
+	glCullFace(GL_FRONT);
 	for (std::shared_ptr<DirLight> dirLight : directionalLightList) {
 		DrawShadowMap(dirLight, currentMesh);
 	}
@@ -108,7 +107,7 @@ void RenderSystem::UpdateShadow(std::shared_ptr<Shader> shader, std::shared_ptr<
 	for (std::shared_ptr<PointLight> pointLight : pointLightList) {
 		DrawShadowPoint(pointLight, currentMesh);
 	}
-
+	glCullFace(GL_BACK);
 }
 
 
@@ -132,21 +131,28 @@ void RenderSystem::RenderMesh() {
 		std::shared_ptr<Shader> shader = currentModel->GetShader();
 
 		if (currentModel->haveToBeDraw) {
-			UpdateShadow(shader, currentModel);
+			UpdateShadow(currentModel);
 
 			shader->Use();
 
-			UpdateLight(shader);  // Oui je sais, les light sont recalculer pour chaque modele
 
 			////Link shadowMap
-			shader->setInt("shadowMap", 15);
-			glActiveTexture(GL_TEXTURE15);
-			glBindTexture(GL_TEXTURE_2D, depthMap);
+			//temp
+			if (directionalLightList.size() != 0) {
+				shader->setInt("shadowMap", 15);
+				glActiveTexture(GL_TEXTURE15);
+				glBindTexture(GL_TEXTURE_2D, directionalLightList[0]->depthMap);
+			}
 
-			shader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTENTIELLE
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);  // Utilise samplerCubeArray dans le shader
+			if (pointLightList.size() != 0) {
+				shader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTENTIELLE
+				glActiveTexture(GL_TEXTURE2);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightList[0]->depthCubeMap);  // Utilise samplerCubeArray dans le shader
+			}
 			////
+
+			UpdateLight(shader);  // Oui je sais, les light sont recalculer pour chaque modele
+
 
 			currentModel->modelMesh->Draw(shader.get());  // Le reste du code utilise un poiteur brut d'ou le get
 		}

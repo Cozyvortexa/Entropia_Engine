@@ -223,45 +223,45 @@ void RenderModule::FactoSpotLight(Shader* lightShader, int i) {
 //	return lightMatrice;
 //}
 
-void RenderModule::DrawShadowPoint() {
-	float aspect = (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT;
-	float near_plane = 0.1f;
-	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near_plane, far_plane);
-
-
-	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-	glBindFramebuffer(GL_FRAMEBUFFER, depthCubeMapFBO);  // Fbo unique par light
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-
-	for (glm::vec3 lightPos : pointLightPositions) {
-		std::vector<glm::mat4> shadowTransforms;
-
-		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
-		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
-		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
-		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
-
-
-		depthShaderCubeMap->Use();
-		depthShaderCubeMap->setFloat("far_plane", far_plane);
-
-		for (int i = 0; i < shadowTransforms.size(); i++) {
-			depthShaderCubeMap->setMatrix("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
-		}
-
-		depthShaderCubeMap->setVec3("lightPos", lightPos);
-
-
-		cube->DrawObject(depthShaderCubeMap, true);
-		house->DrawObject(depthShaderCubeMap, true);
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
-}
+//void RenderModule::DrawShadowPoint() {
+//	float aspect = (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT;
+//	float near_plane = 0.1f;
+//	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near_plane, far_plane);
+//
+//
+//	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+//	glBindFramebuffer(GL_FRAMEBUFFER, depthCubeMapFBO);  // Fbo unique par light
+//	glClear(GL_DEPTH_BUFFER_BIT);
+//
+//
+//	for (glm::vec3 lightPos : pointLightPositions) {
+//		std::vector<glm::mat4> shadowTransforms;
+//
+//		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+//		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+//		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+//		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
+//		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
+//		shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
+//
+//
+//		depthShaderCubeMap->Use();
+//		depthShaderCubeMap->setFloat("far_plane", far_plane);
+//
+//		for (int i = 0; i < shadowTransforms.size(); i++) {
+//			depthShaderCubeMap->setMatrix("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
+//		}
+//
+//		depthShaderCubeMap->setVec3("lightPos", lightPos);
+//
+//
+//		cube->DrawObject(depthShaderCubeMap, true);
+//		house->DrawObject(depthShaderCubeMap, true);
+//	}
+//
+//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
+//}
 
 void RenderModule::DrawMirorCube() {
 	reflectShader->Use();
@@ -525,7 +525,7 @@ void RenderModule::Init() {
 		std::cout << "Reference de la window impossible a recuperer" << std::endl;
 		abort();
 	}
-	_shader = new Shader("TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
+	mainShader = std::make_shared<Shader>("TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
 	shaderLight = new Shader("TriangleOne/Shader/LightShader/Light/LightVertexShader.glsl", "TriangleOne/Shader/LightShader/Light/LightFragShader.glsl");
 	ppShader = new Shader("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
 	skyboxShader = new Shader("TriangleOne/Shader/MiscShader/SkyBoxVertex.glsl", "TriangleOne/Shader/MiscShader/SkyBoxFrag.glsl");
@@ -563,13 +563,20 @@ void RenderModule::Init() {
 	pointLightPositions.push_back(glm::vec3(1.0f, 2.0f, 0.0f));
 
 
-	house = new GameObject("Assets/ImpScene/autumn_house.glb");
-	cube = new Entity("Assets/ImpScene/cubeDebeguer.glb");
-	cube->SetPosition(glm::vec3(10.0f, 6.0f, 0.0f));
+	//house = new GameObject("Assets/ImpScene/autumn_house.glb");
+	//cube = new Entity("Assets/ImpScene/cubeDebeguer.glb");
+	//cube->SetPosition(glm::vec3(10.0f, 6.0f, 0.0f));
 	//modelMesh2 = new Model("Assets/tryModel/backpacka.obj");
 
 
-	renderSystem = new RenderSystem();
+	renderSystem = std::make_shared<RenderSystem>();
+
+	currentScene = std::make_shared<Scene>(renderSystem);
+
+	std::shared_ptr entity = currentScene->CreateNewEntity();
+	std::shared_ptr<MeshComponent> meshAttachToEntity = currentScene->AddComponent<MeshComponent>(entity, "Assets/ImpScene/autumn_house.glb", mainShader);
+
+	meshAttachToEntity->modelMesh = std::make_shared<Model>("Assets/ImpScene/autumn_house.glb");
 
 	glm::vec3 ambient = glm::vec3(0.3f, 0.3f, 0.3f);
 	glm::vec3 diffuse = glm::vec3(3.0f, 3.0f, 3.0f);
@@ -577,7 +584,7 @@ void RenderModule::Init() {
 
 	glm::vec3 worldLightDir = glm::vec3(-2.0f, 4.0f, -1.0f);
 
-	dirLight = new Light(glm::vec3(0), worldLightDir, ambient, diffuse, specular);
+	//dirLight = new Light(glm::vec3(0), worldLightDir, ambient, diffuse, specular);
 
 	InitQuadVao();
 
@@ -587,31 +594,11 @@ void RenderModule::Init() {
 
 	InitCubeMap();
 
-	//glGenVertexArrays(1, &reflectVAO);
-	//glBindVertexArray(reflectVAO);
-
-
-	//glGenBuffers(1, &reflectVBO);
-	//glBindBuffer(GL_ARRAY_BUFFER, reflectVBO);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(verticesNormal), verticesNormal, GL_STATIC_DRAW);
-
-
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-	//glEnableVertexAttribArray(0);
-
-	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	//glEnableVertexAttribArray(1);
-
-	//glBindVertexArray(0);
 }
 
 void RenderModule::Render()
  {
 	//Shadow
-	glCullFace(GL_FRONT);
-	DrawShadowMap();
-	DrawShadowPoint();
-	glCullFace(GL_BACK);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -619,16 +606,15 @@ void RenderModule::Render()
 	for (int i = 0; i < pointLightPositions.size(); i++)
 		DrawLight(i);
 
-	_shader->Use();
-	_shader->setFloat("far_plane", far_plane);  
-	_shader->setFloat("material.shininess", 32.0f);
-	_shader->setVec3("viewPos", mainCamera->GetPos());
+	//_shader->Use();
+	//_shader->setFloat("far_plane", far_plane);  
+	//_shader->setFloat("material.shininess", 32.0f);
+	//_shader->setVec3("viewPos", mainCamera->GetPos());
 
-	for (int i = 0; i < pointLightPositions.size(); i++)
-		FactoPointLight(_shader, i);
+	//for (int i = 0; i < pointLightPositions.size(); i++)
+	//	FactoPointLight(_shader, i);
 
-	dirLight->UseLight(_shader);
-	dirLight->UseShadow(_shader);
+
 	//FactoSpotLight(_shader, 0);
 
 
@@ -636,23 +622,24 @@ void RenderModule::Render()
 	//glm::mat4 model = glm::rotate(_model, glm::radians(90.0f), glm::vec3(1, 0, 0));
 
 
-	_shader->setMatrix("model", _model);
-	_shader->setMatrix("view", mainCamera->GetViewMatrix());
-	_shader->setMatrix("projection", projection);
+	//_shader->setMatrix("model", _model);
+	//_shader->setMatrix("view", mainCamera->GetViewMatrix());
+	//_shader->setMatrix("projection", projection);
 
 
-	_shader->setInt("shadowMap", 15);
-	glActiveTexture(GL_TEXTURE15);
-	glBindTexture(GL_TEXTURE_2D, depthMap);
+	//_shader->setInt("shadowMap", 15);
+	//glActiveTexture(GL_TEXTURE15);
+	//glBindTexture(GL_TEXTURE_2D, depthMap);
 
-	_shader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTENTIELLE
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+	//_shader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTENTIELLE
+	//glActiveTexture(GL_TEXTURE2);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
-	
-	house->DrawObject(_shader, false);
-	cube->DrawObject(_shader, false);
+	//
+	//house->DrawObject(_shader, false);
+	//cube->DrawObject(_shader, false);
 
+	currentScene->RenderScene();
 
 	//DrawSkyBox(projection);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

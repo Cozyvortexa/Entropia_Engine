@@ -8,16 +8,9 @@ void Scene::RenderScene() {
 	renderSystem->RenderMesh();
 }
 
-template<typename EntityComponent> std::shared_ptr<EntityComponent> Scene::AddComponent(std::shared_ptr<Entity> currentEntity) {
-	std::shared_ptr<EntityComponent> component = currentEntity->EntityCreateModules<EntityComponent>();
-
-	switch (EntityComponent)
-	{
-		case MeshComponent :
-			renderSystem->AddMeshComponent(component);
-			break;
-		default:
-			break;
-	}
-	return module;
+std::shared_ptr<Entity> Scene::CreateNewEntity() {
+	std::shared_ptr<Entity> newEntity = std::make_shared<Entity>();
+	listEntity.push_back(newEntity);
+	return newEntity;
 }
+

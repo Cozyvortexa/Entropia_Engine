@@ -1,7 +1,7 @@
 #include "Entity/Entity.h"
 
 Entity::Entity() {
-	transform = this->EntityCreateModules<Transform>();
+	transform = EntityCreateModules<Transform>();
 }
 
 //GameObject::GameObject(std::string model) {
@@ -30,11 +30,7 @@ Entity::Entity() {
 //		modelMesh->Draw(shader);
 //}
 
-template<typename EntityComponent> std::shared_ptr<EntityComponent> Entity::EntityCreateModules() {
-	std::shared_ptr<EntityComponent> module = new EntityComponent();
-	entityComponentList.push_back(module);
-	return module;
-}
+
 
 void Entity::EntityRemoveModules(std::shared_ptr<EntityComponent> module) {
 	for (int i = 0; i < entityComponentList.size(); i++) {
