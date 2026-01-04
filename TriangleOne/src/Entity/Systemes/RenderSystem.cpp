@@ -1,6 +1,7 @@
 #include "Entity/Systemes/RenderSystem.h"
 
 void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader) {
+	shader->Use();
 	for (std::shared_ptr<DirLight> dirLight: directionalLightList) {
 		shader->setVec3("dirLight.direction", glm::normalize(dirLight->direction));
 		shader->setVec3("dirLight.ambient", dirLight->ambient);
@@ -115,6 +116,10 @@ void RenderSystem::AddMeshComponent(std::shared_ptr<MeshComponent> modele) {
 	modeleList.push_back(modele);
 }
 
+void RenderSystem::AddLightComponent(std::shared_ptr<DirLight> modele) {
+	directionalLightList.push_back(modele);
+}
+
 //void RenderSystem::RemoveMeshComponent(std::shared_ptr<MeshComponent> modele) {
 //	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
 //
@@ -138,7 +143,6 @@ void RenderSystem::RenderMesh() {
 
 			////Link shadowMap
 			//temp
-
 
 			shader->setInt("shadowMap", 30);
 			shader->setInt("shadowCubeMap", 31);

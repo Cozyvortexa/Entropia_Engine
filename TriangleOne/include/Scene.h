@@ -20,6 +20,9 @@ public:
 		if constexpr (std::is_same_v<T, MeshComponent>) {
 			renderSystem->AddMeshComponent(component);
 		}
+		else if constexpr (std::is_same_v<T, DirLight>) {
+			renderSystem->AddLightComponent(component);  // Prend en compte que les dir 
+		}
 
 		return component;
 	}

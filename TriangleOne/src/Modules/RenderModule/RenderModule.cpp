@@ -576,6 +576,8 @@ void RenderModule::Init() {
 	std::shared_ptr<Entity> entity = currentScene->CreateNewEntity();
 	std::shared_ptr<MeshComponent> meshAttachToEntity = currentScene->AddComponent<MeshComponent>(entity, "Assets/ImpScene/autumn_house.glb", mainShader);
 
+
+
 	if (glfwGetCurrentContext() == NULL) {
 		std::cout << "FATAL: Tentative de création de Mesh sans contexte OpenGL !" << std::endl;
 	}
@@ -585,6 +587,12 @@ void RenderModule::Init() {
 	glm::vec3 specular = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	glm::vec3 worldLightDir = glm::vec3(-2.0f, 4.0f, -1.0f);
+
+	//std::shared_ptr<Entity> entityLight = currentScene->CreateNewEntity();
+	//std::shared_ptr<DirLight> dirLight = currentScene->AddComponent<DirLight>(entityLight, glm::vec3(0),ambient,diffuse,specular,worldLightDir, mainShader);
+
+	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, std::shared_ptr<Shader> _depthShader);
+
 
 	//dirLight = new Light(glm::vec3(0), worldLightDir, ambient, diffuse, specular);
 

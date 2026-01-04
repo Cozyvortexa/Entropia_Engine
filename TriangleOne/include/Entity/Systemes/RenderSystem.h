@@ -11,6 +11,8 @@ public:
 	void RenderMesh();
 
 	void AddMeshComponent(std::shared_ptr<MeshComponent> modele);
+
+	void AddLightComponent(std::shared_ptr<DirLight> modele);
 	//void RemoveMeshComponent(std::shared_ptr<MeshComponent> modele);
 
 private:
