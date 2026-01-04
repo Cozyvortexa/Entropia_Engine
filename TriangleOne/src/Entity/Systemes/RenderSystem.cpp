@@ -53,7 +53,7 @@ void RenderSystem::DrawShadowMap(std::shared_ptr<DirLight> currentLight, std::sh
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	//glm::rotate(_model, glm::radians(90.0f), glm::vec3(1, 0, 0))
 
-	currentMesh->modelMesh->DrawWithoutTexture(currentLight->depthShader.get());
+	currentMesh->modelMesh->DrawWithoutTexture(currentLight->depthShader);
 
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -87,7 +87,7 @@ void RenderSystem::DrawShadowPoint(std::shared_ptr<PointLight> currentLight, std
 	}
 	currentLight->depthShaderCubeMap->setVec3("lightPos", currentLight->position);
 
-	currentMesh->modelMesh->DrawWithoutTexture(currentLight->depthShaderCubeMap.get());
+	currentMesh->modelMesh->DrawWithoutTexture(currentLight->depthShaderCubeMap);
 
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -122,39 +122,41 @@ void RenderSystem::AddMeshComponent(std::shared_ptr<MeshComponent> modele) {
 //}
 
 void RenderSystem::RenderMesh() {
-	//glCullFace(GL_FRONT);
-	//DrawShadowMap();
-	//DrawShadowPoint();
-	//glCullFace(GL_BACK);
+
+	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
+		if (currentModel->haveToBeDraw) {
+			UpdateShadow(currentModel);
+		}
+	}
 
 	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
 		std::shared_ptr<Shader> shader = currentModel->GetShader();
 
 		if (currentModel->haveToBeDraw) {
-			UpdateShadow(currentModel);
-
 			shader->Use();
 
 
 			////Link shadowMap
 			//temp
+
+
+			shader->setInt("shadowMap", 30);
+			shader->setInt("shadowCubeMap", 31);
+
 			if (directionalLightList.size() != 0) {
-				shader->setInt("shadowMap", 15);
-				glActiveTexture(GL_TEXTURE15);
+				glActiveTexture(GL_TEXTURE30);
 				glBindTexture(GL_TEXTURE_2D, directionalLightList[0]->depthMap);
 			}
-
 			if (pointLightList.size() != 0) {
-				shader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTENTIELLE
-				glActiveTexture(GL_TEXTURE2);
+				glActiveTexture(GL_TEXTURE31);
 				glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightList[0]->depthCubeMap);  // Utilise samplerCubeArray dans le shader
 			}
 			////
 
+
 			UpdateLight(shader);  // Oui je sais, les light sont recalculer pour chaque modele
 
-
-			currentModel->modelMesh->Draw(shader.get());  // Le reste du code utilise un poiteur brut d'ou le get
+			currentModel->modelMesh->Draw(shader);
 		}
 
 	}

@@ -573,10 +573,12 @@ void RenderModule::Init() {
 
 	currentScene = std::make_shared<Scene>(renderSystem);
 
-	std::shared_ptr entity = currentScene->CreateNewEntity();
+	std::shared_ptr<Entity> entity = currentScene->CreateNewEntity();
 	std::shared_ptr<MeshComponent> meshAttachToEntity = currentScene->AddComponent<MeshComponent>(entity, "Assets/ImpScene/autumn_house.glb", mainShader);
 
-	meshAttachToEntity->modelMesh = std::make_shared<Model>("Assets/ImpScene/autumn_house.glb");
+	if (glfwGetCurrentContext() == NULL) {
+		std::cout << "FATAL: Tentative de création de Mesh sans contexte OpenGL !" << std::endl;
+	}
 
 	glm::vec3 ambient = glm::vec3(0.3f, 0.3f, 0.3f);
 	glm::vec3 diffuse = glm::vec3(3.0f, 3.0f, 3.0f);
@@ -606,40 +608,42 @@ void RenderModule::Render()
 	for (int i = 0; i < pointLightPositions.size(); i++)
 		DrawLight(i);
 
-	//_shader->Use();
-	//_shader->setFloat("far_plane", far_plane);  
-	//_shader->setFloat("material.shininess", 32.0f);
-	//_shader->setVec3("viewPos", mainCamera->GetPos());
+	//mainShader->Use();
+	//mainShader->setFloat("far_plane", far_plane);  
+	//mainShader->setFloat("material.shininess", 32.0f);
+	//mainShader->setVec3("viewPos", mainCamera->GetPos());
 
 	//for (int i = 0; i < pointLightPositions.size(); i++)
-	//	FactoPointLight(_shader, i);
+	//	FactoPointLight(mainShader, i);
 
 
-	//FactoSpotLight(_shader, 0);
+	//FactoSpotLight(mainShader, 0);
 
 
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
-	//glm::mat4 model = glm::rotate(_model, glm::radians(90.0f), glm::vec3(1, 0, 0));
+	glm::mat4 model = glm::rotate(_model, glm::radians(90.0f), glm::vec3(1, 0, 0));
+
+	mainShader->Use(); 
+	mainShader->setMatrix("model", _model);
+	mainShader->setMatrix("view", mainCamera->GetViewMatrix());
+	mainShader->setMatrix("projection", projection);
 
 
-	//_shader->setMatrix("model", _model);
-	//_shader->setMatrix("view", mainCamera->GetViewMatrix());
-	//_shader->setMatrix("projection", projection);
-
-
-	//_shader->setInt("shadowMap", 15);
+	//mainShader->setInt("shadowMap", 15);
 	//glActiveTexture(GL_TEXTURE15);
 	//glBindTexture(GL_TEXTURE_2D, depthMap);
 
-	//_shader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTENTIELLE
+	//mainShader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTENTIELLE
 	//glActiveTexture(GL_TEXTURE2);
 	//glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
 	//
-	//house->DrawObject(_shader, false);
-	//cube->DrawObject(_shader, false);
+	//house->DrawObject(mainShader, false);
+	//cube->DrawObject(mainShader, false);
+
 
 	currentScene->RenderScene();
+
 
 	//DrawSkyBox(projection);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

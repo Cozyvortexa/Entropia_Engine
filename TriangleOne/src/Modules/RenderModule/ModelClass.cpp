@@ -143,12 +143,12 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 	return textures;
 }
 
-void Model::Draw(Shader* shader) {
-	for (Mesh mesh : meshes)
+void Model::Draw(std::shared_ptr<Shader> shader) {
+	for (Mesh& mesh : meshes)
 		mesh.Draw(shader);
 }
-void Model::DrawWithoutTexture(Shader* shader){ 
-	for (Mesh mesh : meshes)
+void Model::DrawWithoutTexture(std::shared_ptr<Shader> shader){
+	for (Mesh& mesh : meshes)
 		mesh.DrawWithoutTexture(shader);
 }
 

@@ -38,8 +38,10 @@ void Mesh::SetupMesh()
 	glBindVertexArray(0);
 }
 
-void Mesh::Draw(Shader* shader)
+void Mesh::Draw(std::shared_ptr<Shader> shader)
 {
+	assert(glIsVertexArray(VAO));
+	assert(glIsBuffer(EBO));
 	int diffuseNbr = 0;
 	int specularNbr = 0;
 
@@ -78,7 +80,7 @@ void Mesh::Draw(Shader* shader)
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
-void Mesh::DrawWithoutTexture(Shader* shader) {
+void Mesh::DrawWithoutTexture(std::shared_ptr<Shader> shader) {
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
