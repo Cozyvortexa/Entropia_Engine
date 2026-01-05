@@ -60,11 +60,14 @@ public:
 
 private:
 	std::shared_ptr<Shader> mainShader = nullptr;
+	std::shared_ptr<Shader> depthShader = nullptr;
+
+	//A delette
 	Shader* shaderLight = nullptr;
 	Shader* ppShader = nullptr;
 	Shader* skyboxShader = nullptr;
 	Shader* reflectShader = nullptr;
-	Shader* depthShader = nullptr;
+	//
 	Shader* depthShaderCubeMap = nullptr;
 
 	GLFWwindow* window = nullptr;

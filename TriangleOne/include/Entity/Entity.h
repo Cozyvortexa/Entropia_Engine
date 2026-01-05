@@ -23,8 +23,9 @@ public:
 	void EntityRemoveModules(std::shared_ptr<EntityComponent> module);
 
 	std::string name;
-private: 
 	std::shared_ptr<Transform> transform;
+
+private: 
 	std::vector<std::shared_ptr<EntityComponent>> entityComponentList;
 	int id;
 

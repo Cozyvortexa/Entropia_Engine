@@ -9,7 +9,7 @@ void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader) {
 		shader->setVec3("dirLight.specular", dirLight->specular);
 	}
 
-	for (int i = 0; i < pointLightList.size();i++) {
+	for (int i = 0; i < pointLightList.size() ;i++) {
 		shader->setVec3("pointLights[" + std::to_string(i) + "].position", pointLightList[i]->position);
 
 		shader->setVec3("pointLights[" + std::to_string(i) + "].ambient", pointLightList[i]->ambient);
@@ -22,7 +22,7 @@ void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader) {
 
 	}
 
-	for (int i = 0; i < spotLightList.size();i++)
+	for (int i = 0; i < spotLightList.size() ;i++)
 	{
 		shader->setVec3("spotLight.Position", spotLightList[i]->position);
 
@@ -42,6 +42,22 @@ void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader) {
 
 }
 
+glm::mat4 RenderSystem::CalculModel(std::shared_ptr<Transform> currentTransform) {
+	glm::mat4 model = _model;
+
+
+	model = glm::translate(model, currentTransform->position);
+
+	model = glm::rotate(model, glm::radians(currentTransform->rotation.x), glm::vec3(1, 0, 0));
+	model = glm::rotate(model, glm::radians(currentTransform->rotation.y), glm::vec3(0, 1, 0));
+	model = glm::rotate(model, glm::radians(currentTransform->rotation.z), glm::vec3(0, 0, 1));
+
+	model = glm::scale(model, glm::vec3(currentTransform->scale));
+
+	return model;
+}
+
+
 void RenderSystem::DrawShadowMap(std::shared_ptr<DirLight> currentLight, std::shared_ptr<MeshComponent> currentMesh) {  // Bug sur la window si resize
 	glViewport(0, 0, currentLight->shadowWidth, currentLight->shadowHeight);
 	glBindFramebuffer(GL_FRAMEBUFFER, currentLight->depthMapFBO);
@@ -54,6 +70,8 @@ void RenderSystem::DrawShadowMap(std::shared_ptr<DirLight> currentLight, std::sh
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	//glm::rotate(_model, glm::radians(90.0f), glm::vec3(1, 0, 0))
 
+	currentLight->depthShader->setMatrix("model", CalculModel(currentMesh->transform));
+	
 	currentMesh->modelMesh->DrawWithoutTexture(currentLight->depthShader);
 
 
@@ -82,6 +100,10 @@ void RenderSystem::DrawShadowPoint(std::shared_ptr<PointLight> currentLight, std
 
 	currentLight->depthShaderCubeMap->Use();
 	currentLight->depthShaderCubeMap->setFloat("far_plane", currentLight->far_plane);
+
+
+
+	currentLight->depthShaderCubeMap->setMatrix("model", CalculModel(currentMesh->transform));
 
 	for (int i = 0; i < shadowTransforms.size(); i++) {
 		currentLight->depthShaderCubeMap->setMatrix("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
@@ -130,7 +152,7 @@ void RenderSystem::RenderMesh() {
 
 	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
 		if (currentModel->haveToBeDraw) {
-			UpdateShadow(currentModel);
+			//UpdateShadow(currentModel);
 		}
 	}
 
@@ -140,10 +162,10 @@ void RenderSystem::RenderMesh() {
 		if (currentModel->haveToBeDraw) {
 			shader->Use();
 
+			// Vérifie la position finale (colonne 3 de la matrice)
 
 			////Link shadowMap
 			//temp
-
 			shader->setInt("shadowMap", 30);
 			shader->setInt("shadowCubeMap", 31);
 

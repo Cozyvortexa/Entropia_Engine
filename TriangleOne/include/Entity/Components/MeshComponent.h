@@ -8,6 +8,8 @@ struct MeshComponent : EntityComponent {
 public:
 	MeshComponent(std::string model, std::shared_ptr<Shader> _shader);
 
+	virtual ~MeshComponent() = default;
+
 	bool haveToBeDraw = true;
 	bool castShadow = true;
 

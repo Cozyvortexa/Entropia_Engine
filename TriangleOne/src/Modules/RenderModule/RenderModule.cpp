@@ -526,11 +526,13 @@ void RenderModule::Init() {
 		abort();
 	}
 	mainShader = std::make_shared<Shader>("TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
+	depthShader = std::make_shared<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
+
 	shaderLight = new Shader("TriangleOne/Shader/LightShader/Light/LightVertexShader.glsl", "TriangleOne/Shader/LightShader/Light/LightFragShader.glsl");
 	ppShader = new Shader("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
 	skyboxShader = new Shader("TriangleOne/Shader/MiscShader/SkyBoxVertex.glsl", "TriangleOne/Shader/MiscShader/SkyBoxFrag.glsl");
 	reflectShader = new Shader("TriangleOne/Shader/MiscShader/ReflexionVertex.glsl", "TriangleOne/Shader/MiscShader/ReflexionFrag.glsl");
-	depthShader = new Shader("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
+
 
 	depthShaderCubeMap = new Shader("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 
@@ -588,8 +590,8 @@ void RenderModule::Init() {
 
 	glm::vec3 worldLightDir = glm::vec3(-2.0f, 4.0f, -1.0f);
 
-	//std::shared_ptr<Entity> entityLight = currentScene->CreateNewEntity();
-	//std::shared_ptr<DirLight> dirLight = currentScene->AddComponent<DirLight>(entityLight, glm::vec3(0),ambient,diffuse,specular,worldLightDir, mainShader);
+	std::shared_ptr<Entity> entityLight = currentScene->CreateNewEntity();
+	std::shared_ptr<DirLight> dirLight = currentScene->AddComponent<DirLight>(entityLight, glm::vec3(0),ambient, diffuse, specular, worldLightDir, depthShader);
 
 	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, std::shared_ptr<Shader> _depthShader);
 
