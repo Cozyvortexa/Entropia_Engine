@@ -1,5 +1,9 @@
 #include "Entity/Systemes/RenderSystem.h"
 
+RenderSystem::RenderSystem() {
+	InitShadowMap();
+}
+
 void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader) {
 	shader->Use();
 	for (std::shared_ptr<DirLight> dirLight: directionalLightList) {
@@ -57,82 +61,104 @@ glm::mat4 RenderSystem::CalculModel(std::shared_ptr<Transform> currentTransform)
 	return model;
 }
 
+#pragma region Shadow
+void RenderSystem::InitShadowMap() {
+	glGenFramebuffers(1, &depthMapFBO);
 
-void RenderSystem::DrawShadowMap(std::shared_ptr<DirLight> currentLight, std::shared_ptr<MeshComponent> currentMesh) {  // Bug sur la window si resize
-	glViewport(0, 0, currentLight->shadowWidth, currentLight->shadowHeight);
-	glBindFramebuffer(GL_FRAMEBUFFER, currentLight->depthMapFBO);
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Shadow Framebuffer not complete!" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void RenderSystem::DrawShadowForDirLight(std::shared_ptr<DirLight> currentLight) {  // Bug sur la window si resize
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	currentLight->depthShader->Use();
 	currentLight->depthShader->setMatrix("lightSpaceMatrix", currentLight->lightMatrice);  //  Calculer a l'init de la light
 
-	//depthShader->setMatrix("view", mainCamera->GetViewMatrix());
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	//glm::rotate(_model, glm::radians(90.0f), glm::vec3(1, 0, 0))
+	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
+		if (currentModel->haveToBeDraw && currentModel->castShadow) {
 
-	currentLight->depthShader->setMatrix("model", CalculModel(currentMesh->transform));
-	
-	currentMesh->modelMesh->DrawWithoutTexture(currentLight->depthShader);
-
+			currentLight->depthShader->setMatrix("model", CalculModel(currentModel->transform));
+			currentModel->modelMesh->DrawWithoutTexture(currentLight->depthShader);
+		}
+	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
+
 }
 
-void RenderSystem::DrawShadowPoint(std::shared_ptr<PointLight> currentLight, std::shared_ptr<MeshComponent> currentMesh) {
-	currentLight->aspect = (float)currentLight->shadowWidth / (float)currentLight->shadowHeight;
-	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), currentLight->aspect, currentLight->near_plane, currentLight->far_plane);
+//void RenderSystem::DrawShadowPoint(std::shared_ptr<PointLight> currentLight, std::shared_ptr<MeshComponent> currentMesh) {
+//	currentLight->aspect = (float)currentLight->shadowWidth / (float)currentLight->shadowHeight;
+//	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), currentLight->aspect, currentLight->near_plane, currentLight->far_plane);
+//
+//
+//	glViewport(0, 0, currentLight->shadowWidth, currentLight->shadowHeight);
+//	glBindFramebuffer(GL_FRAMEBUFFER, currentLight->depthCubeMapFBO);  // Fbo unique par light
+//	glClear(GL_DEPTH_BUFFER_BIT);
+//
+//
+//	std::vector<glm::mat4> shadowTransforms;
+//	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+//	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+//	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+//	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
+//	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
+//	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
+//
+//
+//	currentLight->depthShaderCubeMap->Use();
+//	currentLight->depthShaderCubeMap->setFloat("far_plane", currentLight->far_plane);
+//
+//
+//
+//	currentLight->depthShaderCubeMap->setMatrix("model", CalculModel(currentMesh->transform));
+//
+//	for (int i = 0; i < shadowTransforms.size(); i++) {
+//		currentLight->depthShaderCubeMap->setMatrix("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
+//	}
+//	currentLight->depthShaderCubeMap->setVec3("lightPos", currentLight->position);
+//
+//	currentMesh->modelMesh->DrawWithoutTexture(currentLight->depthShaderCubeMap);
+//
+//
+//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
+//}
 
-
-	glViewport(0, 0, currentLight->shadowWidth, currentLight->shadowHeight);
-	glBindFramebuffer(GL_FRAMEBUFFER, currentLight->depthCubeMapFBO);  // Fbo unique par light
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-
-	std::vector<glm::mat4> shadowTransforms;
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
-
-
-	currentLight->depthShaderCubeMap->Use();
-	currentLight->depthShaderCubeMap->setFloat("far_plane", currentLight->far_plane);
-
-
-
-	currentLight->depthShaderCubeMap->setMatrix("model", CalculModel(currentMesh->transform));
-
-	for (int i = 0; i < shadowTransforms.size(); i++) {
-		currentLight->depthShaderCubeMap->setMatrix("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
-	}
-	currentLight->depthShaderCubeMap->setVec3("lightPos", currentLight->position);
-
-	currentMesh->modelMesh->DrawWithoutTexture(currentLight->depthShaderCubeMap);
-
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
-}
-
-void RenderSystem::UpdateShadow(std::shared_ptr<MeshComponent> currentMesh) {
-
-	if (!currentMesh->castShadow) {
-		return;
-	}
+void RenderSystem::UpdateShadow() {
 	glCullFace(GL_FRONT);
-	for (std::shared_ptr<DirLight> dirLight : directionalLightList) {
-		DrawShadowMap(dirLight, currentMesh);
-	}
+	DrawShadowForDirLight(directionalLightList[0]);
 
 	for (std::shared_ptr<PointLight> pointLight : pointLightList) {
-		DrawShadowPoint(pointLight, currentMesh);
+		//DrawShadowPoint(pointLight);
 	}
 	glCullFace(GL_BACK);
 }
 
+#pragma endregion Shadow
 
 void RenderSystem::AddMeshComponent(std::shared_ptr<MeshComponent> modele) {
 	modeleList.push_back(modele);
@@ -149,12 +175,8 @@ void RenderSystem::AddLightComponent(std::shared_ptr<DirLight> modele) {
 //}
 
 void RenderSystem::RenderMesh() {
+	UpdateShadow();
 
-	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
-		if (currentModel->haveToBeDraw) {
-			//UpdateShadow(currentModel);
-		}
-	}
 
 	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
 		std::shared_ptr<Shader> shader = currentModel->GetShader();
@@ -171,12 +193,12 @@ void RenderSystem::RenderMesh() {
 
 			if (directionalLightList.size() != 0) {
 				glActiveTexture(GL_TEXTURE30);
-				glBindTexture(GL_TEXTURE_2D, directionalLightList[0]->depthMap);
+				glBindTexture(GL_TEXTURE_2D, depthMap);
 			}
-			if (pointLightList.size() != 0) {
-				glActiveTexture(GL_TEXTURE31);
-				glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightList[0]->depthCubeMap);  // Utilise samplerCubeArray dans le shader
-			}
+			//if (pointLightList.size() != 0) {
+			//	glActiveTexture(GL_TEXTURE31);
+			//	glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightList[0]->depthCubeMap);  // Utilise samplerCubeArray dans le shader
+			//}
 			////
 
 

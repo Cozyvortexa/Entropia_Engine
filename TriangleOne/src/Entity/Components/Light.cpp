@@ -134,7 +134,6 @@ SpotLight::SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse
 DirLight::DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader) {
 	InitShadowMap(depthMapFBO, depthMap);
 	InitBaseLight(_position, _ambient, _diffuse, _specular);
-
 	direction = _direction;
 	//Shadow Purpose
 	lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
