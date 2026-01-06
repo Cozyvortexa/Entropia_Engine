@@ -96,7 +96,7 @@ void RenderSystem::DrawShadowForDirLight(std::shared_ptr<DirLight> currentLight)
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	currentLight->depthShader->Use();
-	currentLight->depthShader->setMatrix("lightSpaceMatrix", currentLight->GetLightMatrice());
+	currentLight->depthShader->setMatrix("lightSpaceMatrix", currentLight->lightMatrice);
 
 	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
 		if (currentModel->haveToBeDraw && currentModel->castShadow) {
@@ -151,7 +151,11 @@ void RenderSystem::DrawShadowForDirLight(std::shared_ptr<DirLight> currentLight)
 
 void RenderSystem::UpdateShadow() {
 	glCullFace(GL_FRONT);
-	DrawShadowForDirLight(directionalLightList[0]);
+
+
+	for (std::shared_ptr<DirLight> dirLight : directionalLightList) {
+		DrawShadowForDirLight(dirLight);
+	}
 
 	for (std::shared_ptr<PointLight> pointLight : pointLightList) {
 		//DrawShadowPoint(pointLight);
@@ -185,14 +189,14 @@ void RenderSystem::RenderMesh() {
 
 		if (currentModel->haveToBeDraw) {
 			shader->Use();
-
+			shader->setMatrix("lightSpaceMatrix", directionalLightList[0]->lightMatrice);
 
 			// Vérifie la position finale (colonne 3 de la matrice)
 
 			////Link shadowMap
 			//temp
 			shader->setInt("shadowMap", 30);
-			shader->setInt("shadowCubeMap", 31);
+			//shader->setInt("shadowCubeMap", 31);
 
 			if (directionalLightList.size() != 0) {
 				glActiveTexture(GL_TEXTURE30);

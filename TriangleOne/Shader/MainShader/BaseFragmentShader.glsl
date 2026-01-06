@@ -39,7 +39,7 @@ struct PointLight {
 	float linear;
 	float quadratic;
 };
-#define NR_POINT_LIGHTS 4
+#define NR_POINT_LIGHTS 1
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 struct DirLight{
@@ -103,12 +103,12 @@ void main()
 	for (int i = 0; i < NR_POINT_LIGHTS; i++)
 	{
 		if (length(pointLights[i].ambient + pointLights[i].diffuse + pointLights[i].specular )> 0.001  ){  // On aplique pas le calcul si les lumiere sont eteinte
-			final_lightning += CalcPointLight(pointLights[i], viewDir, norm, finalDiffuse, finalSpecular);
+			//final_lightning += CalcPointLight(pointLights[i], viewDir, norm, finalDiffuse, finalSpecular);
 		}
 	}
 
 	if (length(spotLight.ambient + spotLight.diffuse + spotLight.specular) > 0.001 ){
-		final_lightning += CalcSpotLight(spotLight, viewDir, norm, finalDiffuse, finalSpecular);  // SpotLight non fonctionnelle ( casser intentionnellement ) 
+		//final_lightning += CalcSpotLight(spotLight, viewDir, norm, finalDiffuse, finalSpecular);  // SpotLight non fonctionnelle ( casser intentionnellement ) 
 	}
 
 //	float gamma = 2.2;

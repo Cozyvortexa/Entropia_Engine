@@ -12,7 +12,7 @@ Light::Light(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::v
 	InitBaseLight(_position, _ambient, _diffuse, _specular);
 }
 
-void Light::InitShadowMap(unsigned int depthMapFBO, unsigned int depthMap) {
+std::pair<unsigned int, unsigned int> Light::InitShadowMap(unsigned int depthMapFBO, unsigned int depthMap) {
 	glGenFramebuffers(1, &depthMapFBO);
 
 	glGenTextures(1, &depthMap);
@@ -37,6 +37,9 @@ void Light::InitShadowMap(unsigned int depthMapFBO, unsigned int depthMap) {
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "Shadow Framebuffer not complete!" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	return std::make_pair(depthMapFBO, depthMap);
 }
 
 void Light::InitCubeMap(unsigned int depthCubeMapFBO,unsigned int depthCubemap) {
@@ -132,25 +135,24 @@ SpotLight::SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse
 }
 
 DirLight::DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader) {
-	InitShadowMap(depthMapFBO, depthMap);
+	std::pair<unsigned int, unsigned int> depthBuffer = InitShadowMap(depthMapFBO, depthMap);
+	depthMapFBO = depthBuffer.first;
+	depthMap = depthBuffer.second;  // On sait jamais
+
 	InitBaseLight(_position, _ambient, _diffuse, _specular);
 	direction = _direction;
+	distance = far_plane / 2;
 	//Shadow Purpose
 
-
-	lightMatrice = GetLightMatrice();
-
 	depthShader = _depthShader;
-}
 
 
-
-glm::mat4 DirLight::GetLightMatrice() {
 	lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
 
 	lightPos = normalize(direction) * distance;
 
 	lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-	return lightProjection * lightView;
+	lightMatrice = lightProjection * lightView;
+
 }

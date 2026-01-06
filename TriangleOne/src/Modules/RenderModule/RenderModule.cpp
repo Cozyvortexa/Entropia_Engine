@@ -556,7 +556,7 @@ void RenderModule::Init() {
 	//glEnable(GL_FRAMEBUFFER_SRGB);
 
 	//Camera 
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	mainCamera = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 	//pointLightPositions.push_back(glm::vec3(0.7f, 0.2f, 2.0f));
@@ -579,10 +579,6 @@ void RenderModule::Init() {
 	std::shared_ptr<MeshComponent> meshAttachToEntity = currentScene->AddComponent<MeshComponent>(entity, "Assets/ImpScene/autumn_house.glb", mainShader);
 
 
-
-	if (glfwGetCurrentContext() == NULL) {
-		std::cout << "FATAL: Tentative de création de Mesh sans contexte OpenGL !" << std::endl;
-	}
 
 	glm::vec3 ambient = glm::vec3(0.3f, 0.3f, 0.3f);
 	glm::vec3 diffuse = glm::vec3(3.0f, 3.0f, 3.0f);
@@ -623,10 +619,8 @@ void RenderModule::Render()
 	mainShader->setMatrix("projection", projection);
 
 
-	//
 	//house->DrawObject(mainShader, false);
 	//cube->DrawObject(mainShader, false);
-
 
 	currentScene->RenderScene();
 

@@ -7,6 +7,7 @@
 
 #include "Modules/RenderModule/Shader.h"
 #include "Entity/Components/EntityComponent.h"
+#include "Entity/Components/Transform.h"
 
 struct Light : EntityComponent{
 public:
@@ -29,7 +30,7 @@ public:
 
 protected:
 	void InitBaseLight(glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
-	void InitShadowMap(unsigned int depthMapFBO, unsigned int depthMap);
+	std::pair<unsigned int, unsigned int> InitShadowMap(unsigned int depthMapFBO, unsigned int depthMap);
 	void InitCubeMap(unsigned int depthCubeMapFBO, unsigned int depthCubemap);
 };
 
@@ -44,17 +45,13 @@ struct DirLight : public Light {
 	float orthoSize = 50.0f;
 	float distance;
 
-	glm::mat4 lightProjection;
-	glm::vec3 lightPos;
-	glm::mat4 lightView;
-
-	glm::mat4 GetLightMatrice();
+	glm::mat4 lightProjection = glm::mat4(0);
+	glm::vec3 lightPos = glm::vec3(0);
+	glm::mat4 lightView = glm::mat4(0);
+	glm::mat4 lightMatrice = glm::mat4(0);
 
 
 	std::shared_ptr<Shader> depthShader = nullptr;
-
-	private:
-		glm::mat4 lightMatrice;
 
 };
 
