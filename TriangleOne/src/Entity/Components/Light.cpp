@@ -136,13 +136,21 @@ DirLight::DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, 
 	InitBaseLight(_position, _ambient, _diffuse, _specular);
 	direction = _direction;
 	//Shadow Purpose
+
+
+	lightMatrice = GetLightMatrice();
+
+	depthShader = _depthShader;
+}
+
+
+
+glm::mat4 DirLight::GetLightMatrice() {
 	lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
 
-	lightPos = normalize(_direction) * distance;
+	lightPos = normalize(direction) * distance;
 
 	lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-	lightMatrice = lightProjection * lightView;
-
-	depthShader = _depthShader;
+	return lightProjection * lightView;
 }

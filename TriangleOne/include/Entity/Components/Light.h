@@ -47,9 +47,14 @@ struct DirLight : public Light {
 	glm::mat4 lightProjection;
 	glm::vec3 lightPos;
 	glm::mat4 lightView;
-	glm::mat4 lightMatrice;
+
+	glm::mat4 GetLightMatrice();
+
 
 	std::shared_ptr<Shader> depthShader = nullptr;
+
+	private:
+		glm::mat4 lightMatrice;
 
 };
 

@@ -9,7 +9,7 @@
 
 class RenderSystem {
 public:
-	RenderSystem();
+	RenderSystem(unsigned int* newFramebuffer);
 	void RenderMesh();
 
 	void AddMeshComponent(std::shared_ptr<MeshComponent> modele);
@@ -39,4 +39,6 @@ private:
 	unsigned int depthMapFBO;
 	unsigned int depthMap;
 	const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
+
+	unsigned int* framebuffer;
 };

@@ -571,7 +571,7 @@ void RenderModule::Init() {
 	//modelMesh2 = new Model("Assets/tryModel/backpacka.obj");
 
 
-	renderSystem = std::make_shared<RenderSystem>();
+	renderSystem = std::make_shared<RenderSystem>(&framebuffer);
 
 	currentScene = std::make_shared<Scene>(renderSystem);
 
@@ -598,12 +598,10 @@ void RenderModule::Init() {
 
 	//dirLight = new Light(glm::vec3(0), worldLightDir, ambient, diffuse, specular);
 
+
 	InitQuadVao();
-
 	InitSkyBox();
-
 	InitShadowMap();
-
 	InitCubeMap();
 
 }
@@ -612,22 +610,8 @@ void RenderModule::Render()
  {
 	//Shadow
 
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//DrawMirorCube();
 	for (int i = 0; i < pointLightPositions.size(); i++)
 		DrawLight(i);
-
-	//mainShader->Use();
-	//mainShader->setFloat("far_plane", far_plane);  
-	//mainShader->setFloat("material.shininess", 32.0f);
-	//mainShader->setVec3("viewPos", mainCamera->GetPos());
-
-	//for (int i = 0; i < pointLightPositions.size(); i++)
-	//	FactoPointLight(mainShader, i);
-
-
-	//FactoSpotLight(mainShader, 0);
 
 
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
@@ -638,14 +622,6 @@ void RenderModule::Render()
 	mainShader->setMatrix("view", mainCamera->GetViewMatrix());
 	mainShader->setMatrix("projection", projection);
 
-
-	//mainShader->setInt("shadowMap", 15);
-	//glActiveTexture(GL_TEXTURE15);
-	//glBindTexture(GL_TEXTURE_2D, depthMap);
-
-	//mainShader->setInt("shadowCubeMap", 2); ////////////////////////////////////////////////////////////////////////////  ID DEJA ATTRIBUER, BUG POTENTIELLE
-	//glActiveTexture(GL_TEXTURE2);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
 	//
 	//house->DrawObject(mainShader, false);

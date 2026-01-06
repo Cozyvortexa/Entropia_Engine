@@ -1,6 +1,7 @@
 #include "Entity/Systemes/RenderSystem.h"
 
-RenderSystem::RenderSystem() {
+RenderSystem::RenderSystem(unsigned int* newFramebuffer) {
+	framebuffer = newFramebuffer;
 	InitShadowMap();
 }
 
@@ -95,7 +96,7 @@ void RenderSystem::DrawShadowForDirLight(std::shared_ptr<DirLight> currentLight)
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	currentLight->depthShader->Use();
-	currentLight->depthShader->setMatrix("lightSpaceMatrix", currentLight->lightMatrice);  //  Calculer a l'init de la light
+	currentLight->depthShader->setMatrix("lightSpaceMatrix", currentLight->GetLightMatrice());
 
 	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
 		if (currentModel->haveToBeDraw && currentModel->castShadow) {
@@ -177,12 +178,14 @@ void RenderSystem::AddLightComponent(std::shared_ptr<DirLight> modele) {
 void RenderSystem::RenderMesh() {
 	UpdateShadow();
 
-
+	glBindFramebuffer(GL_FRAMEBUFFER, *framebuffer);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
 		std::shared_ptr<Shader> shader = currentModel->GetShader();
 
 		if (currentModel->haveToBeDraw) {
 			shader->Use();
+
 
 			// Vérifie la position finale (colonne 3 de la matrice)
 
@@ -195,10 +198,11 @@ void RenderSystem::RenderMesh() {
 				glActiveTexture(GL_TEXTURE30);
 				glBindTexture(GL_TEXTURE_2D, depthMap);
 			}
-			//if (pointLightList.size() != 0) {
-			//	glActiveTexture(GL_TEXTURE31);
-			//	glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightList[0]->depthCubeMap);  // Utilise samplerCubeArray dans le shader
-			//}
+			if (pointLightList.size() != 0) {
+				glActiveTexture(GL_TEXTURE31);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightList[0]->depthCubeMap);  // Utilise samplerCubeArray dans le shader
+				std::cout << "enter On pointLigList machin chouette, bref viens voir par ici" << std::endl;
+			}
 			////
 
 
