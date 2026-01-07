@@ -152,7 +152,6 @@ void RenderSystem::DrawShadowForDirLight(std::shared_ptr<DirLight> currentLight)
 void RenderSystem::UpdateShadow() {
 	glCullFace(GL_FRONT);
 
-
 	for (std::shared_ptr<DirLight> dirLight : directionalLightList) {
 		DrawShadowForDirLight(dirLight);
 	}
@@ -191,7 +190,7 @@ void RenderSystem::RenderMesh() {
 			shader->Use();
 			shader->setMatrix("lightSpaceMatrix", directionalLightList[0]->lightMatrice);
 
-			// Vérifie la position finale (colonne 3 de la matrice)
+			// Vï¿½rifie la position finale (colonne 3 de la matrice)
 
 			////Link shadowMap
 			//temp
@@ -207,7 +206,6 @@ void RenderSystem::RenderMesh() {
 				glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightList[0]->depthCubeMap);  // Utilise samplerCubeArray dans le shader
 				std::cout << "enter On pointLigList machin chouette, bref viens voir par ici" << std::endl;
 			}
-			////
 
 
 			UpdateLight(shader);  // Oui je sais, les light sont recalculer pour chaque modele

@@ -12,7 +12,9 @@ Light::Light(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::v
 	InitBaseLight(_position, _ambient, _diffuse, _specular);
 }
 
-std::pair<unsigned int, unsigned int> Light::InitShadowMap(unsigned int depthMapFBO, unsigned int depthMap) {
+std::pair<unsigned int, unsigned int> Light::InitShadowMap() {
+	unsigned int depthMapFBO;
+	unsigned int depthMap;
 	glGenFramebuffers(1, &depthMapFBO);
 
 	glGenTextures(1, &depthMap);
@@ -135,18 +137,25 @@ SpotLight::SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse
 }
 
 DirLight::DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader) {
-	std::pair<unsigned int, unsigned int> depthBuffer = InitShadowMap(depthMapFBO, depthMap);
+	std::pair<unsigned int, unsigned int> depthBuffer = InitShadowMap();
 	depthMapFBO = depthBuffer.first;
 	depthMap = depthBuffer.second;  // On sait jamais
 
 	InitBaseLight(_position, _ambient, _diffuse, _specular);
 	direction = _direction;
 	distance = far_plane / 2;
-	//Shadow Purpose
 
 	depthShader = _depthShader;
 
 
+	UpdateMatrix();
+
+}
+
+void DirLight::UpdateMatrix() {
+	if (glm::length(direction) < 0.001f) {
+		direction = glm::vec3(0, -1, 0); // Valeur par défaut sûre
+	}
 	lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
 
 	lightPos = normalize(direction) * distance;
@@ -154,5 +163,4 @@ DirLight::DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, 
 	lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	lightMatrice = lightProjection * lightView;
-
 }

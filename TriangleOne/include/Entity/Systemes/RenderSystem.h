@@ -36,9 +36,9 @@ private:
 
 	glm::mat4 _model = glm::mat4(1.0f);
 
-	unsigned int depthMapFBO;
-	unsigned int depthMap;
+	unsigned int depthMapFBO = 0;
+	unsigned int depthMap = 0;
 	const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 
-	unsigned int* framebuffer;
+	unsigned int* framebuffer = nullptr;
 };

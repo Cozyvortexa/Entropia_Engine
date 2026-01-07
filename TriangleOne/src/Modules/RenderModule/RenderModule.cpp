@@ -618,6 +618,7 @@ void RenderModule::Render()
 	mainShader->setMatrix("view", mainCamera->GetViewMatrix());
 	mainShader->setMatrix("projection", projection);
 
+	mainShader->setVec3("viewPos", mainCamera->GetPos());
 
 	//house->DrawObject(mainShader, false);
 	//cube->DrawObject(mainShader, false);

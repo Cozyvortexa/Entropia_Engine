@@ -19,36 +19,38 @@ public:
 	//void UseShadow(Shader* shader);
 
 
-	glm::vec3 position;
+	glm::vec3 position = glm::vec3(0);
 
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
-	glm::vec3 specular;
+	glm::vec3 ambient = glm::vec3(0);
+	glm::vec3 diffuse = glm::vec3(0);
+	glm::vec3 specular = glm::vec3(0);
 
 	float intensity = 1.0f;
 	unsigned int shadowWidth = 2048, shadowHeight = 2048;
 
 protected:
 	void InitBaseLight(glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
-	std::pair<unsigned int, unsigned int> InitShadowMap(unsigned int depthMapFBO, unsigned int depthMap);
+	std::pair<unsigned int, unsigned int> InitShadowMap();
 	void InitCubeMap(unsigned int depthCubeMapFBO, unsigned int depthCubemap);
 };
 
 struct DirLight : public Light {
 	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, std::shared_ptr<Shader> _depthShader);
-	glm::vec3 direction;
-	unsigned int depthMap;
-	unsigned int depthMapFBO;
+	glm::vec3 direction = glm::vec3(0);
+	unsigned int depthMap = 0;
+	unsigned int depthMapFBO = 0;
 
 	//Shadow purpose
 	float near_plane = 1.0f, far_plane = 50.0f;
 	float orthoSize = 50.0f;
 	float distance;
 
-	glm::mat4 lightProjection = glm::mat4(0);
+	glm::mat4 lightProjection = glm::mat4(1);
 	glm::vec3 lightPos = glm::vec3(0);
-	glm::mat4 lightView = glm::mat4(0);
-	glm::mat4 lightMatrice = glm::mat4(0);
+	glm::mat4 lightView = glm::mat4(1);
+	glm::mat4 lightMatrice = glm::mat4(1);
+
+	void UpdateMatrix();
 
 
 	std::shared_ptr<Shader> depthShader = nullptr;
@@ -81,7 +83,7 @@ public:
 	float linear;
 
 	float quadratique;
-	glm::vec3 direction;
+	glm::vec3 direction = glm::vec3(0);
 	float cutOff;
 	float outerCutOff;
 };

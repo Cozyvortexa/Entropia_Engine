@@ -57,6 +57,28 @@ public:
 		glUniformMatrix3fv(projLoc, 1, GL_FALSE, glm::value_ptr(matrix));
 	}
 
+	void DebugValueInShader() {
+		GLint count;
+		GLint size; // taille de la variable
+		GLenum type; // type de la variable (GL_FLOAT, GL_SAMPLER_2D, etc.)
+		const GLsizei bufSize = 32; // longueur max du nom
+		GLchar name[bufSize]; // nom de la variable
+		GLsizei length; // longueur du nom
+
+		glGetProgramiv(shaderID, GL_ACTIVE_UNIFORMS, &count);
+		std::cout << "--- Uniforms Actifs pour Shader ID " << shaderID << " ---" << std::endl;
+
+		for (int i = 0; i < count; i++)
+		{
+			glGetActiveUniform(shaderID, (GLuint)i, bufSize, &length, &size, &type, name);
+
+			// On récupère sa location officielle
+			GLint location = glGetUniformLocation(shaderID, name);
+
+			std::cout << "Uniform #" << i << " | Location: " << location << " | Nom: " << name << std::endl;
+		}
+		std::cout << "-----------------------------------------------" << std::endl;
+	}
 
 	unsigned int shaderID = NULL;
 

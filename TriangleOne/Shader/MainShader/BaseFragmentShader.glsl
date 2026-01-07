@@ -133,23 +133,38 @@ vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, ve
 	}
 
 	vec3 lightDir = normalize(-light.direction);
-	// diffuse shading
+
+
+	// Initialisation par defaut
+	vec3 ambient = light.ambient * vec3(finalDiffuse);
+    vec3 diffuse = vec3(0.0);
+    vec3 specular = vec3(0.0);
+    float shadow = 0.0;
+
 	float diff = max(dot(norm, lightDir), 0.0);
 	if (diff > 0.0) {
 		// diffuse shading
 		vec3 reflectDir = reflect(- lightDir, norm);
 		float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess); 
 
-		// combine results
-//		vec3 ambient = light.ambient * vec3(finalDiffuse);
-		vec3 diffuse = light.diffuse * diff * vec3(finalDiffuse);
-		vec3 specular = light.specular * spec * vec3(finalSpecular);
 
-		float shadow = ShadowDirLight();
-		vec3 light_contribution = (diffuse + specular) * (1.0 - shadow);
+		diffuse = light.diffuse * diff * vec3(finalDiffuse);
+		specular = light.specular * spec * vec3(finalSpecular);
+
+		vec3 light_contribution = vec3(0);
+
+		shadow = ShadowDirLight();
+		if (specularNbr == 0 ){
+			light_contribution = diffuse  * (1.0 - shadow);
+		}
+		else{
+			light_contribution = (diffuse + specular ) * (1.0 - shadow);  //Sale batard on devrait t'envoyer au goulag pour cque ta fais 
+		}
+
 
 		return light_contribution;
 	}
+	return ambient + (diffuse + specular) * (1.0 - shadow);
 }
 
 vec3 CalcPointLight(PointLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular)
