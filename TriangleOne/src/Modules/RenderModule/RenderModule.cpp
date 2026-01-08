@@ -527,14 +527,13 @@ void RenderModule::Init() {
 	}
 	mainShader = std::make_shared<Shader>("TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
 	depthShader = std::make_shared<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
+	depthShaderCubeMap = std::make_shared<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 
 	shaderLight = new Shader("TriangleOne/Shader/LightShader/Light/LightVertexShader.glsl", "TriangleOne/Shader/LightShader/Light/LightFragShader.glsl");
 	ppShader = new Shader("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
 	skyboxShader = new Shader("TriangleOne/Shader/MiscShader/SkyBoxVertex.glsl", "TriangleOne/Shader/MiscShader/SkyBoxFrag.glsl");
 	reflectShader = new Shader("TriangleOne/Shader/MiscShader/ReflexionVertex.glsl", "TriangleOne/Shader/MiscShader/ReflexionFrag.glsl");
 
-
-	depthShaderCubeMap = new Shader("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 
 
 	//Blending     //ya pas de blending mm avec cette ligne au cas ou 
@@ -559,9 +558,7 @@ void RenderModule::Init() {
 	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	mainCamera = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
-	//pointLightPositions.push_back(glm::vec3(0.7f, 0.2f, 2.0f));
-	//pointLightPositions.push_back(glm::vec3(2.3f, -3.3f, -4.0f));
-	//pointLightPositions.push_back(glm::vec3(-4.0f, 2.0f, -12.0f));
+
 	pointLightPositions.push_back(glm::vec3(1.0f, 2.0f, 0.0f));
 
 
@@ -574,7 +571,7 @@ void RenderModule::Init() {
 	renderSystem = std::make_shared<RenderSystem>(&framebuffer);
 
 	currentScene = std::make_shared<Scene>(renderSystem);
-
+	//Maison
 	std::shared_ptr<Entity> entity = currentScene->CreateNewEntity();
 	std::shared_ptr<MeshComponent> meshAttachToEntity = currentScene->AddComponent<MeshComponent>(entity, "Assets/ImpScene/autumn_house.glb", mainShader);
 
@@ -586,10 +583,22 @@ void RenderModule::Init() {
 
 	glm::vec3 worldLightDir = glm::vec3(-2.0f, 4.0f, -1.0f);
 
-	std::shared_ptr<Entity> entityLight = currentScene->CreateNewEntity();
-	std::shared_ptr<DirLight> dirLight = currentScene->AddComponent<DirLight>(entityLight, glm::vec3(0),ambient, diffuse, specular, worldLightDir, depthShader);
+	//DirLight   	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader)
+	//std::shared_ptr<Entity> entityLight = currentScene->CreateNewEntity();
+	//std::shared_ptr<DirLight> dirLight = currentScene->AddComponent<DirLight>(entityLight, glm::vec3(0),ambient, diffuse, specular, worldLightDir, depthShader);
 
-	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, std::shared_ptr<Shader> _depthShader);
+	float pointLightConstant = 1.0f;
+	float pointLightLinear = 0.09f;
+	float pointLightQuadratique = 0.032f;
+
+	//PointLight
+	std::shared_ptr<Entity> entityPointLight = currentScene->CreateNewEntity();
+	entityPointLight->transform->position = glm::vec3(1.0f, 2.0f, 0.0f);
+	std::shared_ptr<PointLight> dirLight = currentScene->AddComponent<PointLight>(entityPointLight, ambient, diffuse, specular, 
+		pointLightConstant, pointLightLinear, pointLightQuadratique, depthShaderCubeMap);
+
+
+	//	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap) 
 
 
 	//dirLight = new Light(glm::vec3(0), worldLightDir, ambient, diffuse, specular);

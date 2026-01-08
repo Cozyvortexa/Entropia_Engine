@@ -22,7 +22,7 @@ private:
 	void UpdateShadow();
 
 	void DrawShadowForDirLight(std::shared_ptr<DirLight> currentLight);
-	//void DrawShadowPoint(std::shared_ptr<PointLight> currentLight, std::shared_ptr<MeshComponent> currentMesh);
+	void DrawShadowForPointLight(std::shared_ptr<PointLight> currentLight);
 	
 	void InitShadowMap();
 

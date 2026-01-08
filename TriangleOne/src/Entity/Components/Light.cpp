@@ -44,7 +44,9 @@ std::pair<unsigned int, unsigned int> Light::InitShadowMap() {
 	return std::make_pair(depthMapFBO, depthMap);
 }
 
-void Light::InitCubeMap(unsigned int depthCubeMapFBO,unsigned int depthCubemap) {
+std::pair<unsigned int, unsigned int> Light::InitCubeMap() {
+	unsigned int depthCubeMapFBO;
+	unsigned int depthCubemap;
 	glGenFramebuffers(1, &depthCubeMapFBO);
 
 	glGenTextures(1, &depthCubemap);
@@ -69,6 +71,8 @@ void Light::InitCubeMap(unsigned int depthCubeMapFBO,unsigned int depthCubemap) 
 		std::cout << "CubeMap Shadow Framebuffer not complete!" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+	return std::make_pair(depthCubeMapFBO, depthCubemap);
 }
 
 
@@ -109,9 +113,18 @@ void Light::InitCubeMap(unsigned int depthCubeMapFBO,unsigned int depthCubemap) 
 //	}
 //}
 
-PointLight::PointLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap) {
-	InitCubeMap(depthCubeMapFBO, depthCubeMap);
-	InitBaseLight(_position, _ambient, _diffuse, _specular);
+PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap) {
+	std::pair<unsigned int, unsigned int> depthBuffer = InitCubeMap();
+	depthCubeMapFBO = depthBuffer.first;
+	depthCubeMap = depthBuffer.second;
+
+	entity;
+
+	if (transform == nullptr) {
+		std::cout << " c'est la merde" << std::endl;
+	}
+
+	InitBaseLight(transform->position, _ambient, _diffuse, _specular);
 
 	constant = _constant;
 	linear = _linear;

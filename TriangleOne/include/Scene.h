@@ -1,6 +1,5 @@
 #pragma once
 #include "Entity/Entity.h"
-//#include "memory.h"
 #include "Entity/Systemes/RenderSystem.h"
 #include "Entity/Components/EntityComponent.h"
 #include <type_traits>
@@ -21,6 +20,7 @@ public:
 		component->transform = currentEntity->transform;
 		component->entity = currentEntity;
 
+		component->transform;
 
 		if constexpr (std::is_same_v<T, MeshComponent>) {
 			renderSystem->AddMeshComponent(component);
@@ -31,6 +31,15 @@ public:
 
 
 		return component;
+	}
+
+	template<typename T> std::shared_ptr<T> GetComponent(std::shared_ptr<Entity> currentEntity) {
+		for (std::shared_ptr<EntityComponent> currentComponent : currentEntity->entityComponentList) {
+			if constexpr(std::is_same_v<T, currentComponent>) {
+				return currentComponent;
+			}
+		}
+		return nullptr;
 	}
 
 	std::shared_ptr<Entity> CreateNewEntity();

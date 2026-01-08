@@ -31,7 +31,7 @@ public:
 protected:
 	void InitBaseLight(glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
 	std::pair<unsigned int, unsigned int> InitShadowMap();
-	void InitCubeMap(unsigned int depthCubeMapFBO, unsigned int depthCubemap);
+	std::pair<unsigned int, unsigned int> InitCubeMap();
 };
 
 struct DirLight : public Light {
@@ -59,18 +59,18 @@ struct DirLight : public Light {
 
 struct PointLight : public Light{
 public:
-	PointLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap);
-	float constant;
-	float linear;
-	float quadratique;
+	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap);
+	float constant = 1.0f;
+	float linear = 0.0f;
+	float quadratique = 0.0f;
 
 	unsigned int depthCubeMapFBO;
 	unsigned int depthCubeMap;
 
 	//Shadow purpose
-	float aspect;
-	float near_plane;
-	float far_plane; 
+	float aspect = 0.0f;
+	float near_plane = 0.1f;
+	float far_plane = 50.0f; 
 
 	std::shared_ptr<Shader> depthShaderCubeMap = nullptr;
 

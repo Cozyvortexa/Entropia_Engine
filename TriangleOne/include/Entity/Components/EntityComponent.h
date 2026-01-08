@@ -7,6 +7,6 @@ class Transform;
 
 struct EntityComponent {
 public:
-	std::shared_ptr<Entity> entity;
-	std::shared_ptr<Transform> transform; 
+	std::shared_ptr<Entity> entity = nullptr;
+	std::shared_ptr<Transform> transform = nullptr; 
 };

@@ -2,13 +2,10 @@
 
 Entity::Entity() {
 	transform = EntityCreateModules<Transform>();
+	transform->transform = transform;  // Tkt c'est normal
+	transform->entity = nullptr; 
 }
 
-//GameObject::GameObject(std::string model) {
-//	modelMesh = new Model(model);
-//}
-//
-//
 
 //void GameObject::DrawObject(Shader* shader, bool drawShadow) {
 //
