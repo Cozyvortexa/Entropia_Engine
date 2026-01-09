@@ -2,47 +2,82 @@
 #include "Modules/RenderModule/Shader.h"
 
 #include "Modules/RenderModule/ModelClass.h"
-#include "Entity/Components/EntityComponent.h"
-#include "Entity/Components/Transform.h"
 
 #include <utility>
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <typeindex>
 
-class Entity : public std::enable_shared_from_this<Entity> {
+
+class Component {
 public:
-	Entity();
-	
-	template<typename T, typename... Args> std::shared_ptr<T> EntityCreateModules(Args&&... args) {
-		auto module = std::make_shared<T>(std::forward<Args>(args)...);
-		entityComponentList.push_back(module);
+	virtual ~Component() = default;
 
+	//virtual std::string NameToSting() const = 0;
 
-		//module->entity = this;
-		transform;
-		module->transform = transform;
-		module->entity = shared_from_this();
-		return module;
+	//// Pure virtual clone method to force derived components to implement copying
+	//virtual std::unique_ptr<Component> Clone() const = 0;
+};
+
+class Entity {
+public:
+	template<typename T, typename... TArgs>
+	T* AddComponent(TArgs&&... args) { // ...and forwards them...
+		// Ensure T inherits from Component
+		static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
+
+		// ...to std::make_unique, which calls the correct constructor (e.g., MaterialOverride(shaderName))
+		components[typeid(T)] = std::make_unique<T>(std::forward<TArgs>(args)...);
+
+		return static_cast<T*>(components[typeid(T)].get());
 	}
 
-	void EntityRemoveModules(std::shared_ptr<EntityComponent> module);
-
-	template<typename T> std::shared_ptr<T> GetComponent(std::shared_ptr<Entity> currentEntity) {
-		for (std::shared_ptr<EntityComponent> currentComponent : currentEntity->entityComponentList) {
-			if constexpr (std::is_same_v<T, currentComponent.get()>) {
-				return currentComponent;
-			}
+	template<typename T>
+	T* GetComponent() {
+		// Ensure T inherits from Component
+		static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
+		auto it = components.find(typeid(T));
+		// We can safely static_cast here because we know T inherits from Component
+		return (it != components.end()) ? static_cast<T*>(it->second.get()) : nullptr;
+	}
+	Entity() {};	
+	template<typename T, typename... TArgs>
+	T* GetOrAddComponent(TArgs&&... args) {
+		static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
+		auto it = components.find(typeid(T));
+		if (it != components.end()) {
+			return static_cast<T*>(it->second.get());
 		}
-		return nullptr;
+		return AddComponent<T>(std::forward<TArgs>(args)...);
 	}
 
+	template<typename T>
+	bool RemoveComponent() {
+		// Ensure T inherits from Component
+		static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
+
+		auto it = components.find(typeid(T));
+		if (it != components.end()) {
+			components.erase(it); // Erase the entry from the map
+			return true;          // Return true indicating successful removal
+		}
+
+		return false; // Return false if the component wasn't found
+	}
+
+	template<typename T>
+	bool HasComponent() {
+		// Ensure T inherits from Component
+		static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
+		return components.count(typeid(T)) > 0;
+	}
 
 	std::string name;
-	std::shared_ptr<Transform> transform;
 
 private: 
-	std::vector<std::shared_ptr<EntityComponent>> entityComponentList;
+	std::unordered_map<std::type_index, std::unique_ptr<Component>> components;
 	int id = 0;  // Go voir apres
 
 	//Pour plus tard

@@ -568,12 +568,14 @@ void RenderModule::Init() {
 	//modelMesh2 = new Model("Assets/tryModel/backpacka.obj");
 
 
-	renderSystem = std::make_shared<RenderSystem>(&framebuffer);
+	renderSystem = new RenderSystem(&framebuffer);
 
-	currentScene = std::make_shared<Scene>(renderSystem);
+	currentScene = new Scene();
 	//Maison
-	std::shared_ptr<Entity> entity = currentScene->CreateNewEntity();
-	std::shared_ptr<MeshComponent> meshAttachToEntity = currentScene->AddComponent<MeshComponent>(entity, "Assets/ImpScene/autumn_house.glb", mainShader);
+	Entity* entity = currentScene->CreateNewEntity();
+	entity->AddComponent<Transform>();
+	entity->AddComponent<MeshComponent>("Assets/ImpScene/autumn_house.glb", mainShader);
+	//std::shared_ptr<MeshComponent> meshAttachToEntity = currentScene->AddComponent<MeshComponent>(entity, "Assets/ImpScene/autumn_house.glb", mainShader);
 
 
 
@@ -584,18 +586,20 @@ void RenderModule::Init() {
 	glm::vec3 worldLightDir = glm::vec3(-2.0f, 4.0f, -1.0f);
 
 	//DirLight   	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader)
-	//std::shared_ptr<Entity> entityLight = currentScene->CreateNewEntity();
-	//std::shared_ptr<DirLight> dirLight = currentScene->AddComponent<DirLight>(entityLight, glm::vec3(0),ambient, diffuse, specular, worldLightDir, depthShader);
+	Entity* entityLight = currentScene->CreateNewEntity();
+	entityLight->AddComponent<Transform>();
+	entityLight->AddComponent<DirLight>(glm::vec3(0),ambient, diffuse, specular, worldLightDir, depthShader);
 
 	float pointLightConstant = 1.0f;
 	float pointLightLinear = 0.09f;
 	float pointLightQuadratique = 0.032f;
 
 	//PointLight
-	std::shared_ptr<Entity> entityPointLight = currentScene->CreateNewEntity();
-	entityPointLight->transform->position = glm::vec3(1.0f, 2.0f, 0.0f);
-	std::shared_ptr<PointLight> dirLight = currentScene->AddComponent<PointLight>(entityPointLight, ambient, diffuse, specular, 
-		pointLightConstant, pointLightLinear, pointLightQuadratique, depthShaderCubeMap);
+	Entity* entityPointLight = currentScene->CreateNewEntity();
+	entityPointLight->AddComponent<Transform>()->position = glm::vec3(1.0f, 2.0f, 0.0f);
+
+
+	//entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightConstant, pointLightLinear, pointLightQuadratique, depthShaderCubeMap);
 
 
 	//	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap) 
@@ -632,7 +636,7 @@ void RenderModule::Render()
 	//house->DrawObject(mainShader, false);
 	//cube->DrawObject(mainShader, false);
 
-	currentScene->RenderScene();
+	renderSystem->RenderScene(currentScene);
 
 
 	//DrawSkyBox(projection);

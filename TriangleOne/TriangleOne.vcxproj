@@ -136,7 +136,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="include\Entity\Components\EntityComponent.h" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\Entity\Entity.cpp" />

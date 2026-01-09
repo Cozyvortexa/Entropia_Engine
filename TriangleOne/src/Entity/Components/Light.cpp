@@ -118,14 +118,6 @@ PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specul
 	depthCubeMapFBO = depthBuffer.first;
 	depthCubeMap = depthBuffer.second;
 
-	entity;
-
-	if (transform == nullptr) {
-		std::cout << " c'est la merde" << std::endl;
-	}
-
-	InitBaseLight(transform->position, _ambient, _diffuse, _specular);
-
 	constant = _constant;
 	linear = _linear;
 	quadratique = _quadratique;

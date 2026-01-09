@@ -5,49 +5,49 @@ RenderSystem::RenderSystem(unsigned int* newFramebuffer) {
 	InitShadowMap();
 }
 
-void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader) {
+void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList) {
 	shader->Use();
-	for (std::shared_ptr<DirLight> dirLight: directionalLightList) {
+	for (DirLight* dirLight: directionalLightList) {
 		shader->setVec3("dirLight.direction", glm::normalize(dirLight->direction));
 		shader->setVec3("dirLight.ambient", dirLight->ambient);
 		shader->setVec3("dirLight.diffuse", dirLight->diffuse);
 		shader->setVec3("dirLight.specular", dirLight->specular);
 	}
 
-	for (int i = 0; i < pointLightList.size() ;i++) {
-		shader->setVec3("pointLights[" + std::to_string(i) + "].position", pointLightList[i]->position);
+	//for (int i = 0; i < pointLightList.size() ;i++) {
+	//	shader->setVec3("pointLights[" + std::to_string(i) + "].position", pointLightList[i]->position);
 
-		shader->setVec3("pointLights[" + std::to_string(i) + "].ambient", pointLightList[i]->ambient);
-		shader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", pointLightList[i]->diffuse);
-		shader->setVec3("pointLights[" + std::to_string(i) + "].specular", pointLightList[i]->specular);
+	//	shader->setVec3("pointLights[" + std::to_string(i) + "].ambient", pointLightList[i]->ambient);
+	//	shader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", pointLightList[i]->diffuse);
+	//	shader->setVec3("pointLights[" + std::to_string(i) + "].specular", pointLightList[i]->specular);
 
-		shader->setFloat("pointLights[" + std::to_string(i) + "].constant", pointLightList[i]->constant);
-		shader->setFloat("pointLights[" + std::to_string(i) + "].linear", pointLightList[i]->linear);
-		shader->setFloat("pointLights[" + std::to_string(i) + "].quadratic", pointLightList[i]->quadratique);
+	//	shader->setFloat("pointLights[" + std::to_string(i) + "].constant", pointLightList[i]->constant);
+	//	shader->setFloat("pointLights[" + std::to_string(i) + "].linear", pointLightList[i]->linear);
+	//	shader->setFloat("pointLights[" + std::to_string(i) + "].quadratic", pointLightList[i]->quadratique);
 
-	}
+	//}
 
-	for (int i = 0; i < spotLightList.size() ;i++)
-	{
-		shader->setVec3("spotLight.Position", spotLightList[i]->position);
+	//for (int i = 0; i < spotLightList.size() ;i++)
+	//{
+	//	shader->setVec3("spotLight.Position", spotLightList[i]->position);
 
-		shader->setVec3("spotLight.ambient", spotLightList[i]->ambient);
-		shader->setVec3("spotLight.diffuse", spotLightList[i]->diffuse);
-		shader->setVec3("spotLight.specular", spotLightList[i]->specular);
+	//	shader->setVec3("spotLight.ambient", spotLightList[i]->ambient);
+	//	shader->setVec3("spotLight.diffuse", spotLightList[i]->diffuse);
+	//	shader->setVec3("spotLight.specular", spotLightList[i]->specular);
 
-		shader->setFloat("spotLight.constant", spotLightList[i]->constant);
-		shader->setFloat("spotLight.linear", spotLightList[i]->linear);
-		shader->setFloat("spotLight.quadratic", spotLightList[i]->quadratique);
+	//	shader->setFloat("spotLight.constant", spotLightList[i]->constant);
+	//	shader->setFloat("spotLight.linear", spotLightList[i]->linear);
+	//	shader->setFloat("spotLight.quadratic", spotLightList[i]->quadratique);
 
-		shader->setVec3("spotLight.direction", spotLightList[i]->direction);
-		shader->setFloat("spotLight.cutOff", glm::radians(spotLightList[i]->cutOff));
-		shader->setFloat("spotLight.outerCutOff", glm::radians(spotLightList[i]->outerCutOff));
+	//	shader->setVec3("spotLight.direction", spotLightList[i]->direction);
+	//	shader->setFloat("spotLight.cutOff", glm::radians(spotLightList[i]->cutOff));
+	//	shader->setFloat("spotLight.outerCutOff", glm::radians(spotLightList[i]->outerCutOff));
 
-	}
+	//}
 
 }
 
-glm::mat4 RenderSystem::CalculModel(std::shared_ptr<Transform> currentTransform) {
+glm::mat4 RenderSystem::CalculModel(Transform* currentTransform) {
 	glm::mat4 model = _model;
 
 
@@ -90,7 +90,7 @@ void RenderSystem::InitShadowMap() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void RenderSystem::DrawShadowForDirLight(std::shared_ptr<DirLight> currentLight) {  // Bug sur la window si resize
+void RenderSystem::DrawShadowForDirLight(DirLight* currentLight, Scene* scene) {  // Bug sur la window si resize
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -98,10 +98,15 @@ void RenderSystem::DrawShadowForDirLight(std::shared_ptr<DirLight> currentLight)
 	currentLight->depthShader->Use();
 	currentLight->depthShader->setMatrix("lightSpaceMatrix", currentLight->lightMatrice);
 
-	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
-		if (currentModel->haveToBeDraw && currentModel->castShadow) {
+	for (const auto& currentEntity : scene->GetEntities()) {
+		if (!currentEntity->HasComponent<MeshComponent>() || !currentEntity->HasComponent<Transform>() || currentEntity->HasComponent<DirLight>()) {
+			continue;
+		}
 
-			currentLight->depthShader->setMatrix("model", CalculModel(currentModel->transform));
+		MeshComponent* currentModel = currentEntity->GetComponent<MeshComponent>();
+		std::shared_ptr<Shader> shader = currentModel->GetShader();
+		if (currentModel->haveToBeDraw && currentModel->castShadow) {
+			currentLight->depthShader->setMatrix("model", CalculModel(currentEntity->GetComponent<Transform>()));
 			currentModel->modelMesh->DrawWithoutTexture(currentLight->depthShader);
 		}
 	}
@@ -111,7 +116,7 @@ void RenderSystem::DrawShadowForDirLight(std::shared_ptr<DirLight> currentLight)
 
 }
 
-void RenderSystem::DrawShadowForPointLight(std::shared_ptr<PointLight> currentLight) {
+void RenderSystem::DrawShadowForPointLight(std::shared_ptr<PointLight> currentLight, Scene* scene) {
 	currentLight->aspect = (float)currentLight->shadowWidth / (float)currentLight->shadowHeight;
 	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), currentLight->aspect, currentLight->near_plane, currentLight->far_plane);
 
@@ -139,14 +144,16 @@ void RenderSystem::DrawShadowForPointLight(std::shared_ptr<PointLight> currentLi
 		currentLight->depthShaderCubeMap->setMatrix("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
 	}
 
-	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
-		if (currentModel->haveToBeDraw && currentModel->castShadow) {
-
-			currentLight->depthShaderCubeMap->setMatrix("model", CalculModel(currentModel->transform));
-			currentModel->modelMesh->DrawWithoutTexture(currentLight->depthShaderCubeMap);
+	for (const auto& currentEntity : scene->GetEntities()) {
+		if (!currentEntity->HasComponent<MeshComponent>() || !currentEntity->HasComponent<Transform>()) {
+			continue;
 		}
-	}
+		MeshComponent* currentModel = currentEntity->GetComponent<MeshComponent>();
+		std::shared_ptr<Shader> shader = currentModel->GetShader();
 
+		currentLight->depthShaderCubeMap->setMatrix("model", CalculModel(currentEntity->GetComponent<Transform>()));
+		currentModel->modelMesh->DrawWithoutTexture(currentLight->depthShaderCubeMap);
+	}
 
 
 
@@ -154,46 +161,49 @@ void RenderSystem::DrawShadowForPointLight(std::shared_ptr<PointLight> currentLi
 	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
 }
 
-void RenderSystem::UpdateShadow() {
+void RenderSystem::UpdateShadow(Scene* scene) {
 	glCullFace(GL_FRONT);
-
-	for (std::shared_ptr<DirLight> dirLight : directionalLightList) {
-		DrawShadowForDirLight(dirLight);
+	for (const auto& currentEntity : scene->GetEntities()) {
+		if (currentEntity->HasComponent<DirLight>()) {
+			DrawShadowForDirLight(currentEntity->GetComponent<DirLight>(), scene);
+		}
 	}
 
-	for (std::shared_ptr<PointLight> pointLight : pointLightList) {
-		//DrawShadowForPointLight(pointLight);
-	}
+	//for (std::shared_ptr<PointLight> pointLight : pointLightList) {
+	//	DrawShadowForPointLight(pointLight, scene);
+	//}
 	glCullFace(GL_BACK);
 }
 
 #pragma endregion Shadow
 
-void RenderSystem::AddMeshComponent(std::shared_ptr<MeshComponent> modele) {
-	modeleList.push_back(modele);
-}
 
-void RenderSystem::AddLightComponent(std::shared_ptr<DirLight> modele) {
-	directionalLightList.push_back(modele);
-}
 
-//void RenderSystem::RemoveMeshComponent(std::shared_ptr<MeshComponent> modele) {
-//	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
-//
-//	}
-//}
-
-void RenderSystem::RenderMesh() {
-	UpdateShadow();
+void RenderSystem::RenderScene(Scene* scene) {
+	UpdateShadow(scene);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, *framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	for (std::shared_ptr<MeshComponent> currentModel : modeleList) {
+	std::vector<DirLight*> star;
+	for (const auto& currentEntity : scene->GetEntities()) {
+		if (currentEntity->HasComponent<DirLight>()) {
+			star.push_back(currentEntity->GetComponent<DirLight>());
+		}
+	}
+	for (const auto& currentEntity: scene->GetEntities()) {
+		if (!currentEntity->HasComponent<MeshComponent>()) {
+			continue;
+		}
+		MeshComponent* currentModel = currentEntity->GetComponent<MeshComponent>();
 		std::shared_ptr<Shader> shader = currentModel->GetShader();
 
 		if (currentModel->haveToBeDraw) {
 			shader->Use();
-			shader->setMatrix("lightSpaceMatrix", directionalLightList[0]->lightMatrice);
+
+			if (star.size() != 0) {
+				shader->setMatrix("lightSpaceMatrix", star.at(0)->lightMatrice);
+			}
+
 
 			// V�rifie la position finale (colonne 3 de la matrice)
 
@@ -202,22 +212,23 @@ void RenderSystem::RenderMesh() {
 			shader->setInt("shadowMap", 30);
 			//shader->setInt("shadowCubeMap", 31);
 
-			if (directionalLightList.size() != 0) {
+			if (star.size() != 0) {
 				glActiveTexture(GL_TEXTURE30);
 				glBindTexture(GL_TEXTURE_2D, depthMap);
 			}
-			if (pointLightList.size() != 0) {
-				glActiveTexture(GL_TEXTURE31);
-				glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightList[0]->depthCubeMap);  // Utilise samplerCubeArray dans le shader
-				std::cout << "enter On pointLigList machin chouette, bref viens voir par ici" << std::endl;
-			}
+			//if (pointLightList.size() != 0) {
+			//	glActiveTexture(GL_TEXTURE31);
+			//	glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightList[0]->depthCubeMap);  // Utilise samplerCubeArray dans le shader
+			//	std::cout << "enter On pointLigList machin chouette, bref viens voir par ici" << std::endl;
+			//}
 
-
-			UpdateLight(shader);  // Oui je sais, les light sont recalculer pour chaque modele
+			
+			UpdateLight(shader, star);  // Oui je sais, les light sont recalculer pour chaque modele
 
 			currentModel->modelMesh->Draw(shader);
+
 		}
 
 	}
-
+	star.clear();
 }

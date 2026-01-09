@@ -102,8 +102,8 @@ private:
 	unsigned int quadVBO;  
 
 
-	std::shared_ptr<RenderSystem> renderSystem = nullptr;
-	std::shared_ptr<Scene> currentScene = nullptr;
+	RenderSystem* renderSystem = nullptr;
+	Scene* currentScene = nullptr;
 
 
 	//Legacy

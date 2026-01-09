@@ -1,7 +1,5 @@
 #pragma once
 #include "Entity/Entity.h"
-#include "Entity/Systemes/RenderSystem.h"
-#include "Entity/Components/EntityComponent.h"
 #include <type_traits>
 
 #include "memory.h"
@@ -9,43 +7,11 @@
 
 class Scene {
 public:
-	Scene(std::shared_ptr<RenderSystem> newRenderSystme);
-	void RenderScene();
+	Scene() = default;
 
-
-	template<typename T, typename... Args> std::shared_ptr<T> AddComponent(std::shared_ptr<Entity> currentEntity, Args&&... args) {
-		std::shared_ptr<T> component = currentEntity->EntityCreateModules<T>(std::forward<Args>(args)...);
-
-
-		component->transform = currentEntity->transform;
-		component->entity = currentEntity;
-
-		component->transform;
-
-		if constexpr (std::is_same_v<T, MeshComponent>) {
-			renderSystem->AddMeshComponent(component);
-		}
-		else if constexpr (std::is_same_v<T, DirLight>) {
-			renderSystem->AddLightComponent(component);  // Prend en compte que les dir 
-		}
-
-
-		return component;
-	}
-
-	template<typename T> std::shared_ptr<T> GetComponent(std::shared_ptr<Entity> currentEntity) {
-		for (std::shared_ptr<EntityComponent> currentComponent : currentEntity->entityComponentList) {
-			if constexpr(std::is_same_v<T, currentComponent>) {
-				return currentComponent;
-			}
-		}
-		return nullptr;
-	}
-
-	std::shared_ptr<Entity> CreateNewEntity();
-
+	Entity* CreateNewEntity();
+	const std::vector<std::unique_ptr<Entity>>& GetEntities() const { return listEntity; }
 private:
-	std::vector<std::shared_ptr<Entity>> listEntity;
+	std::vector<std::unique_ptr<Entity>> listEntity;
 
-	std::shared_ptr<RenderSystem> renderSystem;
 };

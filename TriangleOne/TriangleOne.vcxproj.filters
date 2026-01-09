@@ -54,9 +54,6 @@
     <ClCompile Include="src\Entity\Entity.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="include\Entity\Components\EntityComponent.h">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="src\Entity\Systemes\RenderSystem.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>

@@ -1,10 +1,9 @@
 #pragma once
-#include "Entity/Components/EntityComponent.h"
 #include "Modules/RenderModule/ModelClass.h"
 #include "memory.h"
+#include "Entity/Entity.h"
 
-
-struct MeshComponent : EntityComponent {
+struct MeshComponent : Component {
 public:
 	MeshComponent(std::string model, std::shared_ptr<Shader> _shader);
 

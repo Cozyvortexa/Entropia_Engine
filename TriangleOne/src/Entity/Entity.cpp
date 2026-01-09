@@ -1,11 +1,5 @@
 #include "Entity/Entity.h"
 
-Entity::Entity() {
-	transform = EntityCreateModules<Transform>();
-	transform->transform = transform;  // Tkt c'est normal
-	transform->entity = nullptr; 
-}
-
 
 //void GameObject::DrawObject(Shader* shader, bool drawShadow) {
 //
@@ -29,15 +23,15 @@ Entity::Entity() {
 
 
 
-void Entity::EntityRemoveModules(std::shared_ptr<EntityComponent> module) {
-	for (int i = 0; i < entityComponentList.size(); i++) {
-		if (entityComponentList[i] == module) {
-			//entityComponentList[i]->Shutdown();
-			entityComponentList.erase(entityComponentList.begin() + i);
-			return;
-		}
-		else {
-			std::cout << "Component a retirer non trouver" << std::endl;
-		}
-	}
-}
+//void Entity::EntityRemoveModules(std::shared_ptr<EntityComponent> module) {
+//	for (int i = 0; i < entityComponentList.size(); i++) {
+//		if (entityComponentList[i] == module) {
+//			//entityComponentList[i]->Shutdown();
+//			entityComponentList.erase(entityComponentList.begin() + i);
+//			return;
+//		}
+//		else {
+//			std::cout << "Component a retirer non trouver" << std::endl;
+//		}
+//	}
+//}

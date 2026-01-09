@@ -6,10 +6,9 @@
 #include <vector>
 
 #include "Modules/RenderModule/Shader.h"
-#include "Entity/Components/EntityComponent.h"
 #include "Entity/Components/Transform.h"
 
-struct Light : EntityComponent{
+struct Light : Component{
 public:
 	Light() {};
 	Light(glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
