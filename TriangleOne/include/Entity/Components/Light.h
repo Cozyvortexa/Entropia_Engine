@@ -40,8 +40,8 @@ struct DirLight : public Light {
 	unsigned int depthMapFBO = 0;
 
 	//Shadow purpose
-	float near_plane = 1.0f, far_plane = 50.0f;
-	float orthoSize = 50.0f;
+	float near_plane = 1.0f, far_plane = 100.0f;
+	float orthoSize = 40.0f;
 	float distance;
 
 	glm::mat4 lightProjection = glm::mat4(1);
