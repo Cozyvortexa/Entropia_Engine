@@ -1,9 +1,12 @@
 #include "Entity/Systemes/RenderSystem.h"
 
-RenderSystem::RenderSystem(unsigned int* newFramebuffer) {
+RenderSystem::RenderSystem(unsigned int* newFramebuffer, Camera* newMainCamera) {
 	framebuffer = newFramebuffer;
 	InitShadowMap();
+	mainCamera = newMainCamera;
 }
+
+
 
 void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList) {
 	shader->Use();
@@ -161,11 +164,14 @@ void RenderSystem::DrawShadowForPointLight(std::shared_ptr<PointLight> currentLi
 	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
 }
 
-void RenderSystem::UpdateShadow(Scene* scene) {
+void RenderSystem::UpdateShadow(Scene* scene, glm::mat4 projection) {
 	glCullFace(GL_FRONT);
 	for (const auto& currentEntity : scene->GetEntities()) {
 		if (currentEntity->HasComponent<DirLight>()) {
-			DrawShadowForDirLight(currentEntity->GetComponent<DirLight>(), scene);
+			DirLight* currentLight = currentEntity->GetComponent<DirLight>();
+
+			currentLight->UpdateMatrix(projection, mainCamera->GetViewMatrix());
+			DrawShadowForDirLight(currentLight, scene);
 		}
 	}
 
@@ -179,8 +185,8 @@ void RenderSystem::UpdateShadow(Scene* scene) {
 
 
 
-void RenderSystem::RenderScene(Scene* scene) {
-	UpdateShadow(scene);
+void RenderSystem::RenderScene(Scene* scene, glm::mat4 projection) {
+	UpdateShadow(scene, projection);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, *framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

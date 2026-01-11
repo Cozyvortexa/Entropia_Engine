@@ -28,6 +28,8 @@ public:
 
 	glm::vec3 GetFront() { return cameraFront; }
 
+	float GetNearPlane() { return nearPlane; }
+	float GetFarPlane() { return farPlane; }
 private:
 	GLFWwindow* window = nullptr;
 
@@ -40,6 +42,8 @@ private:
 	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
+	float nearPlane = 0.1f;
+	float farPlane = 100.0f;
 
 	float zoom = 45.0f;  // valeur de zoom par default 
 	//Rotation

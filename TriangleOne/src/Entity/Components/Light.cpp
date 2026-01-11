@@ -1,6 +1,5 @@
 #include <Entity/Components/Light.h>
 
-
 void Light::InitBaseLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular) {
 	position = _position;
 	ambient = _ambient;
@@ -76,43 +75,6 @@ std::pair<unsigned int, unsigned int> Light::InitCubeMap() {
 }
 
 
-//void Light::UseLight(Shader* shader) {
-//	switch (lightType)
-//	{
-//	case Light::DirectionalLight: {
-//		shader->setVec3("dirLight.direction", glm::normalize(_direction));
-//		shader->setVec3("dirLight.ambient", _ambient);
-//		shader->setVec3("dirLight.diffuse", _diffuse);
-//		shader->setVec3("dirLight.specular", _specular);
-//		break;
-//	}
-//	default:
-//		break;
-//	}
-//}
-//
-//void Light::UseShadow(Shader* shader) {
-//	switch (lightType)
-//	{
-//	case Light::DirectionalLight: {
-//		float near_plane = 1.0f, far_plane = 50.0f;
-//		float orthoSize = 50.0f;
-//		float distance = far_plane / 2;
-//		glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
-//
-//		glm::vec3 lightPos = normalize(_direction) * distance;
-//
-//		glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-//
-//		glm::mat4 lightMatrice = lightProjection * lightView;
-//		shader->setMatrix("lightSpaceMatrix", lightMatrice);
-//		break;
-//	}
-//	default:
-//		break;
-//	}
-//}
-
 PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap) {
 	std::pair<unsigned int, unsigned int> depthBuffer = InitCubeMap();
 	depthCubeMapFBO = depthBuffer.first;
@@ -148,24 +110,86 @@ DirLight::DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, 
 
 	InitBaseLight(_position, _ambient, _diffuse, _specular);
 	direction = _direction;
-	distance = far_plane / 2;
 
 	depthShader = _depthShader;
 
 
-	UpdateMatrix();
 
+	ndcCubePoint.push_back(glm::vec3(-1, -1, -1));
+	ndcCubePoint.push_back(glm::vec3(1, -1, -1));
+	ndcCubePoint.push_back(glm::vec3(-1, 1, -1));
+	ndcCubePoint.push_back(glm::vec3(1, 1, -1));
+
+	ndcCubePoint.push_back(glm::vec3(-1, -1, 1));
+	ndcCubePoint.push_back(glm::vec3(1, -1, 1));
+	ndcCubePoint.push_back(glm::vec3(-1, 1, 1));
+	ndcCubePoint.push_back(glm::vec3(1, 1, 1));
 }
 
-void DirLight::UpdateMatrix() {
-	if (glm::length(direction) < 0.001f) {
-		direction = glm::vec3(0, -1, 0); // Valeur par défaut sûre
+
+
+std::vector<glm::vec3> DirLight::CalcWorldCorner(const glm::mat4 projection, glm::mat4 viewMatrice) {
+	glm::mat4 invProjectionViewMatrice = glm::inverse(projection * viewMatrice);
+	std::vector<glm::vec3> result;
+
+	for (glm::vec3 ndcCorner : ndcCubePoint) {
+		glm::vec4 point = invProjectionViewMatrice * glm::vec4(ndcCorner, 1);
+		glm::vec3 worldCorner = glm::vec3(point) / point.w;
+		result.push_back(worldCorner);
 	}
-	lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
+	return result;
+}
 
-	lightPos = normalize(direction) * distance;
+glm::vec3 DirLight::FrustumCenter(std::vector<glm::vec3> corners)
+{
+	glm::vec3 center(0.0f);
 
-	lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	for (int i = 0; i < 8; ++i)
+		center += corners[i];
 
-	lightMatrice = lightProjection * lightView;
+	return center / 8.0f;
+}
+
+
+AABB DirLight::CalcBoundingBox(const std::vector<glm::vec3> worldCorner) {
+	glm::vec3 minPoint(std::numeric_limits<float>::infinity());
+	glm::vec3 maxPoint(-std::numeric_limits<float>::infinity());
+
+
+	for (glm::vec3 worldPoint : worldCorner) {
+
+		minPoint = glm::min(minPoint, worldPoint);
+		maxPoint = glm::max(maxPoint, worldPoint);
+	}
+
+	return AABB(minPoint, maxPoint);
+}
+
+void DirLight::UpdateMatrix(glm::mat4 projection, const glm::mat4 viewMatrice) {
+	if (glm::length(direction) < 0.001f) direction = glm::vec3(0, -1, 0); // Valeur par défaut sûre
+
+	std::vector<glm::vec3> worldCorners = CalcWorldCorner(projection, viewMatrice);
+
+	lightPos =  normalize(direction) * 10.0f;
+	lightViewMatrice = glm::lookAt(lightPos, glm::vec3(0), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	std::vector<glm::vec3> lightCorners;
+	for (glm::vec3 currentCorner : worldCorners) {
+		lightCorners.push_back(lightViewMatrice * glm::vec4(currentCorner, 1.0f));
+	}
+
+	// Deuxieme passage
+	//glm::vec3 frustumCenter = FrustumCenter(lightCorners);
+	//lightViewMatrice = glm::lookAt(lightPos, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	//float distance = (frustrumFitting.max.z - frustrumFitting.min.z) / 2.0f;
+
+
+
+	AABB box = CalcBoundingBox(lightCorners);
+	lightProjection = glm::ortho(box.min.x, box.max.x, box.min.y, box.max.y, box.min.z, box.max.z);
+
+	lightMatrice = lightProjection * lightViewMatrice;
+
+
 }

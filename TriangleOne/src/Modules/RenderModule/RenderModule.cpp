@@ -568,7 +568,7 @@ void RenderModule::Init() {
 	//modelMesh2 = new Model("Assets/tryModel/backpacka.obj");
 
 
-	renderSystem = new RenderSystem(&framebuffer);
+	renderSystem = new RenderSystem(&framebuffer, mainCamera);
 
 	currentScene = new Scene();
 	//Maison
@@ -623,8 +623,7 @@ void RenderModule::Render()
 		DrawLight(i);
 
 
-	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
-	glm::mat4 model = glm::rotate(_model, glm::radians(90.0f), glm::vec3(1, 0, 0));
+	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), mainCamera->GetNearPlane(), mainCamera->GetFarPlane());
 
 	mainShader->Use(); 
 	mainShader->setMatrix("model", _model);
@@ -636,7 +635,7 @@ void RenderModule::Render()
 	//house->DrawObject(mainShader, false);
 	//cube->DrawObject(mainShader, false);
 
-	renderSystem->RenderScene(currentScene);
+	renderSystem->RenderScene(currentScene, projection);
 
 
 	//DrawSkyBox(projection);

@@ -1,12 +1,27 @@
 #pragma once
+#define NOMINMAX
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <vector>
 
+#include "Camera.h"
 #include "Modules/RenderModule/Shader.h"
 #include "Entity/Components/Transform.h"
+
+struct AABB {
+	AABB() {};
+	AABB(glm::vec3 newMin, glm::vec3 newMax)
+	{
+		min = newMin;
+		max = newMax;
+	}
+public:
+	glm::vec3 min;
+	glm::vec3 max;
+};
+
 
 struct Light : Component{
 public:
@@ -40,21 +55,28 @@ struct DirLight : public Light {
 	unsigned int depthMapFBO = 0;
 
 	//Shadow purpose
-	float near_plane = 1.0f, far_plane = 100.0f;
+	float near_plane = 0.1f, far_plane = 100.0f;
 	float orthoSize = 40.0f;
-	float distance;
 
 	glm::mat4 lightProjection = glm::mat4(1);
 	glm::vec3 lightPos = glm::vec3(0);
-	glm::mat4 lightView = glm::mat4(1);
+	glm::mat4 lightViewMatrice = glm::mat4(1);
 	glm::mat4 lightMatrice = glm::mat4(1);
 
-	void UpdateMatrix();
+	void UpdateMatrix(glm::mat4 projection,const glm::mat4 viewMatrice);
+
 
 
 	std::shared_ptr<Shader> depthShader = nullptr;
 
+private:
+	glm::vec3 FrustumCenter(const std::vector<glm::vec3> corners);
+	std::vector<glm::vec3> CalcWorldCorner(const glm::mat4 projection, glm::mat4 viewMatrice);
+	AABB CalcBoundingBox(std::vector<glm::vec3> worldCorner);
+
+	std::vector<glm::vec3> ndcCubePoint;
 };
+
 
 struct PointLight : public Light{
 public:

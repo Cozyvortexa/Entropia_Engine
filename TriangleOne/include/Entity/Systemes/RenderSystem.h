@@ -11,13 +11,13 @@
 
 class RenderSystem {
 public:
-	RenderSystem(unsigned int* newFramebuffer);
-	void RenderScene(Scene* scene);
+	RenderSystem(unsigned int* newFramebuffer, Camera* newMainCamera);
+	void RenderScene(Scene* scene, glm::mat4 projection);
 
 
 private:
 	void UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList);
-	void UpdateShadow(Scene* scene);
+	void UpdateShadow(Scene* scene, glm::mat4 projection);
 
 	void DrawShadowForDirLight(DirLight* currentLight, Scene* scene);
 	void DrawShadowForPointLight(std::shared_ptr<PointLight> currentLight, Scene* scene);
@@ -26,7 +26,7 @@ private:
 
 	glm::mat4 CalculModel(Transform* currentTransform);
 
-
+	Camera* mainCamera = nullptr;
 	glm::mat4 _model = glm::mat4(1.0f);
 
 	unsigned int depthMapFBO = 0;
