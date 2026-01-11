@@ -1,14 +1,21 @@
 #include <Entity/Components/Light.h>
 
-void Light::InitBaseLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular) {
+#pragma region Init
+void Light::InitBaseLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float newIntensity) {
 	position = _position;
 	ambient = _ambient;
 	diffuse = _diffuse;
 	specular = _specular;
+
+	intensity = newIntensity;
+
+	ambient = glm::clamp(ambient, 0.0f, 1.0f);
+	diffuse = glm::clamp(diffuse, 0.0f, 1.0f);
+	diffuse *= intensity;
 }
 
-Light::Light(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular) {
-	InitBaseLight(_position, _ambient, _diffuse, _specular);
+Light::Light(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float newIntensity) {
+	InitBaseLight(_position, _ambient, _diffuse, _specular, newIntensity);
 }
 
 std::pair<unsigned int, unsigned int> Light::InitShadowMap() {
@@ -74,26 +81,11 @@ std::pair<unsigned int, unsigned int> Light::InitCubeMap() {
 	return std::make_pair(depthCubeMapFBO, depthCubemap);
 }
 
+#pragma endregion Init
 
-PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap) {
-	std::pair<unsigned int, unsigned int> depthBuffer = InitCubeMap();
-	depthCubeMapFBO = depthBuffer.first;
-	depthCubeMap = depthBuffer.second;
 
-	constant = _constant;
-	linear = _linear;
-	quadratique = _quadratique;
-
-	aspect = (float)shadowWidth / (float)shadowHeight;
-	//Valeur par default
-	near_plane = 0.1f;
-	far_plane = 50.0f;
-
-	depthShaderCubeMap = _depthShaderCubeMap;
-}
-
-SpotLight::SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _constant, float _linear, float _quadratique, float _cutOff, float _outercutOff) {
-	InitBaseLight(_position, _ambient, _diffuse, _specular);
+SpotLight::SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _constant, float _linear, float _quadratique, float _cutOff, float _outercutOff, float newIntensity) {
+	InitBaseLight(_position, _ambient, _diffuse, _specular, newIntensity);
 	constant = _constant;
 	linear = _linear;
 	quadratique = _quadratique;
@@ -103,12 +95,15 @@ SpotLight::SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse
 	direction = _direction;
 }
 
-DirLight::DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader) {
+
+#pragma region DirLight
+
+DirLight::DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader, float newIntensity) {
 	std::pair<unsigned int, unsigned int> depthBuffer = InitShadowMap();
 	depthMapFBO = depthBuffer.first;
 	depthMap = depthBuffer.second;  // On sait jamais
 
-	InitBaseLight(_position, _ambient, _diffuse, _specular);
+	InitBaseLight(_position, _ambient, _diffuse, _specular, newIntensity);
 	direction = _direction;
 
 	depthShader = _depthShader;
@@ -125,9 +120,6 @@ DirLight::DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, 
 	ndcCubePoint.push_back(glm::vec3(-1, 1, 1));
 	ndcCubePoint.push_back(glm::vec3(1, 1, 1));
 }
-
-
-
 std::vector<glm::vec3> DirLight::CalcWorldCorner(const glm::mat4 projection, glm::mat4 viewMatrice) {
 	glm::mat4 invProjectionViewMatrice = glm::inverse(projection * viewMatrice);
 	std::vector<glm::vec3> result;
@@ -174,7 +166,7 @@ std::vector<glm::vec3> DirLight::WorldCornerToLightSpace(glm::mat4 lightViewMatr
 }
 
 void DirLight::UpdateMatrix(glm::mat4 projection, const glm::mat4 viewMatrice) {
-	if (glm::length(direction) < 0.001f) direction = glm::vec3(0, -1, 0); // Valeur par défaut sûre
+	if (glm::length(direction) < 0.001f) direction = glm::vec3(0, -1, 0); // Valeur par défaut
 
 	std::vector<glm::vec3> worldCorners = CalcWorldCorner(projection, viewMatrice);
 
@@ -201,3 +193,27 @@ void DirLight::UpdateMatrix(glm::mat4 projection, const glm::mat4 viewMatrice) {
 
 
 }
+
+#pragma endregion DirLight
+
+
+#pragma region PointLight
+
+PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap) {
+	std::pair<unsigned int, unsigned int> depthBuffer = InitCubeMap();
+	depthCubeMapFBO = depthBuffer.first;
+	depthCubeMap = depthBuffer.second;
+
+	constant = _constant;
+	linear = _linear;
+	quadratique = _quadratique;
+
+	aspect = (float)shadowWidth / (float)shadowHeight;
+	//Valeur par default
+	near_plane = 0.1f;
+	far_plane = 50.0f;
+
+	depthShaderCubeMap = _depthShaderCubeMap;
+}
+
+#pragma endregion PointLight

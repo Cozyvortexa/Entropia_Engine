@@ -8,7 +8,7 @@ RenderSystem::RenderSystem(unsigned int* newFramebuffer, Camera* newMainCamera) 
 
 
 
-void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList) {
+void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList, const std::vector<PointLight*> pointLightList) {
 	shader->Use();
 	for (DirLight* dirLight: directionalLightList) {
 		shader->setVec3("dirLight.direction", glm::normalize(dirLight->direction));
@@ -17,18 +17,19 @@ void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLi
 		shader->setVec3("dirLight.specular", dirLight->specular);
 	}
 
-	//for (int i = 0; i < pointLightList.size() ;i++) {
-	//	shader->setVec3("pointLights[" + std::to_string(i) + "].position", pointLightList[i]->position);
+	for (int i = 0; i < pointLightList.size() ;i++) {
+		shader->setVec3("pointLights[" + std::to_string(i) + "].position", pointLightList[i]->position);
 
-	//	shader->setVec3("pointLights[" + std::to_string(i) + "].ambient", pointLightList[i]->ambient);
-	//	shader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", pointLightList[i]->diffuse);
-	//	shader->setVec3("pointLights[" + std::to_string(i) + "].specular", pointLightList[i]->specular);
+		shader->setVec3("pointLights[" + std::to_string(i) + "].ambient", pointLightList[i]->ambient);
+		shader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", pointLightList[i]->diffuse);
+		shader->setVec3("pointLights[" + std::to_string(i) + "].specular", pointLightList[i]->specular);
 
-	//	shader->setFloat("pointLights[" + std::to_string(i) + "].constant", pointLightList[i]->constant);
-	//	shader->setFloat("pointLights[" + std::to_string(i) + "].linear", pointLightList[i]->linear);
-	//	shader->setFloat("pointLights[" + std::to_string(i) + "].quadratic", pointLightList[i]->quadratique);
+		shader->setFloat("pointLights[" + std::to_string(i) + "].constant", pointLightList[i]->constant);
+		shader->setFloat("pointLights[" + std::to_string(i) + "].linear", pointLightList[i]->linear);
+		shader->setFloat("pointLights[" + std::to_string(i) + "].quadratic", pointLightList[i]->quadratique);
 
-	//}
+	}
+	shader->setInt("nbrPointLight", pointLightList.size());
 
 	//for (int i = 0; i < spotLightList.size() ;i++)
 	//{
@@ -193,11 +194,17 @@ void RenderSystem::RenderScene(Scene* scene, glm::mat4 projection) {
 	glBindFramebuffer(GL_FRAMEBUFFER, *framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	std::vector<DirLight*> star;
+	std::vector<PointLight*> pointLights;
 	for (const auto& currentEntity : scene->GetEntities()) {
 		if (currentEntity->HasComponent<DirLight>()) {
 			star.push_back(currentEntity->GetComponent<DirLight>());
 		}
+		else if(currentEntity->HasComponent<PointLight>()) {
+			pointLights.push_back(currentEntity->GetComponent<PointLight>());
+		}
 	}
+	if (pointLights.size() >= 8) std::cout << "Max pointLight number reach" << std::endl;  // Valeur a definir a l'avenir dans un dossier config
+
 	for (const auto& currentEntity: scene->GetEntities()) {
 		if (!currentEntity->HasComponent<MeshComponent>()) {
 			continue;
@@ -231,7 +238,7 @@ void RenderSystem::RenderScene(Scene* scene, glm::mat4 projection) {
 			//}
 
 			
-			UpdateLight(shader, star);  // Oui je sais, les light sont recalculer pour chaque modele
+			UpdateLight(shader, star, pointLights);  // Oui je sais, les light sont recalculer pour chaque modele
 
 			currentModel->modelMesh->Draw(shader);
 

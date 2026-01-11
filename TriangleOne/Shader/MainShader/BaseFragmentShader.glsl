@@ -39,8 +39,9 @@ struct PointLight {
 	float linear;
 	float quadratic;
 };
-#define NR_POINT_LIGHTS 1
-uniform PointLight pointLights[NR_POINT_LIGHTS];
+#define NBR_MAX_POINT_LIGHTS 8  // A setup dans config si possible ( quand il existera) 
+uniform PointLight pointLights[NBR_MAX_POINT_LIGHTS];
+uniform int nbrPointLight;
 
 struct DirLight{
 	vec3 direction;
@@ -100,7 +101,7 @@ void main()
 		final_lightning += CalcDirLight(dirLight, viewDir, norm, finalDiffuse, finalSpecular); // Une seule lumiere dir dans la scene 
 	}
 
-	for (int i = 0; i < NR_POINT_LIGHTS; i++)
+	for (int i = 0; i < nbrPointLight; i++)
 	{
 		if (length(pointLights[i].ambient + pointLights[i].diffuse + pointLights[i].specular )> 0.001  ){  // On aplique pas le calcul si les lumiere sont eteinte
 			//final_lightning += CalcPointLight(pointLights[i], viewDir, norm, finalDiffuse, finalSpecular);

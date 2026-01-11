@@ -580,15 +580,17 @@ void RenderModule::Init() {
 
 
 	glm::vec3 ambient = glm::vec3(0.3f, 0.3f, 0.3f);
-	glm::vec3 diffuse = glm::vec3(3.0f, 3.0f, 3.0f);
+	glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 	glm::vec3 specular = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	float intensity = 3.0f;
 
 	glm::vec3 worldLightDir = glm::vec3(-2.0f, 4.0f, -1.0f);
 
 	//DirLight   	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader)
 	Entity* entityLight = currentScene->CreateNewEntity();
 	entityLight->AddComponent<Transform>();
-	entityLight->AddComponent<DirLight>(glm::vec3(0),ambient, diffuse, specular, worldLightDir, depthShader);
+	entityLight->AddComponent<DirLight>(glm::vec3(0),ambient, diffuse, specular, worldLightDir, depthShader, intensity);
 
 	float pointLightConstant = 1.0f;
 	float pointLightLinear = 0.09f;
@@ -597,6 +599,8 @@ void RenderModule::Init() {
 	//PointLight
 	Entity* entityPointLight = currentScene->CreateNewEntity();
 	entityPointLight->AddComponent<Transform>()->position = glm::vec3(1.0f, 2.0f, 0.0f);
+	//entityPointLight->AddComponent<PointLight>();
+
 
 
 	//entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightConstant, pointLightLinear, pointLightQuadratique, depthShaderCubeMap);
