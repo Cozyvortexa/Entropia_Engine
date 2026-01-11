@@ -555,7 +555,7 @@ void RenderModule::Init() {
 	//glEnable(GL_FRAMEBUFFER_SRGB);
 
 	//Camera 
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	mainCamera = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 

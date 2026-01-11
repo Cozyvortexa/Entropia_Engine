@@ -73,6 +73,7 @@ private:
 	glm::vec3 FrustumCenter(const std::vector<glm::vec3> corners);
 	std::vector<glm::vec3> CalcWorldCorner(const glm::mat4 projection, glm::mat4 viewMatrice);
 	AABB CalcBoundingBox(std::vector<glm::vec3> worldCorner);
+	std::vector<glm::vec3> WorldCornerToLightSpace(glm::mat4 lightViewMatrice, std::vector<glm::vec3> worldCorners);
 
 	std::vector<glm::vec3> ndcCubePoint;
 };

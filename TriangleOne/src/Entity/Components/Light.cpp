@@ -165,6 +165,14 @@ AABB DirLight::CalcBoundingBox(const std::vector<glm::vec3> worldCorner) {
 	return AABB(minPoint, maxPoint);
 }
 
+std::vector<glm::vec3> DirLight::WorldCornerToLightSpace(glm::mat4 lightViewMatrice, std::vector<glm::vec3> worldCorners) {
+	std::vector<glm::vec3> lightCorners;
+	for (glm::vec3 currentCorner : worldCorners) {
+		lightCorners.push_back(lightViewMatrice * glm::vec4(currentCorner, 1.0f));
+	}
+	return lightCorners;
+}
+
 void DirLight::UpdateMatrix(glm::mat4 projection, const glm::mat4 viewMatrice) {
 	if (glm::length(direction) < 0.001f) direction = glm::vec3(0, -1, 0); // Valeur par défaut sûre
 
@@ -173,21 +181,21 @@ void DirLight::UpdateMatrix(glm::mat4 projection, const glm::mat4 viewMatrice) {
 	lightPos =  normalize(direction) * 10.0f;
 	lightViewMatrice = glm::lookAt(lightPos, glm::vec3(0), glm::vec3(0.0f, 1.0f, 0.0f));
 
-	std::vector<glm::vec3> lightCorners;
-	for (glm::vec3 currentCorner : worldCorners) {
-		lightCorners.push_back(lightViewMatrice * glm::vec4(currentCorner, 1.0f));
-	}
-
-	// Deuxieme passage
-	//glm::vec3 frustumCenter = FrustumCenter(lightCorners);
-	//lightViewMatrice = glm::lookAt(lightPos, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
-
-	//float distance = (frustrumFitting.max.z - frustrumFitting.min.z) / 2.0f;
-
-
+	std::vector<glm::vec3> lightCorners = WorldCornerToLightSpace(lightViewMatrice, worldCorners);
 
 	AABB box = CalcBoundingBox(lightCorners);
-	lightProjection = glm::ortho(box.min.x, box.max.x, box.min.y, box.max.y, box.min.z, box.max.z);
+
+	// Deuxieme passage
+	float distance = (box.max.z - box.min.z) / 2.0f;
+	lightPos = normalize(direction) * distance;
+	glm::vec3 frustumCenter = FrustumCenter(worldCorners);
+	lightViewMatrice = glm::lookAt(frustumCenter, frustumCenter - lightPos, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	lightCorners = WorldCornerToLightSpace(lightViewMatrice, worldCorners);
+	box = CalcBoundingBox(lightCorners);
+
+
+	lightProjection = glm::ortho(box.min.x, box.max.x, box.min.y, box.max.y, box.min.z , box.max.z);
 
 	lightMatrice = lightProjection * lightViewMatrice;
 

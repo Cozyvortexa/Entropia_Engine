@@ -166,6 +166,7 @@ void RenderSystem::DrawShadowForPointLight(std::shared_ptr<PointLight> currentLi
 
 void RenderSystem::UpdateShadow(Scene* scene, glm::mat4 projection) {
 	glCullFace(GL_FRONT);
+	glEnable(GL_DEPTH_CLAMP);
 	for (const auto& currentEntity : scene->GetEntities()) {
 		if (currentEntity->HasComponent<DirLight>()) {
 			DirLight* currentLight = currentEntity->GetComponent<DirLight>();
@@ -178,6 +179,7 @@ void RenderSystem::UpdateShadow(Scene* scene, glm::mat4 projection) {
 	//for (std::shared_ptr<PointLight> pointLight : pointLightList) {
 	//	DrawShadowForPointLight(pointLight, scene);
 	//}
+	glDisable(GL_DEPTH_CLAMP);
 	glCullFace(GL_BACK);
 }
 
