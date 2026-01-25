@@ -599,7 +599,7 @@ void RenderModule::Init() {
 	Entity* entityPointLight = currentScene->CreateNewEntity();
 	entityPointLight->AddComponent<Transform>()->position = glm::vec3(0.0f, -0.1f, 0.0f);
 
-	entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightrange, depthShaderCubeMap, 0.5f);
+	entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightrange, depthShaderCubeMap, 5.0f);
 
 
 

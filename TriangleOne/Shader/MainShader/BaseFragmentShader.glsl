@@ -110,17 +110,16 @@ void main()
 		//final_lightning += CalcSpotLight(spotLight, viewDir, norm, finalDiffuse, finalSpecular);  // SpotLight non fonctionnelle ( casser intentionnellement ) 
 	}
 
-//	float gamma = 2.2;
-//	vec3 diffuseColor = pow(finalDiffuse.rgb, vec3(gamma));
-//	_diffuse += diffuseColor;
-//
 
 	vec3 lighting = final_lightning * vec3(finalDiffuse);
 
+	//Correction gamma
+	//float gamma = 2.2;
+	//vec3 mapped = lighting / (lighting + vec3(1.0));
+	//mapped = pow(mapped, vec3(1.0 / 2.2))
+	//FragColor = vec4(mapped, 1.0);
 
 	FragColor = vec4(lighting, 1.0);
-
-	//FragColor = vec4(_ambient + _diffuse + _specular, 1.0);
 }
 
 
@@ -182,9 +181,10 @@ vec3 CalcPointLight(PointLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse,
 	attenuation = attenuation * attenuation;
 	attenuation = attenuation / (distance * distance + 1.0);
 
-	float diff = max(dot(norm, lightDir), 0.0);
+	float diff = dot(norm, lightDir) * 0.5 + 0.5;
 	//light.diffuse -= ShadowPointLight(light);
 	vec3 diffuse = light.diffuse * diff;
+	diff = diff * diff;
 
 	 // Specular
 	vec3 V = normalize(viewPos - FragPos);
