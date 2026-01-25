@@ -35,9 +35,7 @@ struct PointLight {
 	vec3 diffuse;
 	vec3 specular;
 
-	float constant;
-	float linear;
-	float quadratic;
+	float range;
 };
 #define NBR_MAX_POINT_LIGHTS 8  // A setup dans config si possible ( quand il existera) 
 uniform PointLight pointLights[NBR_MAX_POINT_LIGHTS];
@@ -171,28 +169,38 @@ vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, ve
 vec3 CalcPointLight(PointLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular)
 {
 	vec3 lightDir = normalize(light.position - FragPos);
-	float diff = max(dot(lightDir, norm), 0.0);
+
 
 	float distance = length(light.position - FragPos);
-	float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+	if(distance > light.range) { 
+        return vec3(0.0, 0.0, 0.0);  // A modiff
+    }
+	// C'est l'heure de la triche 
+	float distFrac = distance / light.range;
+	float attenuation = clamp(1.0 - (distFrac * distFrac * distFrac * distFrac), 0.0, 1.0);
 
+	attenuation = attenuation * attenuation;
+	attenuation = attenuation / (distance * distance + 1.0);
+
+	float diff = max(dot(norm, lightDir), 0.0);
 	//light.diffuse -= ShadowPointLight(light);
+	vec3 diffuse = light.diffuse * diff;
 
-	vec3 diffuse = light.diffuse * diff * attenuation;
+	 // Specular
+	vec3 V = normalize(viewPos - FragPos);
+	vec3 halfwayVec = normalize(lightDir + V);
+	float spec = pow(max(dot(viewDir, halfwayVec), 0.0), material.shininess); // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
+	vec3 specular = light.specular * spec * finalSpecular.rgb * attenuation;
+
 	vec3 finalColor = diffuse * finalDiffuse.rgb;
 
+
 	vec3 light_contribution = vec3(0.0);
-
-
 	if (specularNbr == 0 ){
-		light_contribution = finalColor;
+		light_contribution = finalColor * attenuation;
 	}
-	else{  // Specular
-		vec3 reflectDir = reflect(-lightDir, norm); // on inverse lightDir car c'est pas la bonne direction
-		float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);  // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
-		vec3 specular = light.specular * spec * finalSpecular.rgb * attenuation;
-
-		light_contribution = (finalColor + specular ) * 1.0;  //Sale batard on devrait t'envoyer au goulag pour cque ta fais 
+	else{ 
+		light_contribution = (finalColor + specular ) * attenuation;
 	}
 
 

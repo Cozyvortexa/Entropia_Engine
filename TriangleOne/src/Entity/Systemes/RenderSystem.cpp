@@ -24,9 +24,8 @@ void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLi
 		shader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", pointLightList[i].first->diffuse);
 		shader->setVec3("pointLights[" + std::to_string(i) + "].specular", pointLightList[i].first->specular);
 
-		shader->setFloat("pointLights[" + std::to_string(i) + "].constant", pointLightList[i].first->constant);
-		shader->setFloat("pointLights[" + std::to_string(i) + "].linear", pointLightList[i].first->linear);
-		shader->setFloat("pointLights[" + std::to_string(i) + "].quadratic", pointLightList[i].first->quadratique);
+		shader->setFloat("pointLights[" + std::to_string(i) + "].range", pointLightList[i].first->range);
+
 
 	}
 	shader->setInt("nbrPointLight", pointLightList.size());

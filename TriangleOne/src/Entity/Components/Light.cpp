@@ -198,7 +198,7 @@ void DirLight::UpdateMatrix(glm::mat4 projection, const glm::mat4 viewMatrice) {
 
 #pragma region PointLight
 
-PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap, float newIntensity) {
+PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _range, std::shared_ptr<Shader> _depthShaderCubeMap, float newIntensity) {
 	std::pair<unsigned int, unsigned int> depthBuffer = InitCubeMap();
 	depthCubeMapFBO = depthBuffer.first;
 	depthCubeMap = depthBuffer.second;
@@ -206,9 +206,7 @@ PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specul
 	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
 	intensity = newIntensity;
 
-	constant = _constant;
-	linear = _linear;
-	quadratique = _quadratique;
+	range = _range;
 
 	aspect = (float)shadowWidth / (float)shadowHeight;
 	//Valeur par default

@@ -79,10 +79,8 @@ private:
 
 struct PointLight : public Light{
 public:
-	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap, float newIntesity);
-	float constant = 1.0f;
-	float linear = 0.0f;
-	float quadratique = 0.0f;
+	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _range, std::shared_ptr<Shader> _depthShaderCubeMap, float newIntesity);
+	float range = 5.0f;
 
 	unsigned int depthCubeMapFBO;
 	unsigned int depthCubeMap;

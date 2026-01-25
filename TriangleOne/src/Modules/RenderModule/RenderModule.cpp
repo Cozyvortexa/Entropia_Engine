@@ -592,15 +592,14 @@ void RenderModule::Init() {
 	entityLight->AddComponent<Transform>();
 	entityLight->AddComponent<DirLight>(ambient, diffuse, specular, worldLightDir, depthShader, intensity);
 
-	float pointLightConstant = 1.0f;
-	float pointLightLinear = 0.02f;
-	float pointLightQuadratique = 0.001f;
+	float pointLightrange= 5.0f;
+
 
 	//PointLight
 	Entity* entityPointLight = currentScene->CreateNewEntity();
 	entityPointLight->AddComponent<Transform>()->position = glm::vec3(0.0f, -0.1f, 0.0f);
 
-	entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightConstant, pointLightLinear, pointLightQuadratique, depthShaderCubeMap, 0.5f);
+	entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightrange, depthShaderCubeMap, 0.5f);
 
 
 
