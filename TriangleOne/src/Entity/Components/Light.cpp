@@ -1,8 +1,7 @@
 #include <Entity/Components/Light.h>
 
 #pragma region Init
-void Light::InitBaseLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float newIntensity) {
-	position = _position;
+void Light::InitBaseLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float newIntensity) {
 	ambient = _ambient;
 	diffuse = _diffuse;
 	specular = _specular;
@@ -14,8 +13,8 @@ void Light::InitBaseLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _di
 	diffuse *= intensity;
 }
 
-Light::Light(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float newIntensity) {
-	InitBaseLight(_position, _ambient, _diffuse, _specular, newIntensity);
+Light::Light(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float newIntensity) {
+	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
 }
 
 std::pair<unsigned int, unsigned int> Light::InitShadowMap() {
@@ -84,8 +83,8 @@ std::pair<unsigned int, unsigned int> Light::InitCubeMap() {
 #pragma endregion Init
 
 
-SpotLight::SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _constant, float _linear, float _quadratique, float _cutOff, float _outercutOff, float newIntensity) {
-	InitBaseLight(_position, _ambient, _diffuse, _specular, newIntensity);
+SpotLight::SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _constant, float _linear, float _quadratique, float _cutOff, float _outercutOff, float newIntensity) {
+	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
 	constant = _constant;
 	linear = _linear;
 	quadratique = _quadratique;
@@ -98,12 +97,12 @@ SpotLight::SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse
 
 #pragma region DirLight
 
-DirLight::DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader, float newIntensity) {
+DirLight::DirLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader, float newIntensity) {
 	std::pair<unsigned int, unsigned int> depthBuffer = InitShadowMap();
 	depthMapFBO = depthBuffer.first;
 	depthMap = depthBuffer.second;  // On sait jamais
 
-	InitBaseLight(_position, _ambient, _diffuse, _specular, newIntensity);
+	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
 	direction = _direction;
 
 	depthShader = _depthShader;
@@ -199,10 +198,13 @@ void DirLight::UpdateMatrix(glm::mat4 projection, const glm::mat4 viewMatrice) {
 
 #pragma region PointLight
 
-PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap) {
+PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap, float newIntensity) {
 	std::pair<unsigned int, unsigned int> depthBuffer = InitCubeMap();
 	depthCubeMapFBO = depthBuffer.first;
 	depthCubeMap = depthBuffer.second;
+
+	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
+	intensity = newIntensity;
 
 	constant = _constant;
 	linear = _linear;

@@ -8,7 +8,7 @@ RenderSystem::RenderSystem(unsigned int* newFramebuffer, Camera* newMainCamera) 
 
 
 
-void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList, const std::vector<PointLight*> pointLightList) {
+void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList, std::vector <std::pair<PointLight*,Transform*>> pointLightList) {
 	shader->Use();
 	for (DirLight* dirLight: directionalLightList) {
 		shader->setVec3("dirLight.direction", glm::normalize(dirLight->direction));
@@ -18,15 +18,15 @@ void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLi
 	}
 
 	for (int i = 0; i < pointLightList.size() ;i++) {
-		shader->setVec3("pointLights[" + std::to_string(i) + "].position", pointLightList[i]->position);
+		shader->setVec3("pointLights[" + std::to_string(i) + "].position", pointLightList[i].second->position);
 
-		shader->setVec3("pointLights[" + std::to_string(i) + "].ambient", pointLightList[i]->ambient);
-		shader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", pointLightList[i]->diffuse);
-		shader->setVec3("pointLights[" + std::to_string(i) + "].specular", pointLightList[i]->specular);
+		shader->setVec3("pointLights[" + std::to_string(i) + "].ambient", pointLightList[i].first->ambient);
+		shader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", pointLightList[i].first->diffuse);
+		shader->setVec3("pointLights[" + std::to_string(i) + "].specular", pointLightList[i].first->specular);
 
-		shader->setFloat("pointLights[" + std::to_string(i) + "].constant", pointLightList[i]->constant);
-		shader->setFloat("pointLights[" + std::to_string(i) + "].linear", pointLightList[i]->linear);
-		shader->setFloat("pointLights[" + std::to_string(i) + "].quadratic", pointLightList[i]->quadratique);
+		shader->setFloat("pointLights[" + std::to_string(i) + "].constant", pointLightList[i].first->constant);
+		shader->setFloat("pointLights[" + std::to_string(i) + "].linear", pointLightList[i].first->linear);
+		shader->setFloat("pointLights[" + std::to_string(i) + "].quadratic", pointLightList[i].first->quadratique);
 
 	}
 	shader->setInt("nbrPointLight", pointLightList.size());
@@ -120,32 +120,32 @@ void RenderSystem::DrawShadowForDirLight(DirLight* currentLight, Scene* scene) {
 
 }
 
-void RenderSystem::DrawShadowForPointLight(std::shared_ptr<PointLight> currentLight, Scene* scene) {
-	currentLight->aspect = (float)currentLight->shadowWidth / (float)currentLight->shadowHeight;
-	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), currentLight->aspect, currentLight->near_plane, currentLight->far_plane);
+void RenderSystem::DrawShadowForPointLight(std::pair<PointLight*, Transform*> currentLight, Scene* scene) {
+	currentLight.first->aspect = (float)currentLight.first->shadowWidth / (float)currentLight.first->shadowHeight;
+	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), currentLight.first->aspect, currentLight.first->near_plane, currentLight.first->far_plane);
 
 
-	glViewport(0, 0, currentLight->shadowWidth, currentLight->shadowHeight);
-	glBindFramebuffer(GL_FRAMEBUFFER, currentLight->depthCubeMapFBO);  // Fbo unique par point light
+	glViewport(0, 0, currentLight.first->shadowWidth, currentLight.first->shadowHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, currentLight.first->depthCubeMapFBO);  // Fbo unique par point light
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 
 	std::vector<glm::mat4> shadowTransforms;
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight->position, currentLight->position + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
+	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
+	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
+	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
 
 
-	currentLight->depthShaderCubeMap->Use();
-	currentLight->depthShaderCubeMap->setFloat("far_plane", currentLight->far_plane);
-	currentLight->depthShaderCubeMap->setVec3("lightPos", currentLight->position);
+	currentLight.first->depthShaderCubeMap->Use();
+	currentLight.first->depthShaderCubeMap->setFloat("far_plane", currentLight.first->far_plane);
+	currentLight.first->depthShaderCubeMap->setVec3("lightPos", currentLight.second->position);
 
 
 	for (int i = 0; i < shadowTransforms.size(); i++) {
-		currentLight->depthShaderCubeMap->setMatrix("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
+		currentLight.first->depthShaderCubeMap->setMatrix("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
 	}
 
 	for (const auto& currentEntity : scene->GetEntities()) {
@@ -155,8 +155,8 @@ void RenderSystem::DrawShadowForPointLight(std::shared_ptr<PointLight> currentLi
 		MeshComponent* currentModel = currentEntity->GetComponent<MeshComponent>();
 		std::shared_ptr<Shader> shader = currentModel->GetShader();
 
-		currentLight->depthShaderCubeMap->setMatrix("model", CalculModel(currentEntity->GetComponent<Transform>()));
-		currentModel->modelMesh->DrawWithoutTexture(currentLight->depthShaderCubeMap);
+		currentLight.first->depthShaderCubeMap->setMatrix("model", CalculModel(currentEntity->GetComponent<Transform>()));
+		currentModel->modelMesh->DrawWithoutTexture(currentLight.first->depthShaderCubeMap);
 	}
 
 
@@ -194,15 +194,18 @@ void RenderSystem::RenderScene(Scene* scene, glm::mat4 projection) {
 	glBindFramebuffer(GL_FRAMEBUFFER, *framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	std::vector<DirLight*> star;
-	std::vector<PointLight*> pointLights;
+	std::vector<std::pair<PointLight*, Transform*>> pointLights;
+
+	//Recuperation des components
 	for (const auto& currentEntity : scene->GetEntities()) {
 		if (currentEntity->HasComponent<DirLight>()) {
 			star.push_back(currentEntity->GetComponent<DirLight>());
 		}
-		else if(currentEntity->HasComponent<PointLight>()) {
-			pointLights.push_back(currentEntity->GetComponent<PointLight>());
+		else if(currentEntity->HasComponent<PointLight>() && currentEntity->HasComponent<Transform>()) {
+			pointLights.push_back(std::make_pair(currentEntity->GetComponent<PointLight>(), currentEntity->GetComponent<Transform>()));
 		}
 	}
+
 	if (pointLights.size() >= 8) std::cout << "Max pointLight number reach" << std::endl;  // Valeur a definir a l'avenir dans un dossier config
 
 	for (const auto& currentEntity: scene->GetEntities()) {
@@ -225,17 +228,16 @@ void RenderSystem::RenderScene(Scene* scene, glm::mat4 projection) {
 			////Link shadowMap
 			//temp
 			shader->setInt("shadowMap", 30);
-			//shader->setInt("shadowCubeMap", 31);
+			shader->setInt("shadowCubeMap", 31);
 
 			if (star.size() != 0) {
 				glActiveTexture(GL_TEXTURE30);
 				glBindTexture(GL_TEXTURE_2D, depthMap);
 			}
-			//if (pointLightList.size() != 0) {
-			//	glActiveTexture(GL_TEXTURE31);
-			//	glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightList[0]->depthCubeMap);  // Utilise samplerCubeArray dans le shader
-			//	std::cout << "enter On pointLigList machin chouette, bref viens voir par ici" << std::endl;
-			//}
+			if (pointLights.size() != 0) {
+				glActiveTexture(GL_TEXTURE31);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, pointLights[0].first->depthCubeMap);  // Utilise samplerCubeArray dans le shader
+			}
 
 			
 			UpdateLight(shader, star, pointLights);  // Oui je sais, les light sont recalculer pour chaque modele

@@ -104,7 +104,7 @@ void main()
 	for (int i = 0; i < nbrPointLight; i++)
 	{
 		if (length(pointLights[i].ambient + pointLights[i].diffuse + pointLights[i].specular )> 0.001  ){  // On aplique pas le calcul si les lumiere sont eteinte
-			//final_lightning += CalcPointLight(pointLights[i], viewDir, norm, finalDiffuse, finalSpecular);
+			final_lightning += CalcPointLight(pointLights[i], viewDir, norm, finalDiffuse, finalSpecular);
 		}
 	}
 
@@ -117,7 +117,7 @@ void main()
 //	_diffuse += diffuseColor;
 //
 
-	vec3 lighting = vec3(finalDiffuse) * final_lightning;
+	vec3 lighting = final_lightning * vec3(finalDiffuse);
 
 
 	FragColor = vec4(lighting, 1.0);
@@ -170,27 +170,30 @@ vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, ve
 
 vec3 CalcPointLight(PointLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular)
 {
-	vec3 lightDir = normalize(light.position - FragPos);  // Direction de la lumiere vers la normal du vertex
+	vec3 lightDir = normalize(light.position - FragPos);
+	float diff = max(dot(lightDir, norm), 0.0);
 
-	vec3 reflectDir = reflect(-lightDir, norm); // on inverse lightDir car c'est pas la bonne direction
-
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);  // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
-
-//	vec3 ambient = light.ambient * finalDiffuse.rgb; 
-	vec3 diffuse = light.diffuse * finalDiffuse.rgb;
-	vec3 specular = light.specular * spec * finalSpecular.rgb;
-
-	// attenuation
 	float distance = length(light.position - FragPos);
 	float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-//	ambient *= attenuation;
-	diffuse *= attenuation;
-	specular *= attenuation;
+	//light.diffuse -= ShadowPointLight(light);
+
+	vec3 diffuse = light.diffuse * diff * attenuation;
+	vec3 finalColor = diffuse * finalDiffuse.rgb;
+
+	vec3 light_contribution = vec3(0.0);
 
 
-	float shadow = ShadowPointLight(light);
-	vec3 light_contribution = (diffuse + specular) * (1.0 - shadow);
+	if (specularNbr == 0 ){
+		light_contribution = finalColor;
+	}
+	else{  // Specular
+		vec3 reflectDir = reflect(-lightDir, norm); // on inverse lightDir car c'est pas la bonne direction
+		float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);  // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
+		vec3 specular = light.specular * spec * finalSpecular.rgb * attenuation;
+
+		light_contribution = (finalColor + specular ) * 1.0;  //Sale batard on devrait t'envoyer au goulag pour cque ta fais 
+	}
 
 
 	return light_contribution;

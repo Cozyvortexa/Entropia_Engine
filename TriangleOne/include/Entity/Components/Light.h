@@ -26,14 +26,13 @@ public:
 struct Light : Component{
 public:
 	Light() {};
-	Light(glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float newIntensity);
+	Light(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float newIntensity);
 	//Light(glm::vec3 position, glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float constant, float linear, float quadratique, float cutOff, float outerCutOff);
 
 	//void UseLight(Shader* shader);
 	//void UseShadow(Shader* shader);
 
 
-	glm::vec3 position = glm::vec3(0);
 
 	float intensity = 1.0f;
 	glm::vec3 ambient = glm::vec3(0);
@@ -43,13 +42,13 @@ public:
 	unsigned int shadowWidth = 2048, shadowHeight = 2048;
 
 protected:
-	void InitBaseLight(glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float newIntensity);
+	void InitBaseLight(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float newIntensity);
 	std::pair<unsigned int, unsigned int> InitShadowMap();
 	std::pair<unsigned int, unsigned int> InitCubeMap();
 };
 
 struct DirLight : public Light {
-	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, std::shared_ptr<Shader> _depthShader, float newIntensity);
+	DirLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, std::shared_ptr<Shader> _depthShader, float newIntensity);
 	glm::vec3 direction = glm::vec3(0);
 	unsigned int depthMap = 0;
 	unsigned int depthMapFBO = 0;
@@ -80,7 +79,7 @@ private:
 
 struct PointLight : public Light{
 public:
-	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap);
+	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap, float newIntesity);
 	float constant = 1.0f;
 	float linear = 0.0f;
 	float quadratique = 0.0f;
@@ -99,7 +98,7 @@ public:
 
 class SpotLight : public Light {
 public: 
-	SpotLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _constant, float _linear, float _quadratique, float _cutOff, float _outercutOff, float newIntensity);
+	SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _constant, float _linear, float _quadratique, float _cutOff, float _outercutOff, float newIntensity);
 	float constant;
 	float linear;
 

@@ -590,20 +590,19 @@ void RenderModule::Init() {
 	//DirLight   	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader)
 	Entity* entityLight = currentScene->CreateNewEntity();
 	entityLight->AddComponent<Transform>();
-	entityLight->AddComponent<DirLight>(glm::vec3(0),ambient, diffuse, specular, worldLightDir, depthShader, intensity);
+	entityLight->AddComponent<DirLight>(ambient, diffuse, specular, worldLightDir, depthShader, intensity);
 
 	float pointLightConstant = 1.0f;
-	float pointLightLinear = 0.09f;
-	float pointLightQuadratique = 0.032f;
+	float pointLightLinear = 0.02f;
+	float pointLightQuadratique = 0.001f;
 
 	//PointLight
 	Entity* entityPointLight = currentScene->CreateNewEntity();
-	entityPointLight->AddComponent<Transform>()->position = glm::vec3(1.0f, 2.0f, 0.0f);
-	//entityPointLight->AddComponent<PointLight>();
+	entityPointLight->AddComponent<Transform>()->position = glm::vec3(0.0f, -0.1f, 0.0f);
+
+	entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightConstant, pointLightLinear, pointLightQuadratique, depthShaderCubeMap, 0.5f);
 
 
-
-	//entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightConstant, pointLightLinear, pointLightQuadratique, depthShaderCubeMap);
 
 
 	//	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap) 

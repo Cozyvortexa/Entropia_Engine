@@ -16,11 +16,11 @@ public:
 
 
 private:
-	void UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList, const std::vector<PointLight*> pointLightList);
+	void UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList, std::vector<std::pair<PointLight*, Transform*>> pointLightList);
 	void UpdateShadow(Scene* scene, glm::mat4 projection);
 
 	void DrawShadowForDirLight(DirLight* currentLight, Scene* scene);
-	void DrawShadowForPointLight(std::shared_ptr<PointLight> currentLight, Scene* scene);
+	void DrawShadowForPointLight(std::pair<PointLight*, Transform*> currentLight, Scene* scene);
 	
 	void InitShadowMap();
 
