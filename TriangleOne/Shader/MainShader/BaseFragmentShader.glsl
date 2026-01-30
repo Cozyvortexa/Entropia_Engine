@@ -66,7 +66,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, 
 void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular);
 
 float ShadowDirLight();
-float ShadowPointLight(PointLight light);
+float ShadowPointLight(PointLight light, vec3 norm);
 float ShadowSpotLight(SpotLight light);
 
 in vec3 FragPos;
@@ -182,7 +182,10 @@ vec3 CalcPointLight(PointLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse,
 	attenuation = attenuation / (distance * distance + 1.0);
 
 	float diff = dot(norm, lightDir) * 0.5 + 0.5;
-	//light.diffuse -= ShadowPointLight(light);
+
+	light.diffuse -= ShadowPointLight(light, norm);
+
+
 	vec3 diffuse = light.diffuse * diff;
 	diff = diff * diff;
 
@@ -307,7 +310,7 @@ float ShadowDirLight(){
 	return shadow;
 }
 
-float ShadowPointLight(PointLight light){
+float ShadowPointLight(PointLight light, vec3 norm){
 	vec3 sampleOffsetDirections[20] = vec3[]
 	(
 		vec3( 1, 1, 1), vec3( 1, -1, 1), vec3(-1, -1, 1), vec3(-1, 1, 1),
@@ -318,12 +321,12 @@ float ShadowPointLight(PointLight light){
 	);
 
 	float shadow = 0.0;
-	float bias = 0.5;
-	float samples = 4.0;
+	float samples = 20.0;
 	float offset = 0.1;
 	float viewDistance = length(viewPos- FragPos);
 
 	vec3 fragToLight = FragPos - light.position;
+	float bias = max(0.05 * (1.0 - dot(norm, normalize(-fragToLight))), 0.005);;
 	float currentDepth = length(fragToLight);
 
 	float diskRadius = (1.0 + (viewDistance / far_plane)) / 25.0;
@@ -331,21 +334,12 @@ float ShadowPointLight(PointLight light){
 	{
 		float closestDepth = texture(shadowCubeMap, fragToLight + sampleOffsetDirections[i] * diskRadius).r;
 		closestDepth *= far_plane; // undo mapping [0;1]
-		if(currentDepth - bias > closestDepth)
-		shadow += 1.0;
+		if(currentDepth - bias > closestDepth){
+			shadow += 1.0;
+			}
+
 	}
 	shadow /= samples;
-
-//closestDepth *= far_plane; // undo mapping [0;1]
-//
-//	vec3 fragToLight = FragPos - light.position;
-//	float closestDepth = texture(shadowCubeMap, fragToLight).r;
-//	closestDepth *= far_plane;
-//
-//	float currentDepth = length(fragToLight);
-//
-//
-//	float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
 	return shadow;
 }

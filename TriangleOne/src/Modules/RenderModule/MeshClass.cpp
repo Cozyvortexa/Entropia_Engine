@@ -45,6 +45,14 @@ void Mesh::Draw(std::shared_ptr<Shader> shader)
 	int diffuseNbr = 0;
 	int specularNbr = 0;
 
+	if (textures.empty())
+	{
+		// Si pas de texture, on lie une texture blanche par défaut au slot 0
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, Shader::GetDefaultText());
+		shader->setInt("material.diffuseText[0]", 0);
+		diffuseNbr++;
+	}
 	for (unsigned int i = 0; i < textures.size(); i++)
 	{
 		glActiveTexture(GL_TEXTURE0 + i);

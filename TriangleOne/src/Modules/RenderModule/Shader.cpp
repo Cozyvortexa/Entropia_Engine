@@ -1,4 +1,5 @@
 #include "Modules/RenderModule/Shader.h"
+unsigned int Shader::defaultText = 0;
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 
@@ -127,4 +128,27 @@ int Shader::AssertShader(unsigned int& shader) {
 		return 1;
 	}
 	return 0;
+}
+
+void Shader::CreateDefaultWhiteTexture() {
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+	// CRÉATION DES DONNÉES DU PIXEL
+	// R = 255, G = 255, B = 255, A = 255 (Blanc Opaque)
+	unsigned char whitePixel[] = { 255, 255, 255, 255 };
+
+	// ENVOI À OPENGL
+	// 1x1 pixel, format RGBA
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
+
+	// CONFIGURATION (Important pour éviter des artefacts bizarres)
+	// On veut que ce soit simple : pas de flou, répétition simple
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	defaultText = textureID;
 }

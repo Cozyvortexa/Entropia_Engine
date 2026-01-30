@@ -80,10 +80,14 @@ public:
 		std::cout << "-----------------------------------------------" << std::endl;
 	}
 
-	unsigned int shaderID = NULL;
+	static void CreateDefaultWhiteTexture();
 
+	unsigned int shaderID = NULL;
+	static unsigned int GetDefaultText() { return defaultText; }
 private:
 	std::string ReadFile(const char* shaderPath);
 	int AssertShader(unsigned int& shader);
+
+	static unsigned int defaultText;
 };
 

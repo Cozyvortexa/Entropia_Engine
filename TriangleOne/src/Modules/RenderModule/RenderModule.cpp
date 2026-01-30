@@ -525,6 +525,7 @@ void RenderModule::Init() {
 		std::cout << "Reference de la window impossible a recuperer" << std::endl;
 		abort();
 	}
+	Shader::CreateDefaultWhiteTexture();
 	mainShader = std::make_shared<Shader>("TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
 	depthShader = std::make_shared<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
 	depthShaderCubeMap = std::make_shared<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
@@ -601,6 +602,9 @@ void RenderModule::Init() {
 
 	entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightrange, depthShaderCubeMap, 5.0f);
 
+	Entity* cubeTest = currentScene->CreateNewEntity();
+	cubeTest->AddComponent<Transform>()->position = glm::vec3(0.5f, 0.0f, 0.0f);
+	cubeTest->AddComponent<MeshComponent>("Assets/ImpScene/BasicCube.glb", mainShader);
 
 
 
