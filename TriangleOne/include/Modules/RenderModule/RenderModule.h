@@ -39,20 +39,8 @@ public:
 
 	void InitQuadVao();
 
-	void FactoPointLight(Shader* lightShader, int i);
-	void FactoSpotLight(Shader* lightShader, int i);
-
 	void InitSkyBox();
 	void DrawSkyBox(glm::mat4 projectionMatrix);
-
-	void InitShadowMap();
-
-	void InitCubeMap();
-
-	//void DrawShadowMap();
-
-	//void DrawShadowPoint();
-
 
 	void Init() override;
 	void Render() override;
