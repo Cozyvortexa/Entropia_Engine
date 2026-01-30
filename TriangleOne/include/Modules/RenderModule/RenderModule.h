@@ -33,7 +33,6 @@ public:
 
 	static RenderModule* GetInstance();
 
-	void DrawLight(int indice);
 	void DrawMirorCube();
 	void DrawTextureOnScreen();
 
@@ -52,7 +51,6 @@ private:
 
 	std::shared_ptr<Shader> depthShaderCubeMap = nullptr;
 	//A delette
-	Shader* shaderLight = nullptr;
 	Shader* ppShader = nullptr;
 	Shader* skyboxShader = nullptr;
 	Shader* reflectShader = nullptr;
@@ -70,14 +68,8 @@ private:
 
 	glm::mat4 _model = glm::mat4(1.0f);
 
-	//Light
-
-	//glm::vec3 lightPos;
 
 	std::vector<glm::vec3> pointLightPositions;
-
-	Entity* house = nullptr;
-	Entity* cube = nullptr;
 
 	int sample = 4;
 
@@ -93,23 +85,13 @@ private:
 	RenderSystem* renderSystem = nullptr;
 	Scene* currentScene = nullptr;
 
-
-	//Legacy
 	//Skybox
 	unsigned int cubemapTexture;
 	unsigned int skyboxVAO;
 	unsigned int skyboxVBO;
 
+	//Legacy
 	//Reflect
 	unsigned int reflectVAO;
 	unsigned int reflectVBO;
-
-	//Shadow
-	unsigned int depthMapFBO;
-	unsigned int depthMap;
-	const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
-	float far_plane = 30.0f;
-	//Shadow cube
-	unsigned int depthCubeMapFBO;
-	unsigned int depthCubemap;
 };

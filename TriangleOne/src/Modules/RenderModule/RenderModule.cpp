@@ -207,44 +207,6 @@ void RenderModule::DrawMirorCube() {
 	glBindVertexArray(0);
 }
 
-void RenderModule::DrawLight(int indice){
-	unsigned int lightVAO;
-	glGenVertexArrays(1, &lightVAO);
-	glBindVertexArray(lightVAO);
-
-	unsigned int VBO;  // Vertex Buffer Object
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesLightRec), verticesLightRec, GL_STATIC_DRAW);
-
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	// set the vertex attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	shaderLight->Use();
-
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, pointLightPositions[indice]);
-	model = glm::scale(model, glm::vec3(0.2f));
-
-	shaderLight->setMatrix("model", model);
-
-
-	shaderLight->setMatrix("view", mainCamera->GetViewMatrix());
-	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.1f, 100.0f);
-	shaderLight->setMatrix("projection", projection);
-
-
-	glBindVertexArray(lightVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
-	glDeleteVertexArrays(1, &lightVAO);
-	glDeleteBuffers(1, &VBO);
-	glBindVertexArray(0);
-}
 
 void RenderModule::DrawTextureOnScreen() {
 
@@ -387,7 +349,6 @@ void RenderModule::Init() {
 	depthShader = std::make_shared<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
 	depthShaderCubeMap = std::make_shared<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 
-	shaderLight = new Shader("TriangleOne/Shader/LightShader/Light/LightVertexShader.glsl", "TriangleOne/Shader/LightShader/Light/LightFragShader.glsl");
 	ppShader = new Shader("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
 	skyboxShader = new Shader("TriangleOne/Shader/MiscShader/SkyBoxVertex.glsl", "TriangleOne/Shader/MiscShader/SkyBoxFrag.glsl");
 	reflectShader = new Shader("TriangleOne/Shader/MiscShader/ReflexionVertex.glsl", "TriangleOne/Shader/MiscShader/ReflexionFrag.glsl");
@@ -477,12 +438,6 @@ void RenderModule::Init() {
 
 void RenderModule::Render()
  {
-	//Shadow
-
-	for (int i = 0; i < pointLightPositions.size(); i++)
-		DrawLight(i);
-
-
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), mainCamera->GetNearPlane(), mainCamera->GetFarPlane());
 
 	mainShader->Use(); 
