@@ -28,26 +28,8 @@ void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLi
 
 
 	}
-	shader->setInt("nbrPointLight", pointLightList.size());
-
-	//for (int i = 0; i < spotLightList.size() ;i++)
-	//{
-	//	shader->setVec3("spotLight.Position", spotLightList[i]->position);
-
-	//	shader->setVec3("spotLight.ambient", spotLightList[i]->ambient);
-	//	shader->setVec3("spotLight.diffuse", spotLightList[i]->diffuse);
-	//	shader->setVec3("spotLight.specular", spotLightList[i]->specular);
-
-	//	shader->setFloat("spotLight.constant", spotLightList[i]->constant);
-	//	shader->setFloat("spotLight.linear", spotLightList[i]->linear);
-	//	shader->setFloat("spotLight.quadratic", spotLightList[i]->quadratique);
-
-	//	shader->setVec3("spotLight.direction", spotLightList[i]->direction);
-	//	shader->setFloat("spotLight.cutOff", glm::radians(spotLightList[i]->cutOff));
-	//	shader->setFloat("spotLight.outerCutOff", glm::radians(spotLightList[i]->outerCutOff));
-
-	//}
-
+	int activeLights = std::min((int)pointLightList.size(), 8); // Bloquer à 8 max
+	shader->setInt("nbrPointLight", activeLights);
 }
 
 glm::mat4 RenderSystem::CalculModel(Transform* currentTransform) {
@@ -121,7 +103,7 @@ void RenderSystem::DrawShadowForDirLight(DirLight* currentLight, Scene* scene) {
 
 void RenderSystem::DrawShadowForPointLight(std::pair<PointLight*, Transform*> currentLight, Scene* scene) {
 	currentLight.first->aspect = (float)currentLight.first->shadowWidth / (float)currentLight.first->shadowHeight;
-	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), currentLight.first->aspect, currentLight.first->near_plane, currentLight.first->far_plane);
+	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), currentLight.first->aspect, currentLight.first->near_plane, currentLight.first->range);
 
 
 	glViewport(0, 0, currentLight.first->shadowWidth, currentLight.first->shadowHeight);
@@ -139,7 +121,7 @@ void RenderSystem::DrawShadowForPointLight(std::pair<PointLight*, Transform*> cu
 
 
 	currentLight.first->depthShaderCubeMap->Use();
-	currentLight.first->depthShaderCubeMap->setFloat("far_plane", currentLight.first->far_plane);
+	currentLight.first->depthShaderCubeMap->setFloat("far_plane", currentLight.first->range);
 	currentLight.first->depthShaderCubeMap->setVec3("lightPos", currentLight.second->position);
 
 
@@ -164,50 +146,47 @@ void RenderSystem::DrawShadowForPointLight(std::pair<PointLight*, Transform*> cu
 	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
 }
 
-void RenderSystem::UpdateShadow(Scene* scene, glm::mat4 projection) {
-	glCullFace(GL_FRONT);
-	glEnable(GL_DEPTH_CLAMP);
-	for (const auto& currentEntity : scene->GetEntities()) {
-		if (currentEntity->HasComponent<DirLight>()) {
-			DirLight* currentLight = currentEntity->GetComponent<DirLight>();
+void RenderSystem::UpdateShadow(Scene* scene, glm::mat4 projection, std::vector <DirLight*> star, std::vector<std::pair<PointLight*, Transform*>> pointLights) {
+	glCullFace(GL_BACK);
+	//glEnable(GL_DEPTH_CLAMP);
+	if (star.size() > 0) {
 
-			currentLight->UpdateMatrix(projection, mainCamera->GetViewMatrix());
-			DrawShadowForDirLight(currentLight, scene);
-		}
+		star[0]->UpdateMatrix(projection, mainCamera->GetViewMatrix());
+		DrawShadowForDirLight(star[0], scene);
+	}
+	for (const auto& currentPointLight : pointLights) {
+		DrawShadowForPointLight(currentPointLight, scene);
 	}
 
-	//for (std::shared_ptr<PointLight> pointLight : pointLightList) {
-	//	DrawShadowForPointLight(pointLight, scene);
-	//}
-	glDisable(GL_DEPTH_CLAMP);
+	//glDisable(GL_DEPTH_CLAMP);
 	glCullFace(GL_BACK);
 }
 
 #pragma endregion Shadow
 
 
-
 void RenderSystem::RenderScene(Scene* scene, glm::mat4 projection) {
-	UpdateShadow(scene, projection);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, *framebuffer);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	std::vector<DirLight*> star;
 	std::vector<std::pair<PointLight*, Transform*>> pointLights;
 
-	//Recuperation des components
 	for (const auto& currentEntity : scene->GetEntities()) {
 		if (currentEntity->HasComponent<DirLight>()) {
 			star.push_back(currentEntity->GetComponent<DirLight>());
 		}
-		else if(currentEntity->HasComponent<PointLight>() && currentEntity->HasComponent<Transform>()) {
+		else if (currentEntity->HasComponent<PointLight>() && currentEntity->HasComponent<Transform>()) {
 			pointLights.push_back(std::make_pair(currentEntity->GetComponent<PointLight>(), currentEntity->GetComponent<Transform>()));
 		}
 	}
+	//
+	UpdateShadow(scene, projection, star, pointLights);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, *framebuffer);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
 	if (pointLights.size() >= 8) std::cout << "Max pointLight number reach" << std::endl;  // Valeur a definir a l'avenir dans un dossier config
 
-	for (const auto& currentEntity: scene->GetEntities()) {
+	for (const auto& currentEntity : scene->GetEntities()) {
 		if (!currentEntity->HasComponent<MeshComponent>()) {
 			continue;
 		}
@@ -217,34 +196,67 @@ void RenderSystem::RenderScene(Scene* scene, glm::mat4 projection) {
 		if (currentModel->haveToBeDraw) {
 			shader->Use();
 
-			if (star.size() != 0) {
+			// --- TEXTURE UNIT MANAGEMENT ---
+			// User Material Textures usually use 0-15 (Diffuse[8] + Specular[8])
+			// We will place Shadow Maps starting at Unit 16 to be safe and avoid limits.
+
+			const int SLOT_SHADOW_DIR = 16;       // Pour la lumière directionnelle
+			const int SLOT_SHADOW_POINT_START = 17; // Pour les Point Lights (17, 18, 19...)
+
+			// --- 2. GESTION LUMIERE DIRECTIONNELLE (Shadow Map 2D) ---
+			shader->setInt("shadowMap", SLOT_SHADOW_DIR);
+
+			glActiveTexture(GL_TEXTURE0 + SLOT_SHADOW_DIR);
+			if (star.size() > 0) {
+				glBindTexture(GL_TEXTURE_2D, depthMap);
 				shader->setMatrix("lightSpaceMatrix", star.at(0)->lightMatrice);
 			}
-
-
-			// Vï¿½rifie la position finale (colonne 3 de la matrice)
-
-			////Link shadowMap
-			//temp
-			shader->setInt("shadowMap", 30);
-			shader->setInt("shadowCubeMap", 31);
-
-			if (star.size() != 0) {
-				glActiveTexture(GL_TEXTURE30);
-				glBindTexture(GL_TEXTURE_2D, depthMap);
-			}
-			if (pointLights.size() != 0) {
-				glActiveTexture(GL_TEXTURE31);
-				glBindTexture(GL_TEXTURE_CUBE_MAP, pointLights[0].first->depthCubeMap);  // Utilise samplerCubeArray dans le shader
+			else {
+				// Toujours binder 0 si pas de lumière pour éviter les artefacts en Release
+				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 
-			
-			UpdateLight(shader, star, pointLights);  // Oui je sais, les light sont recalculer pour chaque modele
+			// --- 3. GESTION POINT LIGHTS (Shadow Cube Maps) ---
+			// On s'assure de ne pas dépasser le nombre max défini dans le shader (8)
+			int maxPointLights = 8;
+			int activeLights = std::min((int)pointLights.size(), maxPointLights);
 
+			// On informe le shader du nombre réel de lumières (CRUCIAL en Release)
+			shader->setInt("nbrPointLight", activeLights);
+
+			for (int i = 0; i < maxPointLights; i++) {
+				// Construction du nom "shadowCubeMaps[0]", "shadowCubeMaps[1]"...
+				std::string uniformName = "shadowCubeMaps[" + std::to_string(i) + "]";
+
+				// Calcul du slot : 17 + i
+				int currentSlot = SLOT_SHADOW_POINT_START + i;
+
+				// 1. On dit au shader : "Le sampler i doit lire dans le slot X"
+				shader->setInt(uniformName, currentSlot);
+
+				// 2. On active le slot X
+				glActiveTexture(GL_TEXTURE0 + currentSlot);
+
+				// 3. On lie la texture Cube
+				if (i < activeLights) {
+					glBindTexture(GL_TEXTURE_CUBE_MAP, pointLights[i].first->depthCubeMap);
+				}
+				else {
+					// Nettoyage des slots inutilisés (évite les bugs de "Sampler Type Mismatch")
+					glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+				}
+			}
+
+			// Repasser sur le slot 0 pour éviter d'affecter d'autres opérations
+			glActiveTexture(GL_TEXTURE0);
+
+			// --- END TEXTURE MANAGEMENT ---
+
+			UpdateLight(shader, star, pointLights);
+
+			shader->setMatrix("model", CalculModel(currentEntity->GetComponent<Transform>()));
 			currentModel->modelMesh->Draw(shader);
-
 		}
-
 	}
 	star.clear();
 }

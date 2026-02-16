@@ -56,8 +56,8 @@ std::pair<unsigned int, unsigned int> Light::InitCubeMap() {
 
 	glGenTextures(1, &depthCubemap);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-	for (unsigned int i = 0; i < 6; ++i)
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	for (int i = 0; i < 6; ++i)
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT32F, shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -65,6 +65,9 @@ std::pair<unsigned int, unsigned int> Light::InitCubeMap() {
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, depthCubeMapFBO);
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
@@ -207,11 +210,10 @@ PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specul
 	intensity = newIntensity;
 
 	range = _range;
+	near_plane = 0.01f;
 
 	aspect = (float)shadowWidth / (float)shadowHeight;
-	//Valeur par default
-	near_plane = 0.1f;
-	far_plane = 50.0f;
+
 
 	depthShaderCubeMap = _depthShaderCubeMap;
 }

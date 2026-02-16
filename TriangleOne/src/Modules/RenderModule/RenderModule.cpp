@@ -404,24 +404,24 @@ void RenderModule::Init() {
 
 	float intensity = 3.0f;
 
-	glm::vec3 worldLightDir = glm::vec3(-2.0f, 4.0f, -1.0f);
+	glm::vec3 worldLightDir = glm::normalize(glm::vec3(-2.0f, 4.0f, -1.0f));
 
 	//DirLight   	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader)
 	Entity* entityLight = currentScene->CreateNewEntity();
 	entityLight->AddComponent<Transform>();
-	entityLight->AddComponent<DirLight>(ambient, diffuse, specular, worldLightDir, depthShader, intensity);
+	entityLight->AddComponent<DirLight>(glm::vec3(0.002f, 0.002f, 0.002f), diffuse, specular, worldLightDir, depthShader, intensity);
 
-	float pointLightrange= 5.0f;
+	float pointLightrange = 8.0f;
 
 
 	//PointLight
 	Entity* entityPointLight = currentScene->CreateNewEntity();
-	entityPointLight->AddComponent<Transform>()->position = glm::vec3(0.0f, -0.1f, 0.0f);
+	entityPointLight->AddComponent<Transform>()->position = glm::vec3(1.0f, 3.0f, 0.0f);
 
 	entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightrange, depthShaderCubeMap, 5.0f);
 
 	Entity* cubeTest = currentScene->CreateNewEntity();
-	cubeTest->AddComponent<Transform>()->position = glm::vec3(1.0f, 0.0f, 0.0f);
+	cubeTest->AddComponent<Transform>()->position = glm::vec3(4.0f, 0.0f, 0.0f);
 	cubeTest->AddComponent<MeshComponent>("Assets/ImpScene/BasicCube.glb", mainShader);
 
 
@@ -433,7 +433,7 @@ void RenderModule::Init() {
 
 
 	InitQuadVao();
-	InitSkyBox();
+	//InitSkyBox();
 }
 
 void RenderModule::Render()
@@ -444,6 +444,7 @@ void RenderModule::Render()
 	mainShader->setMatrix("model", _model);
 	mainShader->setMatrix("view", mainCamera->GetViewMatrix());
 	mainShader->setMatrix("projection", projection);
+	mainShader->setFloat("far_plane", mainCamera->GetFarPlane());
 
 	mainShader->setVec3("viewPos", mainCamera->GetPos());
 

@@ -11,7 +11,7 @@
 #include "Entity/Components/Transform.h"
 
 struct AABB {
-	AABB() {};
+	AABB() { min = glm::vec3(0);  max = glm::vec3(0);};
 	AABB(glm::vec3 newMin, glm::vec3 newMax)
 	{
 		min = newMin;
@@ -49,7 +49,7 @@ protected:
 
 struct DirLight : public Light {
 	DirLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, std::shared_ptr<Shader> _depthShader, float newIntensity);
-	glm::vec3 direction = glm::vec3(0);
+	glm::vec3 direction = glm::vec3(0.0f,-1.0f,0.0f);
 	unsigned int depthMap = 0;
 	unsigned int depthMapFBO = 0;
 
@@ -61,6 +61,7 @@ struct DirLight : public Light {
 	glm::vec3 lightPos = glm::vec3(0);
 	glm::mat4 lightViewMatrice = glm::mat4(1);
 	glm::mat4 lightMatrice = glm::mat4(1);
+
 
 	void UpdateMatrix(glm::mat4 projection,const glm::mat4 viewMatrice);
 
@@ -86,9 +87,8 @@ public:
 	unsigned int depthCubeMap;
 
 	//Shadow purpose
-	float aspect = 0.0f;
+	float aspect = 1.0f;
 	float near_plane = 0.1f;
-	float far_plane = 50.0f; 
 
 	std::shared_ptr<Shader> depthShaderCubeMap = nullptr;
 

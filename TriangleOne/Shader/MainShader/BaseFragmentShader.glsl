@@ -51,7 +51,7 @@ uniform DirLight dirLight;
 
 //Shadow
 uniform sampler2D shadowMap;
-uniform samplerCube shadowCubeMap;
+uniform samplerCube shadowCubeMaps[NBR_MAX_POINT_LIGHTS];
 uniform float far_plane;
 
 uniform vec3 viewPos;
@@ -60,13 +60,13 @@ vec4 CalcFinalDiffuse();
 vec4 CalcFinalSpecular();
 
 vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
-vec3 CalcPointLight(PointLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
+vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
 vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
 
 void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular);
 
 float ShadowDirLight();
-float ShadowPointLight(PointLight light, vec3 norm);
+float ShadowPointLight(PointLight light, int lightIndex, vec3 norm);
 float ShadowSpotLight(SpotLight light);
 
 in vec3 FragPos;
@@ -95,14 +95,12 @@ void main()
 
 
 
-	if (length(dirLight.ambient + dirLight.diffuse + dirLight.specular ) > 0.001){
-		final_lightning += CalcDirLight(dirLight, viewDir, norm, finalDiffuse, finalSpecular); // Une seule lumiere dir dans la scene 
-	}
+	final_lightning += CalcDirLight(dirLight, viewDir, norm, finalDiffuse, finalSpecular); // Une seule lumiere dir dans la scene 
 
 	for (int i = 0; i < nbrPointLight; i++)
 	{
 		if (length(pointLights[i].ambient + pointLights[i].diffuse + pointLights[i].specular )> 0.001  ){  // On aplique pas le calcul si les lumiere sont eteinte
-			final_lightning += CalcPointLight(pointLights[i], viewDir, norm, finalDiffuse, finalSpecular);
+			final_lightning += CalcPointLight(pointLights[i], i, viewDir, norm, finalDiffuse, finalSpecular);
 		}
 	}
 
@@ -114,21 +112,22 @@ void main()
 	vec3 lighting = final_lightning * vec3(finalDiffuse);
 
 	//Correction gamma
-	//float gamma = 2.2;
-	//vec3 mapped = lighting / (lighting + vec3(1.0));
-	//mapped = pow(mapped, vec3(1.0 / 2.2))
-	//FragColor = vec4(mapped, 1.0);
+	float gamma = 2.2;
+	vec3 mapped = lighting / (lighting + vec3(1.0));
+	mapped = pow(mapped, vec3(1.0 / 2.2));
+	FragColor = vec4(mapped, 1.0);
 
-	FragColor = vec4(lighting, 1.0);
+	//FragColor = vec4(lighting, 1.0);
+	//FragColor = vec4(vec3(ShadowPointLight(pointLights[0], norm)), 1.0);
 }
 
 
 vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular)
 {
-	if (material.haveNormalText){  // Application de la normal map si elle existe 
-		norm = texture(material.normalText, TexCoords).rgb;
-		norm = normalize(normal * 2.0 - 1.0);
-	}
+//	if (material.haveNormalText){  // Application de la normal map si elle existe 
+//		norm = texture(material.normalText, TexCoords).rgb;
+//		norm = normalize(normal * 2.0 - 1.0);
+//	}
 
 	vec3 lightDir = normalize(-light.direction);
 
@@ -156,7 +155,7 @@ vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, ve
 			light_contribution = diffuse  * (1.0 - shadow);
 		}
 		else{
-			light_contribution = (diffuse + specular ) * (1.0 - shadow);  //Sale batard on devrait t'envoyer au goulag pour cque ta fais 
+			light_contribution = (diffuse + specular ) * (1.0 - shadow);
 		}
 
 
@@ -165,7 +164,7 @@ vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, ve
 	return ambient + (diffuse + specular) * (1.0 - shadow);
 }
 
-vec3 CalcPointLight(PointLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular)
+vec3 CalcPointLight(PointLight light, int lightIndex,vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular)
 {
 	vec3 lightDir = normalize(light.position - FragPos);
 
@@ -182,12 +181,9 @@ vec3 CalcPointLight(PointLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse,
 	attenuation = attenuation / (distance * distance + 1.0);
 
 	float diff = dot(norm, lightDir) * 0.5 + 0.5;
-
-	light.diffuse -= ShadowPointLight(light, norm);
-
-
-	vec3 diffuse = light.diffuse * diff;
 	diff = diff * diff;
+	vec3 diffuse = light.diffuse * diff;
+
 
 	 // Specular
 	vec3 V = normalize(viewPos - FragPos);
@@ -197,17 +193,22 @@ vec3 CalcPointLight(PointLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse,
 
 	vec3 finalColor = diffuse * finalDiffuse.rgb;
 
+    // FIX 4: Pass index to shadow function
+	float shadow = ShadowPointLight(light, lightIndex, norm);
+    
+    // FIX 5: Invert shadow. If shadow is 1.0 (occluded), modifier is 0.0.
+	float lightModifier = (1.0 - shadow); 
 
 	vec3 light_contribution = vec3(0.0);
+
 	if (specularNbr == 0 ){
-		light_contribution = finalColor * attenuation;
+		light_contribution = finalColor * attenuation * lightModifier ;
 	}
 	else{ 
-		light_contribution = (finalColor + specular ) * attenuation;
+		light_contribution = (finalColor + specular ) * attenuation * lightModifier ;
 	}
 
-
-	return light_contribution;
+	return light_contribution / (light_contribution + vec3(1.0));
 }
 
 vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular)  // SpottLight non fonctionnelle
@@ -279,6 +280,11 @@ void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular){
 		discard;
 }
 
+float GetDirShadowMapValue(int index, vec2 dir) {
+    if (index == 0) return texture(shadowMap, dir).r;
+    return 0.0;
+}
+
 float ShadowDirLight(){
 
 	vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
@@ -290,18 +296,16 @@ float ShadowDirLight(){
 	float closestDepth = texture(shadowMap, projCoords.xy).r;
 	float currentDepth = projCoords.z ;
 
-	//float bias = 0.005;
 	vec3 lightDir = normalize(-dirLight.direction );
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
 
-	//PCF marche en verifiant les pixel voisin... askip
 	float shadow = 0.0;
 	vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
 	for(int x = -1; x <= 1; ++x)
 	{
 		for(int y = -1; y <= 1; ++y)
 		{
-			float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+			float pcfDepth = GetDirShadowMapValue(0, projCoords.xy + vec2(x, y) * texelSize);
 			shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
 		}
 	}
@@ -310,7 +314,19 @@ float ShadowDirLight(){
 	return shadow;
 }
 
-float ShadowPointLight(PointLight light, vec3 norm){
+float GetShadowMapValue(int index, vec3 dir) {
+    if (index == 0) return texture(shadowCubeMaps[0], dir).r;
+    if (index == 1) return texture(shadowCubeMaps[1], dir).r;
+    if (index == 2) return texture(shadowCubeMaps[2], dir).r;
+    if (index == 3) return texture(shadowCubeMaps[3], dir).r;
+    if (index == 4) return texture(shadowCubeMaps[4], dir).r;
+    if (index == 5) return texture(shadowCubeMaps[5], dir).r;
+    if (index == 6) return texture(shadowCubeMaps[6], dir).r;
+    if (index == 7) return texture(shadowCubeMaps[7], dir).r;
+    return 0.0;
+}
+
+float ShadowPointLight(PointLight light, int lightIndex, vec3 norm){
 	vec3 sampleOffsetDirections[20] = vec3[]
 	(
 		vec3( 1, 1, 1), vec3( 1, -1, 1), vec3(-1, -1, 1), vec3(-1, 1, 1),
@@ -319,26 +335,38 @@ float ShadowPointLight(PointLight light, vec3 norm){
 		vec3( 1, 0, 1), vec3(-1, 0, 1), vec3( 1, 0, -1), vec3(-1, 0, -1),
 		vec3( 0, 1, 1), vec3( 0, -1, 1), vec3( 0, -1, -1), vec3( 0, 1, -1)
 	);
+	
+    vec3 fragToLight = FragPos - light.position;
+	float currentDepth = length(fragToLight);
+
+	if(currentDepth >= light.range)
+        return 0.0; // Not in shadow if out of range
 
 	float shadow = 0.0;
 	float samples = 20.0;
-	float offset = 0.1;
 	float viewDistance = length(viewPos- FragPos);
+    
+    // NOTE: Ensure your light.range matches the far_plane used in shadow generation
+    float lightFar_plane = light.range; 
 
-	vec3 fragToLight = FragPos - light.position;
-	float bias = max(0.05 * (1.0 - dot(norm, normalize(-fragToLight))), 0.005);;
-	float currentDepth = length(fragToLight);
+	float bias = 0.05;
+	float diskRadius = (1.0 + (viewDistance / lightFar_plane)) / 25.0;
 
-	float diskRadius = (1.0 + (viewDistance / far_plane)) / 25.0;
 	for(int i = 0; i < samples; ++i)
 	{
-		float closestDepth = texture(shadowCubeMap, fragToLight + sampleOffsetDirections[i] * diskRadius).r;
-		closestDepth *= far_plane; // undo mapping [0;1]
+        // FIX 7: Sample from the specific map index using array
+		float closestDepth = GetShadowMapValue(lightIndex, fragToLight + (sampleOffsetDirections[i] * diskRadius));
+		
+        // FIX 8: Un-normalize the depth. The texture stores [0,1], we need [0, range]
+		closestDepth *= lightFar_plane; 
+
+        // FIX 9: Proper comparison. If fragment is further than closest occluder, it is in shadow.
 		if(currentDepth - bias > closestDepth){
 			shadow += 1.0;
-			}
-
+		}
 	}
+    
+    // Average the results
 	shadow /= samples;
 
 	return shadow;
