@@ -22,11 +22,11 @@ struct SpotLight {
 	vec3 diffuse;
 	vec3 specular;
 
-	float constant;
-	float linear;
-	float quadratic;
+	float range;
 };
-uniform SpotLight spotLight;
+#define NBR_MAX_SPOT_LIGHTS 8 // A setup dans config si possible ( quand il existera) 
+uniform SpotLight spotLights[NBR_MAX_SPOT_LIGHTS];
+uniform int nbrSpotLight;
 
 struct PointLight {
 	vec3 position;
@@ -61,7 +61,7 @@ vec4 CalcFinalSpecular();
 
 vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
 vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
-vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
+vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular);
 
 void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular);
 
@@ -103,9 +103,10 @@ void main()
 			final_lightning += CalcPointLight(pointLights[i], i, viewDir, norm, finalDiffuse, finalSpecular);
 		}
 	}
-
-	if (length(spotLight.ambient + spotLight.diffuse + spotLight.specular) > 0.001 ){
-		//final_lightning += CalcSpotLight(spotLight, viewDir, norm, finalDiffuse, finalSpecular);  // SpotLight non fonctionnelle ( casser intentionnellement ) 
+	for (int i = 0; i < nbrSpotLight; i++){
+		if (length(spotLights[i].ambient + spotLights[i].diffuse + spotLights[i].specular) > 0.001 ){
+			final_lightning += CalcSpotLight(spotLights[i], viewDir, norm, finalDiffuse, finalSpecular);
+		}
 	}
 
 
@@ -211,7 +212,7 @@ vec3 CalcPointLight(PointLight light, int lightIndex,vec3 viewDir, vec3 norm,vec
 	return light_contribution / (light_contribution + vec3(1.0));
 }
 
-vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular)  // SpottLight non fonctionnelle
+vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular)  // SpottLight non fonctionnelle
 {
 	vec3 lightDir = normalize(light.position - FragPos);  // Direction entre la source de lumiere et la normal du vertex
 
@@ -235,16 +236,25 @@ vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, v
 
 	// attenuation
 	float distance = length(light.position - FragPos);
-	float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+	float attenuation = clamp(1.0 - (distance / light.range), 0.0, 1.0);
 
 	ambient *= attenuation * intensity;
 	diffuse *= attenuation * intensity;
 	specular *= attenuation * intensity;
 
 //	float shadow = ShadowSpotLight();
+	//vec3 light_contribution = ambient + (diffuse + specular);
 //	vec3 light_contribution = (diffuse + specular) * (1.0 - shadow);
 
-	vec3 light_contribution = vec3(0);
+	vec3 light_contribution = vec3(0.0);
+
+	if (specularNbr == 0 ){
+		light_contribution = ambient + (diffuse);
+	}
+	else{ 
+		light_contribution = ambient + (diffuse + specular);
+	}
+
 	return light_contribution;
 }
 

@@ -8,7 +8,9 @@ RenderSystem::RenderSystem(unsigned int* newFramebuffer, Camera* newMainCamera) 
 
 
 
-void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList, std::vector <std::pair<PointLight*,Transform*>> pointLightList) {
+void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList, 
+	std::vector <std::pair<PointLight*,Transform*>> pointLightList,
+	std::vector<std::pair<SpotLight*, Transform*>> spotLightList) {
 	shader->Use();
 	for (DirLight* dirLight: directionalLightList) {
 		shader->setVec3("dirLight.direction", glm::normalize(dirLight->direction));
@@ -26,10 +28,31 @@ void RenderSystem::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLi
 
 		shader->setFloat("pointLights[" + std::to_string(i) + "].range", pointLightList[i].first->range);
 
-
 	}
-	int activeLights = std::min((int)pointLightList.size(), 8); // Bloquer à 8 max
-	shader->setInt("nbrPointLight", activeLights);
+	for (int i = 0; i < spotLightList.size(); i++) {
+		shader->setVec3("spotLights[" + std::to_string(i) + "].position", spotLightList[i].second->position);
+
+		glm::mat4 rot(1.0f);
+
+		rot = glm::rotate(rot, glm::radians(spotLightList[i].second->rotation.x), glm::vec3(1, 0, 0));
+		rot = glm::rotate(rot, glm::radians(spotLightList[i].second->rotation.y), glm::vec3(0, 1, 0));
+		rot = glm::rotate(rot, glm::radians(spotLightList[i].second->rotation.z), glm::vec3(0, 0, 1));
+
+		shader->setVec3("spotLights[" + std::to_string(i) + "].direction", glm::normalize(glm::vec3(rot * glm::vec4(spotLightList[i].first->direction, 0.0f))));
+
+		shader->setVec3("spotLights[" + std::to_string(i) + "].ambient", spotLightList[i].first->ambient);
+		shader->setVec3("spotLights[" + std::to_string(i) + "].diffuse", spotLightList[i].first->diffuse);
+		shader->setVec3("spotLights[" + std::to_string(i) + "].specular", spotLightList[i].first->specular);
+
+		shader->setFloat("spotLights[" + std::to_string(i) + "].cutOff", glm::cos(glm::radians(spotLightList[i].first->cutOff)));
+		shader->setFloat("spotLights[" + std::to_string(i) + "].outerCutOff", glm::cos(glm::radians(spotLightList[i].first->outerCutOff)));
+		shader->setFloat("spotLights[" + std::to_string(i) + "].range", spotLightList[i].first->range);
+	}
+	int activePointLights = std::min((int)pointLightList.size(), 8); // Bloquer à 8 max
+	int activeSpotLights = std::min((int)spotLightList.size(), 8); // Bloquer à 8 max
+
+	shader->setInt("nbrPointLight", activePointLights);
+	shader->setInt("nbrSpotLight", activeSpotLights);
 }
 
 glm::mat4 RenderSystem::CalculModel(Transform* currentTransform) {
@@ -168,13 +191,17 @@ void RenderSystem::UpdateShadow(Scene* scene, glm::mat4 projection, std::vector 
 void RenderSystem::RenderScene(Scene* scene, glm::mat4 projection) {
 	std::vector<DirLight*> star;
 	std::vector<std::pair<PointLight*, Transform*>> pointLights;
+	std::vector<std::pair<SpotLight*, Transform*>> spotLights;
 
 	for (const auto& currentEntity : scene->GetEntities()) {
 		if (currentEntity->HasComponent<DirLight>()) {
 			star.push_back(currentEntity->GetComponent<DirLight>());
 		}
-		else if (currentEntity->HasComponent<PointLight>() && currentEntity->HasComponent<Transform>()) {
+		else if (currentEntity->HasComponent<PointLight>() && currentEntity->HasComponent<Transform>()) {  // HasComponent Transform a enlever
 			pointLights.push_back(std::make_pair(currentEntity->GetComponent<PointLight>(), currentEntity->GetComponent<Transform>()));
+		}
+		else if (currentEntity->HasComponent<SpotLight>() && currentEntity->HasComponent<Transform>()) {
+			spotLights.push_back(std::make_pair(currentEntity->GetComponent<SpotLight>(), currentEntity->GetComponent<Transform>()));
 		}
 	}
 	//
@@ -252,7 +279,7 @@ void RenderSystem::RenderScene(Scene* scene, glm::mat4 projection) {
 
 			// --- END TEXTURE MANAGEMENT ---
 
-			UpdateLight(shader, star, pointLights);
+			UpdateLight(shader, star, pointLights, spotLights);
 
 			shader->setMatrix("model", CalculModel(currentEntity->GetComponent<Transform>()));
 			currentModel->modelMesh->Draw(shader);

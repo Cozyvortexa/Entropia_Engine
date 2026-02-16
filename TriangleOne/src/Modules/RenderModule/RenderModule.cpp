@@ -398,7 +398,7 @@ void RenderModule::Init() {
 
 
 
-	glm::vec3 ambient = glm::vec3(0.3f, 0.3f, 0.3f);
+	glm::vec3 ambient = glm::vec3(0.002f, 0.002f, 0.002f);
 	glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 	glm::vec3 specular = glm::vec3(0.0f, 0.0f, 0.0f);
 
@@ -417,8 +417,14 @@ void RenderModule::Init() {
 	//PointLight
 	Entity* entityPointLight = currentScene->CreateNewEntity();
 	entityPointLight->AddComponent<Transform>()->position = glm::vec3(1.0f, 3.0f, 0.0f);
-
 	entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightrange, depthShaderCubeMap, 5.0f);
+
+	//SpotLight
+	float cutOff = 15.5f;
+	float outerCutOff = 25.5f;
+	Entity* entitySpotLight = currentScene->CreateNewEntity();
+	entitySpotLight->AddComponent<Transform>()->position = glm::vec3(0.0f, 1.0f, 0.0f);
+	entitySpotLight->AddComponent<SpotLight>(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 100.0f, 10.0f);
 
 	Entity* cubeTest = currentScene->CreateNewEntity();
 	cubeTest->AddComponent<Transform>()->position = glm::vec3(4.0f, 0.0f, 0.0f);
@@ -426,6 +432,7 @@ void RenderModule::Init() {
 
 
 
+	//	SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, float newIntensity)
 	//	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap) 
 
 

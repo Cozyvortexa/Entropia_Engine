@@ -86,15 +86,14 @@ std::pair<unsigned int, unsigned int> Light::InitCubeMap() {
 #pragma endregion Init
 
 
-SpotLight::SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _constant, float _linear, float _quadratique, float _cutOff, float _outercutOff, float newIntensity) {
+SpotLight::SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, float newIntensity) {
 	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
-	constant = _constant;
-	linear = _linear;
-	quadratique = _quadratique;
+	intensity = newIntensity;
 
 	cutOff = _cutOff;
 	outerCutOff = _outercutOff;
 	direction = _direction;
+	this->range = range;
 }
 
 
@@ -207,7 +206,7 @@ PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specul
 	depthCubeMap = depthBuffer.second;
 
 	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
-	intensity = newIntensity;
+
 
 	range = _range;
 	near_plane = 0.01f;

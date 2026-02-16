@@ -94,14 +94,12 @@ public:
 
 };
 
-class SpotLight : public Light {
+struct SpotLight : public Light {
 public: 
-	SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _constant, float _linear, float _quadratique, float _cutOff, float _outercutOff, float newIntensity);
-	float constant;
-	float linear;
+	SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, float newIntensity);
+	float range = 1.0f;
 
-	float quadratique;
 	glm::vec3 direction = glm::vec3(0);
-	float cutOff;
-	float outerCutOff;
+	float cutOff = 0.0f;
+	float outerCutOff = 1.0f;
 };
