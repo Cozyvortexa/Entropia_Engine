@@ -83,19 +83,57 @@ std::pair<unsigned int, unsigned int> Light::InitCubeMap() {
 	return std::make_pair(depthCubeMapFBO, depthCubemap);
 }
 
+std::pair<unsigned int, unsigned int> Light::InitSpotShadowMap() {
+	unsigned int depthMapFBO;
+	unsigned int depthMap;
+	glGenFramebuffers(1, &depthMapFBO);
+
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Shadow Framebuffer not complete!" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	return std::make_pair(depthMapFBO, depthMap);
+}
+
 #pragma endregion Init
 
+#pragma region SpotLight
+SpotLight::SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, std::shared_ptr<Shader> depthShaderSpotMap, float newIntensity) {
+	std::pair<unsigned int, unsigned int> depthBuffer = InitSpotShadowMap();
+	depthMapFBO = depthBuffer.first;
+	depthMap = depthBuffer.second;
 
-SpotLight::SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, float newIntensity) {
 	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
-	intensity = newIntensity;
 
+	aspect = (float)shadowWidth / (float)shadowHeight;
+
+	intensity = newIntensity;
 	cutOff = _cutOff;
 	outerCutOff = _outercutOff;
 	direction = _direction;
 	this->range = range;
+	this->depthSpotShaderMap = depthShaderSpotMap;
 }
-
+#pragma endregion SpotLight
 
 #pragma region DirLight
 
@@ -196,7 +234,6 @@ void DirLight::UpdateMatrix(glm::mat4 projection, const glm::mat4 viewMatrice) {
 }
 
 #pragma endregion DirLight
-
 
 #pragma region PointLight
 

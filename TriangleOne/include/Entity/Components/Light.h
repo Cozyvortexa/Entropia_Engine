@@ -45,6 +45,7 @@ protected:
 	void InitBaseLight(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float newIntensity);
 	std::pair<unsigned int, unsigned int> InitShadowMap();
 	std::pair<unsigned int, unsigned int> InitCubeMap();
+	std::pair<unsigned int, unsigned int> InitSpotShadowMap();
 };
 
 struct DirLight : public Light {
@@ -64,7 +65,6 @@ struct DirLight : public Light {
 
 
 	void UpdateMatrix(glm::mat4 projection,const glm::mat4 viewMatrice);
-
 
 
 	std::shared_ptr<Shader> depthShader = nullptr;
@@ -96,10 +96,19 @@ public:
 
 struct SpotLight : public Light {
 public: 
-	SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, float newIntensity);
+	SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, std::shared_ptr<Shader> depthShaderSpotMap, float newIntensity);
 	float range = 1.0f;
 
 	glm::vec3 direction = glm::vec3(0);
 	float cutOff = 0.0f;
 	float outerCutOff = 1.0f;
+
+	float aspect = 1.0f;
+
+	unsigned int depthMapFBO;
+	unsigned int depthMap;
+
+	glm::mat4 lightSpaceMatrix = glm::mat4(1.0f);  // Je sent le bug arriver avec celle la
+
+	std::shared_ptr<Shader> depthSpotShaderMap = nullptr;
 };

@@ -27,6 +27,7 @@ struct SpotLight {
 #define NBR_MAX_SPOT_LIGHTS 8 // A setup dans config si possible ( quand il existera) 
 uniform SpotLight spotLights[NBR_MAX_SPOT_LIGHTS];
 uniform int nbrSpotLight;
+uniform mat4 spotLightMatrices[NBR_MAX_SPOT_LIGHTS];
 
 struct PointLight {
 	vec3 position;
@@ -52,6 +53,7 @@ uniform DirLight dirLight;
 //Shadow
 uniform sampler2D shadowMap;
 uniform samplerCube shadowCubeMaps[NBR_MAX_POINT_LIGHTS];
+uniform sampler2D shadowMapSpot [NBR_MAX_SPOT_LIGHTS];
 uniform float far_plane;
 
 uniform vec3 viewPos;
@@ -61,13 +63,13 @@ vec4 CalcFinalSpecular();
 
 vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
 vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
-vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular);
+vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 norm,vec4 finalDiffuse, vec4 finalSpecular);
 
 void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular);
 
 float ShadowDirLight();
 float ShadowPointLight(PointLight light, int lightIndex, vec3 norm);
-float ShadowSpotLight(SpotLight light);
+float ShadowSpotLight(SpotLight light, int lightIndex);
 
 in vec3 FragPos;
 in vec3 normal;
@@ -105,7 +107,7 @@ void main()
 	}
 	for (int i = 0; i < nbrSpotLight; i++){
 		if (length(spotLights[i].ambient + spotLights[i].diffuse + spotLights[i].specular) > 0.001 ){
-			final_lightning += CalcSpotLight(spotLights[i], viewDir, norm, finalDiffuse, finalSpecular);
+			final_lightning += CalcSpotLight(spotLights[i], i, viewDir, norm, finalDiffuse, finalSpecular);
 		}
 	}
 
@@ -212,7 +214,7 @@ vec3 CalcPointLight(PointLight light, int lightIndex,vec3 viewDir, vec3 norm,vec
 	return light_contribution / (light_contribution + vec3(1.0));
 }
 
-vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular)  // SpottLight non fonctionnelle
+vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular)  // SpottLight non fonctionnelle
 {
 	vec3 lightDir = normalize(light.position - FragPos);  // Direction entre la source de lumiere et la normal du vertex
 
@@ -242,17 +244,17 @@ vec3 CalcSpotLight(SpotLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, 
 	diffuse *= attenuation * intensity;
 	specular *= attenuation * intensity;
 
-//	float shadow = ShadowSpotLight();
+	float shadow = ShadowSpotLight(light, lightIndex);
 	//vec3 light_contribution = ambient + (diffuse + specular);
 //	vec3 light_contribution = (diffuse + specular) * (1.0 - shadow);
 
 	vec3 light_contribution = vec3(0.0);
 
 	if (specularNbr == 0 ){
-		light_contribution = ambient + (diffuse);
+		light_contribution = ambient + (diffuse) * (1.0 - shadow);
 	}
 	else{ 
-		light_contribution = ambient + (diffuse + specular);
+		light_contribution = ambient + (diffuse + specular) * (1.0 - shadow);
 	}
 
 	return light_contribution;
@@ -382,7 +384,45 @@ float ShadowPointLight(PointLight light, int lightIndex, vec3 norm){
 	return shadow;
 }
 
-float ShadowSpotLight(SpotLight light){
+float GetSpotShadowMapValue(int index, vec2 dir) {
+    if (index == 0) return texture(shadowMapSpot[0], dir).r;
+    if (index == 1) return texture(shadowMapSpot[1], dir).r;
+    if (index == 2) return texture(shadowMapSpot[2], dir).r;
+    if (index == 3) return texture(shadowMapSpot[3], dir).r;
+    if (index == 4) return texture(shadowMapSpot[4], dir).r;
+    if (index == 5) return texture(shadowMapSpot[5], dir).r;
+    if (index == 6) return texture(shadowMapSpot[6], dir).r;
+    if (index == 7) return texture(shadowMapSpot[7], dir).r;
+    return 0.0;
+}
 
-	return 0.0f;
+float ShadowSpotLight(SpotLight light, int lightIndex){
+	vec4 fragPosSpotSpace = spotLightMatrices[lightIndex] * vec4(FragPos, 1.0);
+
+    vec3 projCoords = fragPosSpotSpace.xyz / fragPosSpotSpace.w;
+	projCoords = projCoords * 0.5 + 0.5;
+
+	if (projCoords.z > 1.0 || projCoords.z < 0.0
+	|| projCoords.x < 0.0 || projCoords.x > 1.0
+	|| projCoords.y < 0.0 || projCoords.y > 1.0)
+		return 0.0;
+
+	float currentDepth = projCoords.z ;
+
+	vec3 lightDir = normalize(light.position - FragPos);
+    float bias = max(0.01 * (1.0 - dot(normal, lightDir)), 0.001);
+
+	float shadow = 0.0;
+	vec2 texelSize = 1.0 / textureSize(shadowMapSpot[lightIndex], 0);
+	for(int x = -1; x <= 1; ++x)
+	{
+		for(int y = -1; y <= 1; ++y)
+		{
+			float pcfDepth = GetSpotShadowMapValue(lightIndex, projCoords.xy + vec2(x, y) * texelSize);
+			shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+		}
+	}
+	shadow /= 9.0;
+
+	return shadow;
 }
