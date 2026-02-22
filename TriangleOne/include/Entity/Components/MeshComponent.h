@@ -3,7 +3,7 @@
 #include "memory.h"
 #include "Entity/Entity.h"
 
-struct MeshComponent : Component {
+struct MeshComponent{
 public:
 	MeshComponent(std::string model, std::shared_ptr<Shader> _shader);
 

@@ -42,9 +42,33 @@ public:
 };
 
 class World {
+public:
+    template<typename... Components>
+    View<Components...> view() {
+        return View<Components...>(get_pool<Components>()...);
+    }
+
+    template<typename T>
+    void add_component(int entity, T component) {
+        get_pool<T>()->insert(entity, component);
+    }
+
+    template<typename T>
+    T* get_ressource() {
+        auto type_id = std::type_index(typeid(T));
+
+        if (ressources.find(type_id) == ressources.end()) {
+            std::cout << "La ressource: " << typeid(T).name() << " n'existe pas" << std::endl;
+            return nullptr;
+        }
+
+        // Cast
+        return static_cast<T*>(ressources[type_id].get());
+    }
+
 private:
     std::unordered_map<std::type_index, std::unique_ptr<ISparseSet>> pools;
-    std::unordered_map<std::type_index, Ressource> ressources;
+    std::unordered_map<std::type_index, std::unique_ptr<Ressource>> ressources;
 
     // Recupére/crée un pool spécifique
     template<typename T>
@@ -59,14 +83,17 @@ private:
         return static_cast<SparseSet<T>*>(pools[type_id].get());
     }
 
-public:
-    template<typename... Components>
-    View<Components...> view() {
-        return View<Components...>(get_pool<Components>()...);
+    template<typename T>
+    T* add_ressource() {
+        auto type_id = std::type_index(typeid(T));
+
+        if (ressources.find(type_id) == ressources.end()) {
+            ressources[type_id] = std::make_unique<T>();
+        }
+
+        // Cast
+        return static_cast<T*>(ressources[type_id].get());
     }
 
-    template<typename T>
-    void add_component(int entity, T component) {
-        get_pool<T>()->insert(entity, component);
-    }
+    friend class Scheduler;
 };

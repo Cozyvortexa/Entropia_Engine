@@ -1,23 +1,13 @@
 #include "Systemes/TimeSysteme/Time.hpp"
 
-Time* Time::instance = nullptr;
-
-float Time::deltaTime = 0.0f;
-
-Time::Time() {
-	instance = this;
-}
-
-Time* Time::GetInstance() {
-	return instance;
-}
 
 void Time::Update(World& world) {
+	TimeRessource* ressource = world.get_ressource<TimeRessource>();
 	float currentFrame = glfwGetTime();
-	deltaTime = currentFrame - lastFrame;
-	lastFrame = currentFrame;
+	ressource->deltaTime = currentFrame - ressource->lastFrame;
+	ressource->lastFrame = currentFrame;
 }
 
-void Time::Shutdown() {
+void Time::Shutdown(World& world) {
 	std::cout << "Shuting down TimeSysteme" << std::endl;
 }

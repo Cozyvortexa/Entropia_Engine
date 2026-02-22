@@ -17,10 +17,8 @@ public:
 	void Update();
 	void Shutdown();
 
-
-private:
 	void CreateSystemes();
-	template<typename SystemeType> void CreateSysteme();
+private:
 	std::vector<std::unique_ptr<System>> systemes;
 
 	World* world;

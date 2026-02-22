@@ -4,7 +4,10 @@
 #include <GLFW/glfw3.h>
 
 #include "ECS/System.h"
+#include "ECS/Component.h"
 #include "iostream"
+
+#include "ECS/World.h"
 
 class Window : public System {
 public:
@@ -14,24 +17,9 @@ public:
 
 	static void Framebuffer_size_callback(GLFWwindow* window, int width, int height);
 	void ProcessInput(GLFWwindow* window);
-	bool ShouldClose();
+	bool ShouldClose(World& world);
 
-	GLFWwindow* GetWindow() { return window; }
-
-	static int GetWidth(){ return WIDHT; }
-	static int GetHeight() { return HEIGHT; }
-
-	void Init() override;
+	void Init(World& world) override;
 	void Update(World& world) override;
-	void Shutdown() override;
-
-private:
-	inline static int WIDHT = 800;
-	inline static int HEIGHT = 600;
-
-	static Window* instance;
-
-	int sample = 4;
-
-	GLFWwindow* window = nullptr;
+	void Shutdown(World& world) override;
 };

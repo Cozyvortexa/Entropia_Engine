@@ -2,24 +2,21 @@
 
 Scheduler::Scheduler(World* world, Window* window) {
 	this->world = world;
-	this->window = window;
 
-	systemes.push_back(std::make_unique<Time>());
-	//systemes.push_back(std::make_unique<RenderModule>());
+	this->window = window;  // Window est géré indépendamment du reste
+	world->add_ressource<WindowRessource>();
+	window->Init(*world); // Systeme a part
+
 }
 
 Scheduler::~Scheduler() {};
 
-template<typename SystemeType> void Scheduler::CreateSysteme() {
-	std::unique_ptr<SystemeType> systeme = std::make_unique<SystemeType>();
-	systemes.push_back(std::move(systeme));
-}
-
 
 void Scheduler::CreateSystemes() {
-	//CreateSysteme<Window>();
-	//CreateSysteme<Time>();
-	//CreateSysteme<RenderSysteme>();
+	systemes.push_back(std::make_unique<Time>());
+	world->add_ressource<TimeRessource>();
+
+	//systemes.push_back(std::make_unique<RenderModule>());
 
 	std::cout << "CreateSystemes done\n";
 }
@@ -28,7 +25,7 @@ Scheduler* Scheduler::Init() {
 	std::cout << "Init Starting" << std::endl;
 
 	for (auto& Systeme : systemes) {
-		Systeme->Init();
+		Systeme->Init(*world);
 	}
 
 	std::cout << "Init Done" << std::endl;
@@ -37,14 +34,18 @@ Scheduler* Scheduler::Init() {
 
 void Scheduler::Update() {
 
+	window->Update(*world);
+
 	for (auto& Systeme : systemes) {
 		Systeme->Update(*world);
 	}
 }
 
 void Scheduler::Shutdown() {
+	window->Shutdown(*world);
+
 
 	for (auto&  System : systemes) {
-		System->Shutdown();
+		System->Shutdown(*world);
 	}
 }

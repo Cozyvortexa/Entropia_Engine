@@ -1,4 +1,4 @@
-#include <Modules/RenderModule/ModelClass.h>
+#include <Systemes/RenderModule/ModelClass.h>
 
 void Model::LoadModel(std::string path) {
 	Assimp::Importer importer;

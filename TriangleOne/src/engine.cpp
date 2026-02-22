@@ -12,11 +12,14 @@ Engine::~Engine() {};
 
 void Engine::InitEngine() {
 	window = std::make_unique<Window>();
-	window->Init(); // Systeme a part
+
 
 	world = std::make_unique<World>();
 	scheduler = std::make_unique<Scheduler>(world.get(), window.get());
+
+	//Scheduler
 	scheduler->Init();
+	scheduler->CreateSystemes();
 }
 
 int Engine::Run() {
