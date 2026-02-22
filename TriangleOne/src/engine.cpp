@@ -29,14 +29,14 @@ int Engine::Run() {
 	//	scheduler->Update();
 	//}
 
-	Entity entity = 10;
-	Position position;
-	position.x = 44;
-	world->add_component(entity, position);
-	View view = world->view<Position>();
-	view.each([this](int entity, Position& pos) {
-		std::cout << pos.x << " enter here " << std::endl;
-	});
+	//Entity entity = 10;
+	//Position position;
+	//position.x = 44;
+	//world->add_component(entity, position);
+	//View view = world->view<Position>();
+	//view.each([this](int entity, Position& pos) {
+	//	std::cout << pos.x << " enter here " << std::endl;
+	//});
 
 
 	//while (window->ShouldClose()) {

@@ -8,7 +8,7 @@
 
 #include "Camera.h"
 #include "Systemes/RenderModule/Shader.h"
-#include "Entity/Components/Transform.h"
+#include "ECS/Component.h"
 
 struct AABB {
 	AABB() { min = glm::vec3(0);  max = glm::vec3(0);};

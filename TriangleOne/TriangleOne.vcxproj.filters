@@ -54,9 +54,6 @@
     <ClCompile Include="src\Entity\Entity.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Entity\Systemes\RenderSystem.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="src\Entity\Components\MeshComponent.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
@@ -104,13 +101,7 @@
     <ClInclude Include="include\Entity\Entity.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\Entity\Systemes\RenderSystem.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
     <ClInclude Include="include\Entity\Components\MeshComponent.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Entity\Components\Transform.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="include\Scene.h">

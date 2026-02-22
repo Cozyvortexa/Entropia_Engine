@@ -44,6 +44,25 @@ void Window::Init(World& world) {
 	glViewport(0, 0, ressource->WIDHT, ressource->HEIGHT);
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+
+	glfwSetInputMode(ressource->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	//Blending     //ya pas de blending mm avec cette ligne au cas ou 
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	//Face culling     //fonctionne bizzarement ( faudrait chek l'ordre de dessin des vertex)
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_BACK);
+	//glFrontFace(GL_CCW);
+
+	//MSAA
+	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_DEPTH_TEST);
+
+	//Correction gamma 
+	//glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
 bool Window::ShouldClose(World& world) {

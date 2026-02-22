@@ -13,8 +13,6 @@ class Window : public System {
 public:
 	Window();
 
-	static Window* GetInstance();
-
 	static void Framebuffer_size_callback(GLFWwindow* window, int width, int height);
 	void ProcessInput(GLFWwindow* window);
 	bool ShouldClose(World& world);

@@ -142,7 +142,6 @@
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\Entity\Entity.cpp" />
     <ClCompile Include="src\Entity\Components\MeshComponent.cpp" />
-    <ClCompile Include="src\Entity\Systemes\RenderSystem.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\Entity\Components\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -161,11 +160,9 @@
     <ClInclude Include="include\ECS\Scheduler.h" />
     <ClInclude Include="include\ECS\SpareSet.h" />
     <ClInclude Include="include\engine.h" />
-    <ClInclude Include="include\Entity\Components\Transform.h" />
     <ClInclude Include="include\Entity\Entity.h" />
     <ClInclude Include="include\Entity\Components\Light.h" />
     <ClInclude Include="include\Entity\Components\MeshComponent.h" />
-    <ClInclude Include="include\Entity\Systemes\RenderSystem.h" />
     <ClInclude Include="include\Systemes\RenderModule\MeshClass.h" />
     <ClInclude Include="include\Systemes\RenderModule\ModelClass.h" />
     <ClInclude Include="include\ECS\System.h" />
