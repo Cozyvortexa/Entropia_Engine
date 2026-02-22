@@ -1,7 +1,7 @@
 #pragma once
-#include "Modules/RenderModule/Shader.h"
+#include "Systemes/RenderModule/Shader.h"
 
-#include "Modules/RenderModule/ModelClass.h"
+#include "Systemes/RenderModule/ModelClass.h"
 
 #include <utility>
 #include <memory>

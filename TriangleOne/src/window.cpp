@@ -60,7 +60,7 @@ bool Window::ShouldClose() {
 }
 
 
-void Window::Update() {
+void Window::Update(World& world) {
 	ProcessInput(window);  // gere les inputs 
 }
 

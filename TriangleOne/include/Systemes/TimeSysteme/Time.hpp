@@ -1,18 +1,18 @@
 #pragma once
 
-#include "Modules/Module.h"
+#include "ECS/System.h"
 #include "Windows.h"
 #include <GLFW/glfw3.h>
 #include "iostream"
 
 
-class Time : public Module {  // Oui c'est un hpp, time.h existe deja ( utiliser dans une lib )
+class Time : public System {  // Oui c'est un hpp, time.h existe deja ( utiliser dans une lib )
 public:
 	Time();
 
 	static Time* GetInstance();
 
-	void Update() override;
+	void Update(World& world) override;
 	void Shutdown() override;
 	static float GetDeltaTime() { return deltaTime; }
 

@@ -2,14 +2,14 @@
 #include <glad/glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "Modules/Module.h"
+#include "ECS/System.h"
 
 #include <iostream>
 #include <vector>
 
 #include "Shader.h"
 #include "window.h"
-#include "Modules/TimeModule/Time.hpp"
+#include "Systemes/TimeSysteme/Time.hpp"
 #include "Texture.h"
 #include "Camera.h"
 
@@ -27,7 +27,7 @@
 
 
 
-class RenderModule : public Module {
+class RenderModule : public System {
 public:
 	RenderModule();
 
@@ -42,7 +42,7 @@ public:
 	void DrawSkyBox(glm::mat4 projectionMatrix);
 
 	void Init() override;
-	void Render() override;
+	void Update(World& world) override;
 	void Shutdown() override;
 
 private:

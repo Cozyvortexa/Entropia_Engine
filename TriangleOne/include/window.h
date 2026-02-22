@@ -3,10 +3,10 @@
 #include <glad/glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "Modules/Module.h"
+#include "ECS/System.h"
 #include "iostream"
 
-class Window : public Module {
+class Window : public System {
 public:
 	Window();
 
@@ -22,7 +22,7 @@ public:
 	static int GetHeight() { return HEIGHT; }
 
 	void Init() override;
-	void Update() override;
+	void Update(World& world) override;
 	void Shutdown() override;
 
 private:

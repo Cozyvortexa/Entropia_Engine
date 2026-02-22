@@ -10,63 +10,43 @@ Engine::Engine() {
 
 Engine::~Engine() {};
 
+void Engine::InitEngine() {
+	window = std::make_unique<Window>();
+	window->Init(); // Systeme a part
+
+	world = std::make_unique<World>();
+	scheduler = std::make_unique<Scheduler>(world.get(), window.get());
+	scheduler->Init();
+}
+
 int Engine::Run() {
+	InitEngine();
 
-	CreateModules();
-	Init();
+	//while (window->ShouldClose()) {
+	//	scheduler->Update();
+	//}
 
-	while (window->ShouldClose()) {
-		Update();
-		Render();
-	}
+	Entity entity = 10;
+	Position position;
+	position.x = 44;
+	world->add_component(entity, position);
+	View view = world->view<Position>();
+	view.each([this](int entity, Position& pos) {
+		std::cout << pos.x << " enter here " << std::endl;
+	});
+
+
+	//while (window->ShouldClose()) {
+	//	Update();
+	//	Render();
+	//}
 	Shutdown();
 	return 0;
 }
 
-template<typename ModuleType> ModuleType* Engine::CreateModule() {
-	ModuleType* module = new ModuleType();
-	modules.push_back(module);
-	return module;
-}
-
-
-void Engine::CreateModules() {
-	window = CreateModule<Window>();
-	CreateModule<Time>();
-	CreateModule<RenderModule>();
-
-	std::cout << "CreateModules done\n";
-}
-
-Engine* Engine::Init() {
-	std::cout << "Init Starting" << std::endl;
-
-	for (Module* module : modules) {
-		module->Init();
-	}
-
-	std::cout << "Init Done" << std::endl;
-	return this;
-}
-
-void Engine::Update() {
-
-	for (Module* module : modules) {
-		module->Update();
-	}
-}
-
-void Engine::Render() {
-
-	for (Module* module : modules) {
-		module->Render();
-	}
-}
 
 void Engine::Shutdown() {
+	scheduler->Shutdown();
 
-	for (Module* module : modules) {
-		module->Shutdown();
-		delete module;
-	}
+	std::cout << "Engine off" << std::endl;
 }

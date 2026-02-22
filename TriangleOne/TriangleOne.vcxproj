@@ -138,6 +138,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\ECS\Scheduler.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\Entity\Entity.cpp" />
     <ClCompile Include="src\Entity\Components\MeshComponent.cpp" />
@@ -156,21 +157,25 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Camera.h" />
+    <ClInclude Include="include\ECS\Component.h" />
+    <ClInclude Include="include\ECS\Scheduler.h" />
+    <ClInclude Include="include\ECS\SpareSet.h" />
     <ClInclude Include="include\engine.h" />
     <ClInclude Include="include\Entity\Components\Transform.h" />
     <ClInclude Include="include\Entity\Entity.h" />
     <ClInclude Include="include\Entity\Components\Light.h" />
     <ClInclude Include="include\Entity\Components\MeshComponent.h" />
     <ClInclude Include="include\Entity\Systemes\RenderSystem.h" />
-    <ClInclude Include="include\Modules\RenderModule\MeshClass.h" />
-    <ClInclude Include="include\Modules\RenderModule\ModelClass.h" />
-    <ClInclude Include="include\Modules\Module.h" />
-    <ClInclude Include="include\Modules\RenderModule\RenderModule.h" />
-    <ClInclude Include="include\Modules\RenderModule\Shader.h" />
-    <ClInclude Include="include\Modules\RenderModule\Texture.h" />
-    <ClInclude Include="include\Modules\TimeModule\Time.hpp" />
+    <ClInclude Include="include\Systemes\RenderModule\MeshClass.h" />
+    <ClInclude Include="include\Systemes\RenderModule\ModelClass.h" />
+    <ClInclude Include="include\ECS\System.h" />
+    <ClInclude Include="include\Systemes\RenderModule\RenderModule.h" />
+    <ClInclude Include="include\Systemes\RenderModule\Shader.h" />
+    <ClInclude Include="include\Systemes\RenderModule\Texture.h" />
+    <ClInclude Include="include\Systemes\TimeSysteme\Time.hpp" />
     <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\window.h" />
+    <ClInclude Include="include\ECS\World.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\MainShader\BaseFragmentShader.glsl" />

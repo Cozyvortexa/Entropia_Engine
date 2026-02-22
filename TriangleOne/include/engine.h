@@ -6,14 +6,15 @@
 #include <fstream>
 #include <sstream>
 
-#include <Modules/Module.h>
-#include <Modules/RenderModule/RenderModule.h>
+//#include <Modules/Module.h>
 #include <window.h>
-#include <Modules/TimeModule/Time.hpp>
+//#include <Modules/TimeModule/Time.hpp>
 
 #include <iostream>
 #include <vector>
 
+#include "ECS/World.h"
+#include "ECS/Scheduler.h"
 
 class Engine {
 public:
@@ -21,23 +22,17 @@ public:
 	~Engine();
 
 	int Run();
-
-	Engine* Init();
-	void CreateModules();
-	void Update();
-	void Render();
 	void Shutdown();
 
-
 private:
+	void InitEngine();
 	int WIDHT = 800;
 	int HEIGHT = 600;
 	static Engine* instance;
-	Window* window = nullptr;
+	std::unique_ptr<Window> window;
 
-	std::vector<Module*> modules;
-	std::vector<unsigned int> shaderListe;
-	unsigned int shaderProgram;
 
-	template<typename ModuleType> ModuleType* CreateModule();
+	std::unique_ptr<World> world;
+	std::unique_ptr<Scheduler> scheduler;
+
 };

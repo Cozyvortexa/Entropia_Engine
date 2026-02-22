@@ -6,7 +6,6 @@
 #include "window.h"
 
 #include "Scene.h"
-
 #include <vector>
 
 class RenderSystem {

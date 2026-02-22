@@ -1,4 +1,4 @@
-#include <Modules/RenderModule/RenderModule.h>
+#include <Systemes/RenderModule/RenderModule.h>
 
 
 float verticesLightRec[] = {
@@ -444,7 +444,7 @@ void RenderModule::Init() {
 	//InitSkyBox();
 }
 
-void RenderModule::Render()
+void RenderModule::Update(World& world)
  {
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)Window::GetWidth() / (float)Window::GetHeight(), mainCamera->GetNearPlane(), mainCamera->GetFarPlane());
 

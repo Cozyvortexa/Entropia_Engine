@@ -1,4 +1,4 @@
-#include "Modules/TimeModule/Time.hpp"
+#include "Systemes/TimeSysteme/Time.hpp"
 
 Time* Time::instance = nullptr;
 
@@ -12,12 +12,12 @@ Time* Time::GetInstance() {
 	return instance;
 }
 
-void Time::Update() {
+void Time::Update(World& world) {
 	float currentFrame = glfwGetTime();
 	deltaTime = currentFrame - lastFrame;
 	lastFrame = currentFrame;
 }
 
 void Time::Shutdown() {
-	std::cout << "Shuting down TimeModule" << std::endl;
+	std::cout << "Shuting down TimeSysteme" << std::endl;
 }
