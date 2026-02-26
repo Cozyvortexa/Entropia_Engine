@@ -30,7 +30,7 @@ public:
         if (!contains(e)) {
             // Redimensionner le tableau sparse si l'ID de l'entité est plus grand que la taille interne du tableau
             if (e >= sparse.size()) {
-                sparse.resize(e + 1, static_cast<size_t>(-1));
+                sparse.resize(e + 2000, static_cast<size_t>(-1));
             }
 
             sparse[e] = dense_entities.size();
@@ -49,8 +49,8 @@ public:
     }
 
     // Swap and Pop
-    void remove(Entity e) {
-        if (!contains(e)) return;
+    bool remove(Entity e) {
+        if (!contains(e)) return false;
 
         size_t deleted_idx = sparse[e];
         size_t last_idx = dense_entities.size() - 1;
@@ -70,12 +70,21 @@ public:
         // Retire le dernier élément
         dense_entities.pop_back();
         dense_components.pop_back();
+
+        return true;
     }
 
     // Récupère une référence vers le composant d'une entité
     T& get(Entity e) {
         assert(contains(e) && "L'entite ne possede pas ce composant !");
         return dense_components[sparse[e]];
+    }
+
+    T* try_Get(Entity e) {
+        if (contains(e)) {
+            return &dense_components[sparse[e]];
+        }
+        return nullptr;
     }
 
     size_t size() const { return dense_components.size(); }

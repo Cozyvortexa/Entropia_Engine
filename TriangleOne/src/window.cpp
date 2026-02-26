@@ -16,23 +16,23 @@ void Window::ProcessInput(GLFWwindow* window)
 }
 
 void Window::Init(World& world) {
-	WindowRessource* ressource = world.get_ressource<WindowRessource>();
+	WindowResource* windowData = world.get_ressource<WindowResource>();
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//MSAA
-	glfwWindowHint(GLFW_SAMPLES, ressource->sample);
+	glfwWindowHint(GLFW_SAMPLES, windowData->sample);
 
-	ressource->window = glfwCreateWindow(ressource->WIDHT, ressource->HEIGHT, "Entropia Engine", NULL, NULL);
-	if (ressource->window == NULL)
+	windowData->window = glfwCreateWindow(windowData->WIDHT, windowData->HEIGHT, "Entropia Engine", NULL, NULL);
+	if (windowData->window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		abort();
 	}
 
-	glfwMakeContextCurrent(ressource->window);
+	glfwMakeContextCurrent(windowData->window);
 
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -40,13 +40,13 @@ void Window::Init(World& world) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		abort();
 	}
-	glfwSetFramebufferSizeCallback(ressource->window, Framebuffer_size_callback); // Pour adapter le viewport si la fenetre est resize pendant le court du programme 
-	glViewport(0, 0, ressource->WIDHT, ressource->HEIGHT);
+	glfwSetFramebufferSizeCallback(windowData->window, Framebuffer_size_callback); // Pour adapter le viewport si la fenetre est resize pendant le court du programme 
+	glViewport(0, 0, windowData->WIDHT, windowData->HEIGHT);
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
 
-	glfwSetInputMode(ressource->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(windowData->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//Blending     //ya pas de blending mm avec cette ligne au cas ou 
 	//glEnable(GL_BLEND);
@@ -66,7 +66,7 @@ void Window::Init(World& world) {
 }
 
 bool Window::ShouldClose(World& world) {
-	WindowRessource* ressource = world.get_ressource<WindowRessource>();  // WARNING
+	WindowResource* ressource = world.get_ressource<WindowResource>();  // WARNING
 	if (!glfwWindowShouldClose(ressource->window)) {
 		return true;
 	}
@@ -74,19 +74,19 @@ bool Window::ShouldClose(World& world) {
 }
 
 
-void Window::Update(World& world) {
-	WindowRessource* ressource = world.get_ressource<WindowRessource>();
-	ProcessInput(ressource->window);  // gere les inputs 
+void Window::Update(World& world, const ResourceBuffer* resourceBuffer) {
+	WindowResource* windowData = resourceBuffer->windowResource;
+	ProcessInput(windowData->window);  // gere les inputs 
 }
 
 
 void Window::Shutdown(World& world) {
-	WindowRessource* ressource = world.get_ressource<WindowRessource>();
+	WindowResource* Resource = world.get_ressource<WindowResource>();
 
 	std::cout << "Window shutting down" << std::endl;
-	if (ressource->window != nullptr) {
-		glfwDestroyWindow(ressource->window);
-		ressource->window = nullptr;
+	if (Resource->window != nullptr) {
+		glfwDestroyWindow(Resource->window);
+		Resource->window = nullptr;
 	}
 	glfwTerminate();
 }

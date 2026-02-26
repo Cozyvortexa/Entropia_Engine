@@ -1,47 +1,47 @@
 #include <Systemes/RenderModule/RenderModule.h>
 
 
-void RenderModule::DrawTextureOnScreen() {
+void RenderModule::DrawTextureOnScreen(WindowResource* windowData, RenderResource* renderData) {
 
-	ppShader->Use();
-	glBindVertexArray(quadVAO);
+	renderData->postProcessShader->Use();
+	glBindVertexArray(renderData->quadVAO);
 
 	glDisable(GL_DEPTH_TEST);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, finalTxtOutput);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, finalTxtColorOutput);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtOutput);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData->framebuffer);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBlitFramebuffer(0, 0, Window::GetWidth(), Window::GetHeight(), 0, 0, Window::GetWidth(), Window::GetHeight(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	glBlitFramebuffer(0, 0, windowData->WIDHT, windowData->HEIGHT, 0, 0, windowData->WIDHT, windowData->HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
 }
 
-void RenderModule::InitQuadVao() {
+void RenderModule::InitQuadVao(WindowResource* windowData, RenderResource* renderData) {
 	//Init fbo
-	glGenFramebuffers(1, &framebuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	glGenFramebuffers(1, &renderData->framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->framebuffer);
 
 
 	//Init texture depth
-	glGenTextures(1, &finalTxtOutput);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, finalTxtOutput);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample, GL_DEPTH_COMPONENT24, Window::GetWidth(), Window::GetHeight(), GL_TRUE);
+	glGenTextures(1, &renderData->finalTxtOutput);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtOutput);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDHT, windowData->HEIGHT, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, finalTxtOutput, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtOutput, 0);
 	//
 
 	//Init texture color
-	glGenTextures(1, &finalTxtColorOutput);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, finalTxtColorOutput);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample, GL_RGB, Window::GetWidth(), Window::GetHeight(), GL_TRUE);
+	glGenTextures(1, &renderData->finalTxtColorOutput);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGB, windowData->WIDHT, windowData->HEIGHT, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, finalTxtColorOutput, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput, 0);
 	//
 
 	//Assert
@@ -51,12 +51,12 @@ void RenderModule::InitQuadVao() {
 
 
 	//Init quadVAO
-	glGenVertexArrays(1, &quadVAO);
-	glBindVertexArray(quadVAO);
+	glGenVertexArrays(1, &renderData->quadVAO);
+	glBindVertexArray(renderData->quadVAO);
 
-	glGenBuffers(1, &quadVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+	glGenBuffers(1, &renderData->quadVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, renderData->quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(renderData->quadVertices), renderData->quadVertices, GL_STATIC_DRAW);
 
 	//Position
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
@@ -69,32 +69,6 @@ void RenderModule::InitQuadVao() {
 	glBindVertexArray(0);
 }
 
-void RenderModule::InitShadowMap() {
-	glGenFramebuffers(1, &depthMapFBO);
-
-	glGenTextures(1, &depthMap);
-	glBindTexture(GL_TEXTURE_2D, depthMap);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Shadow Framebuffer not complete!" << std::endl;
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
 
 #pragma region Light
 void RenderModule::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList,
@@ -165,9 +139,9 @@ glm::mat4 RenderModule::CalculModel(Transform* currentTransform, glm::mat4 _mode
 
 #pragma region Shadow
 
-void RenderModule::DrawShadowForDirLight(DirLight* currentLight, Scene* scene) {  // Bug sur la window si resize
-	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+void RenderModule::DrawShadowForDirLight(WindowResource* windowData, DirLight* currentLight) {  // Bug sur la window si resize
+	glViewport(0, 0, currentLight->SHADOW_WIDTH, currentLight->SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, currentLight->depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	currentLight->depthShader->Use();
@@ -187,11 +161,11 @@ void RenderModule::DrawShadowForDirLight(DirLight* currentLight, Scene* scene) {
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
+	glViewport(0, 0, windowData->WIDHT, windowData->HEIGHT);
 
 }
 
-void RenderModule::DrawShadowForPointLight(std::pair<PointLight*, Transform*> currentLight, Scene* scene) {
+void RenderModule::DrawShadowForPointLight(std::pair<PointLight*, Transform*> currentLight) {
 	currentLight.first->aspect = (float)currentLight.first->shadowWidth / (float)currentLight.first->shadowHeight;
 	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), currentLight.first->aspect, currentLight.first->near_plane, currentLight.first->range);
 
@@ -236,7 +210,7 @@ void RenderModule::DrawShadowForPointLight(std::pair<PointLight*, Transform*> cu
 	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
 }
 
-void RenderModule::DrawShadowForSpotLight(std::pair<SpotLight*, Transform*> currentLight, Scene* scene) {
+void RenderModule::DrawShadowForSpotLight(std::pair<SpotLight*, Transform*> currentLight) {
 	currentLight.first->aspect = (float)currentLight.first->shadowWidth / (float)currentLight.first->shadowHeight;
 	glm::mat4 shadowProj = glm::perspective(glm::radians(currentLight.first->outerCutOff * 2.0f), currentLight.first->aspect, 0.1f, currentLight.first->range);
 
@@ -273,7 +247,8 @@ void RenderModule::DrawShadowForSpotLight(std::pair<SpotLight*, Transform*> curr
 	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
 }
 
-void RenderModule::UpdateShadow(Scene* scene, glm::mat4 projection, std::vector <DirLight*> star,
+void RenderModule::UpdateShadow(WindowResource* windowData, RenderResource* renderData, 
+	glm::mat4 projection, std::vector <DirLight*> star,
 	std::vector<std::pair<PointLight*, Transform*>> pointLights,
 	std::vector<std::pair<SpotLight*, Transform*>> spotLights) {
 	glCullFace(GL_FRONT);
@@ -281,13 +256,13 @@ void RenderModule::UpdateShadow(Scene* scene, glm::mat4 projection, std::vector 
 	if (star.size() > 0) {
 
 		star[0]->UpdateMatrix(projection, mainCamera->GetViewMatrix());
-		DrawShadowForDirLight(star[0], scene);
+		DrawShadowForDirLight(star[0]);
 	}
 	for (const auto& currentPointLight : pointLights) {
-		DrawShadowForPointLight(currentPointLight, scene);
+		DrawShadowForPointLight(currentPointLight);
 	}
 	for (const auto& currentSpotLight : spotLights) {
-		DrawShadowForSpotLight(currentSpotLight, scene);
+		DrawShadowForSpotLight(currentSpotLight);
 	}
 
 	//glDisable(GL_DEPTH_CLAMP);
@@ -296,7 +271,7 @@ void RenderModule::UpdateShadow(Scene* scene, glm::mat4 projection, std::vector 
 
 #pragma endregion Shadow
 
-void RenderModule::RenderScene(Scene* scene, glm::mat4 projection) {
+void RenderModule::RenderScene(WindowResource* windowData, RenderResource* renderData, glm::mat4 projection) {
 	std::vector<DirLight*> star;
 	std::vector<std::pair<PointLight*, Transform*>> pointLights;
 	std::vector<std::pair<SpotLight*, Transform*>> spotLights;
@@ -313,9 +288,9 @@ void RenderModule::RenderScene(Scene* scene, glm::mat4 projection) {
 		}
 	}
 	//
-	UpdateShadow(scene, projection, star, pointLights, spotLights);
+	UpdateShadow(projection, star, pointLights, spotLights);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, *framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
@@ -342,7 +317,7 @@ void RenderModule::RenderScene(Scene* scene, glm::mat4 projection) {
 
 			glActiveTexture(GL_TEXTURE0 + SLOT_SHADOW_DIR);
 			if (star.size() > 0) {
-				glBindTexture(GL_TEXTURE_2D, depthMap);
+				glBindTexture(GL_TEXTURE_2D, renderData->depthMap);
 				shader->setMatrix("lightSpaceMatrix", star.at(0)->lightMatrice);
 			}
 			else {
@@ -413,82 +388,62 @@ void RenderModule::RenderScene(Scene* scene, glm::mat4 projection) {
 }
 
 void RenderModule::Init(World& world) {
-	GLFWwindow* window = world.get_ressource<WindowRessource>()->window;
-	RenderRessource* ressource = world.get_ressource<RenderRessource>();
+	WindowResource* windowData = world.get_ressource<WindowResource>();
+	RenderResource* renderData = world.get_ressource<RenderResource>();
 
-	if (window == nullptr) {
+	if (windowData->window == nullptr) {
 		std::cout << "Reference de la window impossible a recuperer" << std::endl;
 		abort();
 	}
 
 	Shader::CreateDefaultWhiteTexture();
-	ressource->mainShader = std::make_unique<Shader>("TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
-	ressource->depthShader = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
-	ressource->depthShaderCubeMap = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
+	renderData->mainShader = std::make_unique<Shader>("TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
+	renderData->depthShader = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
+	renderData->depthShaderCubeMap = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
+	renderData->postProcessShader = std::make_unique<Shader>("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
 
 
 
-	renderSystem = new RenderSystem(&framebuffer, mainCamera);
+	//currentScene = new Scene();
+	////Maison
+	//Entity* entity = currentScene->CreateNewEntity();
+	//entity->AddComponent<Transform>();
+	//entity->AddComponent<MeshComponent>("Assets/ImpScene/autumn_house.glb", mainShader);
+	////std::shared_ptr<MeshComponent> meshAttachToEntity = currentScene->AddComponent<MeshComponent>(entity, "Assets/ImpScene/autumn_house.glb", mainShader);
 
 
 
+	//glm::vec3 ambient = glm::vec3(0.002f, 0.002f, 0.002f);
+	//glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+	//glm::vec3 specular = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	//float intensity = 3.0f;
+
+	//glm::vec3 worldLightDir = glm::normalize(glm::vec3(-2.0f, 4.0f, -1.0f));
+
+	////DirLight   	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader)
+	//Entity* entityLight = currentScene->CreateNewEntity();
+	//entityLight->AddComponent<Transform>();
+	//entityLight->AddComponent<DirLight>(glm::vec3(0.002f, 0.002f, 0.002f), diffuse, specular, worldLightDir, depthShader, intensity);
+
+	//float pointLightrange = 8.0f;
 
 
+	////PointLight
+	//Entity* entityPointLight = currentScene->CreateNewEntity();
+	//entityPointLight->AddComponent<Transform>()->position = glm::vec3(1.0f, 3.0f, 0.0f);
+	//entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightrange, depthShaderCubeMap, 5.0f);
 
+	////SpotLight
+	//float cutOff = 15.5f;
+	//float outerCutOff = 25.5f;
+	//Entity* entitySpotLight = currentScene->CreateNewEntity();
+	//entitySpotLight->AddComponent<Transform>()->position = glm::vec3(0.0f, 4.0f, -6.0f);
+	//entitySpotLight->AddComponent<SpotLight>(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, depthShader, 10.0f);  // shader identique a celui de la dirLight
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-	currentScene = new Scene();
-	//Maison
-	Entity* entity = currentScene->CreateNewEntity();
-	entity->AddComponent<Transform>();
-	entity->AddComponent<MeshComponent>("Assets/ImpScene/autumn_house.glb", mainShader);
-	//std::shared_ptr<MeshComponent> meshAttachToEntity = currentScene->AddComponent<MeshComponent>(entity, "Assets/ImpScene/autumn_house.glb", mainShader);
-
-
-
-	glm::vec3 ambient = glm::vec3(0.002f, 0.002f, 0.002f);
-	glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-	glm::vec3 specular = glm::vec3(0.0f, 0.0f, 0.0f);
-
-	float intensity = 3.0f;
-
-	glm::vec3 worldLightDir = glm::normalize(glm::vec3(-2.0f, 4.0f, -1.0f));
-
-	//DirLight   	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader)
-	Entity* entityLight = currentScene->CreateNewEntity();
-	entityLight->AddComponent<Transform>();
-	entityLight->AddComponent<DirLight>(glm::vec3(0.002f, 0.002f, 0.002f), diffuse, specular, worldLightDir, depthShader, intensity);
-
-	float pointLightrange = 8.0f;
-
-
-	//PointLight
-	Entity* entityPointLight = currentScene->CreateNewEntity();
-	entityPointLight->AddComponent<Transform>()->position = glm::vec3(1.0f, 3.0f, 0.0f);
-	entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightrange, depthShaderCubeMap, 5.0f);
-
-	//SpotLight
-	float cutOff = 15.5f;
-	float outerCutOff = 25.5f;
-	Entity* entitySpotLight = currentScene->CreateNewEntity();
-	entitySpotLight->AddComponent<Transform>()->position = glm::vec3(0.0f, 4.0f, -6.0f);
-	entitySpotLight->AddComponent<SpotLight>(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, depthShader, 10.0f);  // shader identique a celui de la dirLight
-
-	Entity* cubeTest = currentScene->CreateNewEntity();
-	cubeTest->AddComponent<Transform>()->position = glm::vec3(4.0f, 0.0f, 0.0f);
-	cubeTest->AddComponent<MeshComponent>("Assets/ImpScene/BasicCube.glb", mainShader);
+	//Entity* cubeTest = currentScene->CreateNewEntity();
+	//cubeTest->AddComponent<Transform>()->position = glm::vec3(4.0f, 0.0f, 0.0f);
+	//cubeTest->AddComponent<MeshComponent>("Assets/ImpScene/BasicCube.glb", mainShader);
 
 
 
@@ -499,39 +454,48 @@ void RenderModule::Init(World& world) {
 	//dirLight = new Light(glm::vec3(0), worldLightDir, ambient, diffuse, specular);
 
 
-	InitQuadVao();
+	InitQuadVao(windowData, renderData);
 	//InitSkyBox();
 }
 
-void RenderModule::Update(World& world)
+void RenderModule::Update(World& world, const ResourceBuffer* resourceBuffer)
  {
-	WindowRessource* windowRessource = world.get_ressource<WindowRessource>();
-	Entity mainCam = world.get_ressource<ActiveCamera>()->cameraID;
+	WindowResource* windowData = resourceBuffer->windowResource;
+	Entity entityCam = resourceBuffer->activeCamera->cameraID;
+	RenderResource* renderData = resourceBuffer->renderResource;
 
-	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->GetZoom()), (float)windowRessource->WIDHT / (float)windowRessource->HEIGHT, mainCamera->GetNearPlane(), mainCamera->GetFarPlane());
+	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);  // Une vue n'est pas possible dans ce contexte car c'est une caméra spécifique qui est récupérer
+	Transform* transformMainCamera = world.get_component<Transform>(entityCam);
 
-	mainShader->Use(); 
-	mainShader->setMatrix("model", _model);
-	mainShader->setMatrix("view", mainCamera->GetViewMatrix());
-	mainShader->setMatrix("projection", projection);
-	mainShader->setFloat("far_plane", mainCamera->GetFarPlane());
+	if (mainCamera == nullptr || transformMainCamera == nullptr) {  // Pas de main camera, pas de rendu
+		std::cout << "Main camera have a null value" << std::endl;
+		return;
+	}
 
-	mainShader->setVec3("viewPos", mainCamera->GetPos());
+	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->zoom), (float)windowData->WIDHT / (float)windowData->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
+
+	renderData->mainShader->Use();
+	renderData->mainShader->setMatrix("model", renderData->_model);
+	renderData->mainShader->setMatrix("view", mainCamera->viewMatrice);
+	renderData->mainShader->setMatrix("projection", projection);
+	renderData->mainShader->setFloat("far_plane", mainCamera->farPlane);
+
+	renderData->mainShader->setVec3("viewPos", transformMainCamera->position);
 
 
-	RenderScene(currentScene, projection);
+	RenderScene(windowData, renderData, projection);
 
 
 	//DrawSkyBox(projection);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	DrawTextureOnScreen();
+	DrawTextureOnScreen(windowData, renderData);
 
 	// A deplacer dans un input manager
-	mainCamera->ProcessInput(window);
+	//mainCamera->ProcessInput(windowRessource->window);
 	
-	glfwSwapBuffers(window);
+	glfwSwapBuffers(windowData->window);
 	glfwPollEvents();
 }
 

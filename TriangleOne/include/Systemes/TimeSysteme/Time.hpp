@@ -9,6 +9,6 @@
 
 class Time : public System {  // Oui c'est un hpp, time.h existe deja ( utiliser dans une lib )
 public:
-	void Update(World& world) override;
+	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;
 	void Shutdown(World& world) override;
 };

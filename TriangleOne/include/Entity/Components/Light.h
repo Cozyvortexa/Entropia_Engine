@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "Camera.h"
+#include "CameraSys.h"
 #include "Systemes/RenderModule/Shader.h"
 #include "ECS/Component.h"
 
@@ -23,7 +23,7 @@ public:
 };
 
 
-struct Light{
+struct Light : Component{
 public:
 	Light() {};
 	Light(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float newIntensity);
@@ -39,7 +39,7 @@ public:
 	glm::vec3 diffuse = glm::vec3(0);
 	glm::vec3 specular = glm::vec3(0);
 
-	unsigned int shadowWidth = 2048, shadowHeight = 2048;
+	unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 
 protected:
 	void InitBaseLight(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float newIntensity);

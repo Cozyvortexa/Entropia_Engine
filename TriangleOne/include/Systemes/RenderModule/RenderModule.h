@@ -12,7 +12,7 @@
 #include "window.h"
 #include "Systemes/TimeSysteme/Time.hpp"
 #include "Texture.h"
-#include "Camera.h"
+#include "CameraSys.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -29,33 +29,32 @@
 
 class RenderModule : public System {
 public:
-	void DrawTextureOnScreen();
+	void DrawTextureOnScreen(WindowResource* windowData, RenderResource* renderData);
 
-	void InitQuadVao();
+	void InitQuadVao(WindowResource* windowData, RenderResource* renderData);
 
 
 	//void InitSkyBox();
 	//void DrawSkyBox(glm::mat4 projectionMatrix);
 
 	void Init(World& world) override;
-	void Update(World& world) override;
+	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;
 	void Shutdown(World& world) override;
 
 	glm::mat4 CalculModel(Transform* currentTransform, glm::mat4 _model);
 
-	void RenderScene(Scene* scene, glm::mat4 projection);
+	void RenderScene(WindowResource* windowData, RenderResource* renderData, glm::mat4 projection);
 
 	void UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList,
 		std::vector <std::pair<PointLight*, Transform*>> pointLightList,
 		std::vector<std::pair<SpotLight*, Transform*>> spotLightList);
 
 
-	void InitShadowMap();
-	void DrawShadowForDirLight(DirLight* currentLight, Scene* scene);
-	void DrawShadowForPointLight(std::pair<PointLight*, Transform*> currentLight, Scene* scene);
-	void DrawShadowForSpotLight(std::pair<SpotLight*, Transform*> currentLight, Scene* scene);
+	void DrawShadowForDirLight(WindowResource* windowData, RenderResource* renderData, DirLight* currentLight);
+	void DrawShadowForPointLight(std::pair<PointLight*, Transform*> currentLight);
+	void DrawShadowForSpotLight(std::pair<SpotLight*, Transform*> currentLight);
 
-	void UpdateShadow(Scene* scene, glm::mat4 projection, std::vector <DirLight*> star,
+	void UpdateShadow(WindowResource* windowData, RenderResource* renderData, glm::mat4 projection, std::vector <DirLight*> star,
 		std::vector<std::pair<PointLight*, Transform*>> pointLights,
 		std::vector<std::pair<SpotLight*, Transform*>> spotLights);
 };

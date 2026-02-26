@@ -10,9 +10,7 @@
 
 #include "SpareSet.h"
 
-struct Component {
-	virtual ~Component() = default;
-};
+struct Component {};
 
 struct Transform : public Component
 {
@@ -27,6 +25,7 @@ struct CameraComponent : public Component {
 	glm::mat4 model = glm::mat4(1.0f);
 	glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
 
+	float yoffset = 0.0f;
 
 	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -47,16 +46,29 @@ struct CameraComponent : public Component {
 
 	float lastX = SCR_WIDTH / 2.0f;
 	float lastY = SCR_HEIGHT / 2.0f;
+
+	glm::mat4 viewMatrice = glm::mat4(1.0f);  // Juste pour pas qu'il soit init a zero
 };
 
-struct SceneComponent : public Component {
-	uint32_t scene_id;
+struct SceneTag : public Component {
+	uint32_t scene_id = 0;
+};
+
+
+enum LightTag {
+	None,
+	Directional_Tag,
+	PointLight_Tag,
+	SpotLight_Tag
+};
+struct LightToInitTag : public Component {
+	LightTag tag = LightTag::None;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct Ressource {};
+struct Resource {};
 
-struct WindowRessource : public Ressource {
+struct WindowResource : public Resource {
 	inline static int WIDHT = 800;
 	inline static int HEIGHT = 600;
 
@@ -65,17 +77,17 @@ struct WindowRessource : public Ressource {
 	GLFWwindow* window = nullptr;
 };
 
-struct TimeRessource : public Ressource {
+struct TimeResource : public Resource {
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
 
 };
 
-struct RenderRessource : public Ressource {
+struct RenderResource : public Resource {
 	std::unique_ptr<Shader> mainShader = nullptr;
 	std::unique_ptr<Shader> depthShader = nullptr;
-
 	std::unique_ptr<Shader> depthShaderCubeMap = nullptr;
+	std::unique_ptr<Shader> postProcessShader = nullptr;
 
 
 	GLFWwindow* window = nullptr;
@@ -99,13 +111,27 @@ struct RenderRessource : public Ressource {
 	//Scene* currentScene = nullptr;
 
 
-	unsigned int depthMapFBO = 0;
-	unsigned int depthMap = 0;
 
-	unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;  // A deplacer
+	float quadVertices[24] = {
+		// Position      // Text
+		-1.0f,  1.0f,     0.0f, 1.0f,
+		 1.0f, -1.0f,     1.0f, 0.0f,
+		-1.0f, -1.0f,     0.0f, 0.0f,
+
+		-1.0f,  1.0f,     0.0f, 1.0f,
+		 1.0f,  1.0f,     1.0f, 1.0f,
+		 1.0f, -1.0f,     1.0f, 0.0f
+	};
 
 };
 
-struct ActiveCamera : public Ressource {
+struct ActiveCamera : public Resource {
 	Entity cameraID;
+};
+
+struct ResourceBuffer {
+	WindowResource* windowResource;
+	TimeResource* timeResource;
+	RenderResource* renderResource;
+	ActiveCamera* activeCamera;
 };

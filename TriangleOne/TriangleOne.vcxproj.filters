@@ -24,28 +24,28 @@
     <ClCompile Include="src\engine.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Modules\RenderModule\RenderModule.cpp">
+    <ClCompile Include="src\Systemes\RenderModule\RenderModule.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\window.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Modules\RenderModule\Shader.cpp">
+    <ClCompile Include="src\Systemes\RenderModule\Shader.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Modules\RenderModule\Texture.cpp">
+    <ClCompile Include="src\Systemes\RenderModule\Texture.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Modules\TimeModule\Time.cpp">
+    <ClCompile Include="src\Systemes\TimeModule\Time.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Camera.cpp">
+    <ClCompile Include="src\CameraSys.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Modules\RenderModule\MeshClass.cpp">
+    <ClCompile Include="src\Systemes\RenderModule\MeshClass.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Modules\RenderModule\ModelClass.cpp">
+    <ClCompile Include="src\Systemes\RenderModule\ModelClass.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\Entity\Components\Light.cpp">
@@ -61,6 +61,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\ECS\Scheduler.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systemes\LightSystem.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -86,7 +89,7 @@
     <ClInclude Include="include\Systemes\TimeSysteme\Time.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\Camera.h">
+    <ClInclude Include="include\CameraSys.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="include\Systemes\RenderModule\MeshClass.h">
@@ -117,6 +120,9 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="include\ECS\Scheduler.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Systemes\LightSystem.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>

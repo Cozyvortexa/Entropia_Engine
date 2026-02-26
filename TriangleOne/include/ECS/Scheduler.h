@@ -19,8 +19,11 @@ public:
 
 	void CreateSystemes();
 private:
+	void FillResourceBankBuffer();
 	std::vector<std::unique_ptr<System>> systemes;
 
 	World* world;
 	Window* window;  // Systeme a part
+
+	ResourceBuffer* resourceBuffer;
 };

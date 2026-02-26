@@ -52,6 +52,22 @@ public:
     void add_component(int entity, T component) {
         get_pool<T>()->insert(entity, component);
     }
+    template<typename T>
+    T* get_component(Entity entity) {
+        auto it = pools.find(std::type_index(typeid(T)));
+        if (it == pools.end()) return nullptr;
+
+        return static_cast<SparseSet<T>*>(it->second.get())->try_get(entity);
+    }
+    template<typename T>
+    bool remove_component(Entity entity) {
+        auto it = pools.find(std::type_index(typeid(T)));
+        if (it == pools.end()) {
+            assert(true, "La supression d'un composant sur l'entité numéro: " + entity + " à échouer");
+            return false
+        }
+        return static_cast<SparseSet<T>*>(it->second.get())->remove(entity);
+    }
 
     template<typename T>
     T* get_ressource() {
@@ -68,7 +84,7 @@ public:
 
 private:
     std::unordered_map<std::type_index, std::unique_ptr<ISparseSet>> pools;
-    std::unordered_map<std::type_index, std::unique_ptr<Ressource>> ressources;
+    std::unordered_map<std::type_index, std::unique_ptr<Resource>> ressources;
 
     // Recupére/crée un pool spécifique
     template<typename T>

@@ -18,6 +18,6 @@ public:
 	bool ShouldClose(World& world);
 
 	void Init(World& world) override;
-	void Update(World& world) override;
+	void Update(World& world, const ResourceBuffer* resourceBuffer) override;
 	void Shutdown(World& world) override;
 };
