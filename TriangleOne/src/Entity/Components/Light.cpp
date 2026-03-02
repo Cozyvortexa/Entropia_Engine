@@ -17,131 +17,24 @@ Light::Light(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float 
 	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
 }
 
-std::pair<unsigned int, unsigned int> Light::InitShadowMap() {
-	unsigned int depthMapFBO;
-	unsigned int depthMap;
-	glGenFramebuffers(1, &depthMapFBO);
-
-	glGenTextures(1, &depthMap);
-	glBindTexture(GL_TEXTURE_2D, depthMap);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Shadow Framebuffer not complete!" << std::endl;
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-	return std::make_pair(depthMapFBO, depthMap);
-}
-
-std::pair<unsigned int, unsigned int> Light::InitCubeMap() {
-	unsigned int depthCubeMapFBO;
-	unsigned int depthCubemap;
-	glGenFramebuffers(1, &depthCubeMapFBO);
-
-	glGenTextures(1, &depthCubemap);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-	for (int i = 0; i < 6; ++i)
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT32F, shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, depthCubeMapFBO);
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
-
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "CubeMap Shadow Framebuffer not complete!" << std::endl;
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-
-	return std::make_pair(depthCubeMapFBO, depthCubemap);
-}
-
-std::pair<unsigned int, unsigned int> Light::InitSpotShadowMap() {
-	unsigned int depthMapFBO;
-	unsigned int depthMap;
-	glGenFramebuffers(1, &depthMapFBO);
-
-	glGenTextures(1, &depthMap);
-	glBindTexture(GL_TEXTURE_2D, depthMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Shadow Framebuffer not complete!" << std::endl;
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-	return std::make_pair(depthMapFBO, depthMap);
-}
-
 #pragma endregion Init
 
 #pragma region SpotLight
 SpotLight::SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, std::shared_ptr<Shader> depthShaderSpotMap, float newIntensity) {
-	std::pair<unsigned int, unsigned int> depthBuffer = InitSpotShadowMap();
-	depthMapFBO = depthBuffer.first;
-	depthMap = depthBuffer.second;
-
 	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
-
-	aspect = (float)shadowWidth / (float)shadowHeight;
 
 	intensity = newIntensity;
 	cutOff = _cutOff;
 	outerCutOff = _outercutOff;
 	direction = _direction;
 	this->range = range;
-	this->depthSpotShaderMap = depthShaderSpotMap;
+	this->depthShader = depthShaderSpotMap;
 }
 #pragma endregion SpotLight
 
 #pragma region DirLight
 
 DirLight::DirLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader, float newIntensity) {
-	std::pair<unsigned int, unsigned int> depthBuffer = InitShadowMap();
-	depthMapFBO = depthBuffer.first;
-	depthMap = depthBuffer.second;  // On sait jamais
-
 	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
 	direction = _direction;
 
@@ -229,29 +122,20 @@ void DirLight::UpdateMatrix(glm::mat4 projection, const glm::mat4 viewMatrice) {
 	lightProjection = glm::ortho(box.min.x, box.max.x, box.min.y, box.max.y, box.min.z , box.max.z);
 
 	lightMatrice = lightProjection * lightViewMatrice;
-
-
 }
 
 #pragma endregion DirLight
 
 #pragma region PointLight
 
-PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _range, std::shared_ptr<Shader> _depthShaderCubeMap, float newIntensity) {
-	std::pair<unsigned int, unsigned int> depthBuffer = InitCubeMap();
-	depthCubeMapFBO = depthBuffer.first;
-	depthCubeMap = depthBuffer.second;
-
+PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _range, std::shared_ptr<Shader> depthShaderCubeMap, float newIntensity) {
 	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
-
 
 	range = _range;
 	near_plane = 0.01f;
 
-	aspect = (float)shadowWidth / (float)shadowHeight;
 
-
-	depthShaderCubeMap = _depthShaderCubeMap;
+	this->depthShader = depthShaderCubeMap;
 }
 
 #pragma endregion PointLight

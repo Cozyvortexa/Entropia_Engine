@@ -118,183 +118,15 @@ void RenderModule::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLi
 	shader->setInt("nbrSpotLight", activeSpotLights);
 }
 
-glm::mat4 RenderModule::CalculModel(Transform* currentTransform, glm::mat4 _model) {
-	glm::mat4 model = _model;
-
-
-	model = glm::translate(model, currentTransform->position);
-
-	model = glm::rotate(model, glm::radians(currentTransform->rotation.x), glm::vec3(1, 0, 0));
-	model = glm::rotate(model, glm::radians(currentTransform->rotation.y), glm::vec3(0, 1, 0));
-	model = glm::rotate(model, glm::radians(currentTransform->rotation.z), glm::vec3(0, 0, 1));
-
-	model = glm::scale(model, glm::vec3(currentTransform->scale));
-
-	return model;
-}
-
-
 
 #pragma endregion Light
 
-#pragma region Shadow
-
-void RenderModule::DrawShadowForDirLight(WindowResource* windowData, DirLight* currentLight) {  // Bug sur la window si resize
-	glViewport(0, 0, currentLight->SHADOW_WIDTH, currentLight->SHADOW_HEIGHT);
-	glBindFramebuffer(GL_FRAMEBUFFER, currentLight->depthMapFBO);
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-	currentLight->depthShader->Use();
-	currentLight->depthShader->setMatrix("lightSpaceMatrix", currentLight->lightMatrice);
-
-	for (const auto& currentEntity : scene->GetEntities()) {
-		if (!currentEntity->HasComponent<MeshComponent>() || !currentEntity->HasComponent<Transform>() || currentEntity->HasComponent<DirLight>()) {
-			continue;
-		}
-
-		MeshComponent* currentModel = currentEntity->GetComponent<MeshComponent>();
-		std::shared_ptr<Shader> shader = currentModel->GetShader();
-		if (currentModel->haveToBeDraw && currentModel->castShadow) {
-			currentLight->depthShader->setMatrix("model", CalculModel(currentEntity->GetComponent<Transform>()));
-			currentModel->modelMesh->DrawWithoutTexture(currentLight->depthShader);
-		}
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, windowData->WIDHT, windowData->HEIGHT);
-
-}
-
-void RenderModule::DrawShadowForPointLight(std::pair<PointLight*, Transform*> currentLight) {
-	currentLight.first->aspect = (float)currentLight.first->shadowWidth / (float)currentLight.first->shadowHeight;
-	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), currentLight.first->aspect, currentLight.first->near_plane, currentLight.first->range);
 
 
-	glViewport(0, 0, currentLight.first->shadowWidth, currentLight.first->shadowHeight);
-	glBindFramebuffer(GL_FRAMEBUFFER, currentLight.first->depthCubeMapFBO);  // Fbo unique par point light
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-
-	std::vector<glm::mat4> shadowTransforms;
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(currentLight.second->position, currentLight.second->position + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
-
-
-	currentLight.first->depthShaderCubeMap->Use();
-	currentLight.first->depthShaderCubeMap->setFloat("far_plane", currentLight.first->range);
-	currentLight.first->depthShaderCubeMap->setVec3("lightPos", currentLight.second->position);
-
-
-	for (int i = 0; i < shadowTransforms.size(); i++) {
-		currentLight.first->depthShaderCubeMap->setMatrix("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
-	}
-
-	for (const auto& currentEntity : scene->GetEntities()) {
-		if (!currentEntity->HasComponent<MeshComponent>() || !currentEntity->HasComponent<Transform>()) {
-			continue;
-		}
-		MeshComponent* currentModel = currentEntity->GetComponent<MeshComponent>();
-		std::shared_ptr<Shader> shader = currentModel->GetShader();
-
-		currentLight.first->depthShaderCubeMap->setMatrix("model", CalculModel(currentEntity->GetComponent<Transform>()));
-		currentModel->modelMesh->DrawWithoutTexture(currentLight.first->depthShaderCubeMap);
-	}
-
-
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
-}
-
-void RenderModule::DrawShadowForSpotLight(std::pair<SpotLight*, Transform*> currentLight) {
-	currentLight.first->aspect = (float)currentLight.first->shadowWidth / (float)currentLight.first->shadowHeight;
-	glm::mat4 shadowProj = glm::perspective(glm::radians(currentLight.first->outerCutOff * 2.0f), currentLight.first->aspect, 0.1f, currentLight.first->range);
-
-	glm::vec3 up = (glm::abs(currentLight.first->direction.y) > 0.99f) ? glm::vec3(1, 0, 0) : glm::vec3(0, 1, 0);
-	glm::mat4 shadowView = glm::lookAt(currentLight.second->position, currentLight.second->position + currentLight.first->direction, up);
-
-
-	glm::mat4 lightSpaceMatrix = shadowProj * shadowView;
-	currentLight.first->lightSpaceMatrix = lightSpaceMatrix;
-
-	glViewport(0, 0, currentLight.first->shadowWidth, currentLight.first->shadowHeight);
-	glBindFramebuffer(GL_FRAMEBUFFER, currentLight.first->depthMapFBO);  // Fbo unique par spot light
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-
-	currentLight.first->depthSpotShaderMap->Use();
-	currentLight.first->depthSpotShaderMap->setMatrix("lightSpaceMatrix", lightSpaceMatrix);
-
-
-	for (const auto& currentEntity : scene->GetEntities()) {
-		if (!currentEntity->HasComponent<MeshComponent>() || !currentEntity->HasComponent<Transform>()) {
-			continue;
-		}
-
-		MeshComponent* currentModel = currentEntity->GetComponent<MeshComponent>();
-		std::shared_ptr<Shader> shader = currentModel->GetShader();
-		if (currentModel->haveToBeDraw && currentModel->castShadow) {
-			currentLight.first->depthSpotShaderMap->setMatrix("model", CalculModel(currentEntity->GetComponent<Transform>()));
-			currentModel->modelMesh->DrawWithoutTexture(currentLight.first->depthSpotShaderMap);
-		}
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, Window::GetWidth(), Window::GetHeight());
-}
-
-void RenderModule::UpdateShadow(WindowResource* windowData, RenderResource* renderData, 
-	glm::mat4 projection, std::vector <DirLight*> star,
-	std::vector<std::pair<PointLight*, Transform*>> pointLights,
-	std::vector<std::pair<SpotLight*, Transform*>> spotLights) {
-	glCullFace(GL_FRONT);
-	//glEnable(GL_DEPTH_CLAMP);
-	if (star.size() > 0) {
-
-		star[0]->UpdateMatrix(projection, mainCamera->GetViewMatrix());
-		DrawShadowForDirLight(star[0]);
-	}
-	for (const auto& currentPointLight : pointLights) {
-		DrawShadowForPointLight(currentPointLight);
-	}
-	for (const auto& currentSpotLight : spotLights) {
-		DrawShadowForSpotLight(currentSpotLight);
-	}
-
-	//glDisable(GL_DEPTH_CLAMP);
-	glCullFace(GL_BACK);
-}
-
-#pragma endregion Shadow
-
-void RenderModule::RenderScene(WindowResource* windowData, RenderResource* renderData, glm::mat4 projection) {
-	std::vector<DirLight*> star;
-	std::vector<std::pair<PointLight*, Transform*>> pointLights;
-	std::vector<std::pair<SpotLight*, Transform*>> spotLights;
-
-	for (const auto& currentEntity : scene->GetEntities()) {
-		if (currentEntity->HasComponent<DirLight>()) {
-			star.push_back(currentEntity->GetComponent<DirLight>());
-		}
-		else if (currentEntity->HasComponent<PointLight>() && currentEntity->HasComponent<Transform>()) {  // HasComponent Transform a enlever
-			pointLights.push_back(std::make_pair(currentEntity->GetComponent<PointLight>(), currentEntity->GetComponent<Transform>()));
-		}
-		else if (currentEntity->HasComponent<SpotLight>() && currentEntity->HasComponent<Transform>()) {
-			spotLights.push_back(std::make_pair(currentEntity->GetComponent<SpotLight>(), currentEntity->GetComponent<Transform>()));
-		}
-	}
-	//
-	UpdateShadow(projection, star, pointLights, spotLights);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, renderData->framebuffer);
+void RenderModule::RenderScene(World& world, const ResourceBuffer* resourceBuffer, CameraComponent* mainCamera, glm::mat4 projection) {
+	glBindFramebuffer(GL_FRAMEBUFFER, resourceBuffer->renderResource->framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-	if (pointLights.size() >= 8) std::cout << "Max pointLight number reach" << std::endl;  // Valeur a definir a l'avenir dans un dossier config
 
 	for (const auto& currentEntity : scene->GetEntities()) {
 		if (!currentEntity->HasComponent<MeshComponent>()) {
@@ -384,7 +216,6 @@ void RenderModule::RenderScene(WindowResource* windowData, RenderResource* rende
 			currentModel->modelMesh->Draw(shader);
 		}
 	}
-	star.clear();
 }
 
 void RenderModule::Init(World& world) {
@@ -483,7 +314,7 @@ void RenderModule::Update(World& world, const ResourceBuffer* resourceBuffer)
 	renderData->mainShader->setVec3("viewPos", transformMainCamera->position);
 
 
-	RenderScene(windowData, renderData, projection);
+	RenderScene(world, resourceBuffer, mainCamera, projection);
 
 
 	//DrawSkyBox(projection);

@@ -1,6 +1,7 @@
 #pragma once
 #include "ECS/System.h"
 #include "ECS/World.h"
+
 #include "Systemes/TimeSysteme/Time.hpp"
 //#include <Systemes/RenderModule/RenderModule.h>
 #include <vector>
@@ -19,10 +20,11 @@ public:
 
 	void CreateSystemes();
 private:
-	void FillResourceBankBuffer();
+	void FillResourceBuffer();
 	std::vector<std::unique_ptr<System>> systemes;
 
 	World* world;
+
 	Window* window;  // Systeme a part
 
 	ResourceBuffer* resourceBuffer;

@@ -1,0 +1,23 @@
+#pragma once
+#include "Systemes/RenderModule/ModelClass.h"
+#include <vector>
+#include <unordered_map>
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+class ModelStore {
+public:
+
+	Model& Get_Model(int index);
+	std::pair<Model&, int> Get_Model(std::string path);
+private:
+	std::vector<Model> models;
+	std::unordered_map<std::string, int> pathToIndexMap;
+
+	Model LoadModel(std::string path);
+	void ProcessNode(aiNode* node, const aiScene* scene, Model& currentModel);
+	Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene, Model& currentModel);
+	std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Model& currentModel);
+};

@@ -1,38 +1,40 @@
-#include <Systemes/RenderModule/ModelClass.h>
+#include "ECS/ModelStore.h"
 
-void Model::LoadModel(std::string path) {
+Model ModelStore::LoadModel(std::string path) {
+	Model model = Model();
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
 		std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
-		return;
+		abort();  //Add here the default object to report the fail
+		//return;  
 	}
 	//std::cout << "Embedded textures: " << scene->mNumTextures << std::endl;
 	//std::cout << "Number of meshes: " << scene->mNumMeshes << std::endl;
 	//std::cout << "Number of materials: " << scene->mNumMaterials << std::endl;
-	directory = path.substr(0, path.find_last_of("/"));
-	ProcessNode(scene->mRootNode, scene);
-
+	model.directory = path.substr(0, path.find_last_of("/"));
+	ProcessNode(scene->mRootNode, scene, model);
+	return model;
 }
 
-void Model::ProcessNode(aiNode* node, const aiScene* scene)
+void ModelStore::ProcessNode(aiNode* node, const aiScene* scene, Model& currentModel)
 {
 	// process all the node’s meshes (if any)
 	for (unsigned int i = 0; i < node->mNumMeshes; i++)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		meshes.push_back(ProcessMesh(mesh, scene));
+		currentModel.meshes.push_back(ProcessMesh(mesh, scene, currentModel));
 	}
 	// then do the same for each of its children
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
 	{
-		ProcessNode(node->mChildren[i], scene);
+		ProcessNode(node->mChildren[i], scene, currentModel);
 	}
 }
 
-Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
+Mesh ModelStore::ProcessMesh(aiMesh* mesh, const aiScene* scene, Model& currentModel)
 {
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
@@ -73,22 +75,22 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	{
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-		std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, scene);
+		std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, scene, currentModel);
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
 
-		std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, scene);
-		textures.insert(textures.end(), specularMaps.begin(),specularMaps.end());
+		std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, scene, currentModel);
+		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 
 
-		std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_NORMALS, scene);
+		std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_NORMALS, scene, currentModel);
 		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 	}
 
 	return Mesh(vertices, indices, textures);
 }
 
-std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene)
+std::vector<Texture> ModelStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Model& currentModel)
 {
 	std::vector<Texture> textures;
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
@@ -97,45 +99,45 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 		mat->GetTexture(type, i, &str);
 		bool skip = false;
 
-		for (unsigned int j = 0; j < textures_loaded.size(); j++)
+		for (unsigned int j = 0; j < currentModel.textures_loaded.size(); j++)
 		{
 			//std::string fullPath = directory + "/" + std::string(str.C_Str());
-			if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)  // Verifie si la texture a deja etait charger
+			if (std::strcmp(currentModel.textures_loaded[j].path.data(), str.C_Str()) == 0)  // Verifie si la texture a deja etait charger
 			{
-				textures.push_back(textures_loaded[j]);
+				textures.push_back(currentModel.textures_loaded[j]);
 				skip = true;
 				break;
 			}
 		}
 
-		if (!skip) 
+		if (!skip)
 		{
 			Texture texture;
-			
+
 			if (str.C_Str()[0] == '*') {  // texture embarquer detecter
 				int texIndex = atoi(str.C_Str() + 1);
 				aiTexture* EmbeddedTex = scene->mTextures[texIndex];
 				texture.id = TextureClass::LoadEmbeddedTexture(EmbeddedTex);
 			}
-			else 
-				texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), directory);
+			else
+				texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), currentModel.directory);
 
 			texture.path = str.C_Str();
 
 			switch (type) {  // la texture est charger meme si elle ne serra pas utiliser
-				case aiTextureType_DIFFUSE:
-					texture.textureType = Texture::Diffuse;
-					break;
-				case aiTextureType_SPECULAR:
-					texture.textureType = Texture::Specular;
-					break;
-				case aiTextureType_NORMALS:
-					texture.textureType = Texture::Normal;
-					break;
+			case aiTextureType_DIFFUSE:
+				texture.textureType = Texture::Diffuse;
+				break;
+			case aiTextureType_SPECULAR:
+				texture.textureType = Texture::Specular;
+				break;
+			case aiTextureType_NORMALS:
+				texture.textureType = Texture::Normal;
+				break;
 			}
 
 			textures.push_back(texture);
-			textures_loaded.push_back(texture);
+			currentModel.textures_loaded.push_back(texture);
 
 		}
 
@@ -143,12 +145,20 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 	return textures;
 }
 
-void Model::Draw(std::shared_ptr<Shader> shader) {
-	for (Mesh& mesh : meshes)
-		mesh.Draw(shader);
-}
-void Model::DrawWithoutTexture(std::shared_ptr<Shader> shader){
-	for (Mesh& mesh : meshes)
-		mesh.DrawWithoutTexture(shader);
+Model& ModelStore::Get_Model(int index) {
+	assert(index > models.size() - 1, "Index out of range in Get_Model, ModelStore");
+	return models[index];
 }
 
+std::pair<Model&, int> ModelStore::Get_Model(std::string path) {
+	auto it = pathToIndexMap.find(path);
+	
+	if (it == pathToIndexMap.end()) {
+		models.push_back(LoadModel(path));
+
+		int index = models.size() - 1;
+		pathToIndexMap[path] = index;
+		return std::make_pair(std::ref(models[index]), index);
+	}
+	return std::make_pair(std::ref(models[it->second]), it->second);
+}

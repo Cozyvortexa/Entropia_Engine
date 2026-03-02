@@ -36,7 +36,7 @@ void Scheduler::Update() {
 
 	window->Update(*world, resourceBuffer);
 
-	FillResourceBankBuffer();
+	FillResourceBuffer();
 	for (auto& Systeme : systemes) {
 		Systeme->Update(*world, resourceBuffer);
 	}
@@ -51,7 +51,7 @@ void Scheduler::Shutdown() {
 	}
 }
 
-void Scheduler::FillResourceBankBuffer() {
+void Scheduler::FillResourceBuffer() {
 	resourceBuffer->windowResource = world->get_ressource<WindowResource>();
 	resourceBuffer->activeCamera = world->get_ressource<ActiveCamera>();
 	resourceBuffer->timeResource = world->get_ressource<TimeResource>();

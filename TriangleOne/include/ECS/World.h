@@ -10,6 +10,7 @@
 #include <vector>
 #include "ECS/SpareSet.h"
 #include "ECS/Component.h"
+#include "ECS/ModelStore.h"
 
 #include <unordered_map>
 #include <typeindex>
@@ -43,6 +44,10 @@ public:
 
 class World {
 public:
+    World(ModelStore* modelStore) {
+        this->modelStore = modelStore;
+    }
+
     template<typename... Components>
     View<Components...> view() {
         return View<Components...>(get_pool<Components>()...);
@@ -57,14 +62,14 @@ public:
         auto it = pools.find(std::type_index(typeid(T)));
         if (it == pools.end()) return nullptr;
 
-        return static_cast<SparseSet<T>*>(it->second.get())->try_get(entity);
+        return static_cast<SparseSet<T>*>(it->second.get())->try_Get(entity);
     }
     template<typename T>
     bool remove_component(Entity entity) {
         auto it = pools.find(std::type_index(typeid(T)));
         if (it == pools.end()) {
             assert(true, "La supression d'un composant sur l'entité numéro: " + entity + " à échouer");
-            return false
+            return false;
         }
         return static_cast<SparseSet<T>*>(it->second.get())->remove(entity);
     }
@@ -82,6 +87,7 @@ public:
         return static_cast<T*>(ressources[type_id].get());
     }
 
+    ModelStore* modelStore;
 private:
     std::unordered_map<std::type_index, std::unique_ptr<ISparseSet>> pools;
     std::unordered_map<std::type_index, std::unique_ptr<Resource>> ressources;

@@ -17,6 +17,21 @@ struct Transform : public Component
 	glm::vec3 position = glm::vec3(0.0f);
 	glm::vec3 rotation = glm::vec3(1.0f);
 	glm::vec3 scale = glm::vec3(1.0f);
+
+	glm::mat4 GetTransformModel() const{
+		glm::mat4 model(1.0f);
+
+
+		model = glm::translate(model, position);
+
+		model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+		model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+		model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+
+		model = glm::scale(model, glm::vec3(scale));
+
+		return model;
+	}
 };
 
 struct CameraComponent : public Component {
@@ -51,7 +66,13 @@ struct CameraComponent : public Component {
 };
 
 struct SceneTag : public Component {
-	uint32_t scene_id = 0;
+	uint32_t scene_id = 0;  // Zero correspond to the main scene 
+};
+
+struct MeshHandle : public Component {
+	uint32_t index = 0;
+	bool castShadow = true;
+	bool haveToBeDraw;
 };
 
 

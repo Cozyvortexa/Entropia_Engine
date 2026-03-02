@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include "ECS/System.h"
-
+#define NOMINMAX
 
 #include <iostream>
 #include <vector>
@@ -21,7 +21,6 @@
 #include "ModelClass.h"
 
 
-#include "Scene.h"
 #include "Entity/Entity.h"
 #include "Entity/Components/Light.h"
 
@@ -43,18 +42,11 @@ public:
 
 	glm::mat4 CalculModel(Transform* currentTransform, glm::mat4 _model);
 
-	void RenderScene(WindowResource* windowData, RenderResource* renderData, glm::mat4 projection);
+	void RenderScene(World& world, const ResourceBuffer* resourceBuffer, CameraComponent* mainCamera, glm::mat4 projection);
 
 	void UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList,
 		std::vector <std::pair<PointLight*, Transform*>> pointLightList,
 		std::vector<std::pair<SpotLight*, Transform*>> spotLightList);
 
 
-	void DrawShadowForDirLight(WindowResource* windowData, RenderResource* renderData, DirLight* currentLight);
-	void DrawShadowForPointLight(std::pair<PointLight*, Transform*> currentLight);
-	void DrawShadowForSpotLight(std::pair<SpotLight*, Transform*> currentLight);
-
-	void UpdateShadow(WindowResource* windowData, RenderResource* renderData, glm::mat4 projection, std::vector <DirLight*> star,
-		std::vector<std::pair<PointLight*, Transform*>> pointLights,
-		std::vector<std::pair<SpotLight*, Transform*>> spotLights);
 };

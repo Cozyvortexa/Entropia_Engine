@@ -10,25 +10,33 @@
 
 #include "Texture.h"
 
+#include "ECS/Component.h"
 
-class Model
-{
+class Model : Component {
 public:
-	Model(std::string path)
-	{
-		LoadModel(path);
+	Model() {};
+	//Model(std::string path)
+	//{
+	//	LoadModel(path);
+	//}
+	//void Draw(std::shared_ptr<Shader> shader);
+	void DrawWithoutTexture(std::shared_ptr<Shader> shader) {
+		for (Mesh& mesh : meshes)
+			mesh.DrawWithoutTexture(shader);
 	}
-	void Draw(std::shared_ptr<Shader> shader);
-	void DrawWithoutTexture(std::shared_ptr<Shader> shader);
-private:
-	// model data
 	std::vector<Mesh> meshes;
 	std::string directory;
+	std::vector<Texture> textures_loaded;
+
+private:
 	void LoadModel(std::string path);
 	void ProcessNode(aiNode* node, const aiScene* scene);
 	Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
 	std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene);
 
-	std::vector<Texture> textures_loaded;
-
 };
+
+//void Model::Draw(std::shared_ptr<Shader> shader) {
+//	for (Mesh& mesh : meshes)
+//		mesh.Draw(shader);
+//}

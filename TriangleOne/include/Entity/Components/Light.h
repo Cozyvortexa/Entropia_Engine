@@ -32,8 +32,6 @@ public:
 	//void UseLight(Shader* shader);
 	//void UseShadow(Shader* shader);
 
-
-
 	float intensity = 1.0f;
 	glm::vec3 ambient = glm::vec3(0);
 	glm::vec3 diffuse = glm::vec3(0);
@@ -41,11 +39,9 @@ public:
 
 	unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 
+	std::shared_ptr<Shader> depthShader = nullptr;
 protected:
 	void InitBaseLight(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float newIntensity);
-	std::pair<unsigned int, unsigned int> InitShadowMap();
-	std::pair<unsigned int, unsigned int> InitCubeMap();
-	std::pair<unsigned int, unsigned int> InitSpotShadowMap();
 };
 
 struct DirLight : public Light {
@@ -66,9 +62,6 @@ struct DirLight : public Light {
 
 	void UpdateMatrix(glm::mat4 projection,const glm::mat4 viewMatrice);
 
-
-	std::shared_ptr<Shader> depthShader = nullptr;
-
 private:
 	glm::vec3 FrustumCenter(const std::vector<glm::vec3> corners);
 	std::vector<glm::vec3> CalcWorldCorner(const glm::mat4 projection, glm::mat4 viewMatrice);
@@ -80,18 +73,15 @@ private:
 
 struct PointLight : public Light{
 public:
-	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _range, std::shared_ptr<Shader> _depthShaderCubeMap, float newIntesity);
+	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _range, std::shared_ptr<Shader> depthShaderCubeMap, float newIntesity);
 	float range = 5.0f;
 
-	unsigned int depthCubeMapFBO;
-	unsigned int depthCubeMap;
+	unsigned int depthCubeMapFBO = 0;
+	unsigned int depthCubeMap = 0;
 
 	//Shadow purpose
 	float aspect = 1.0f;
 	float near_plane = 0.1f;
-
-	std::shared_ptr<Shader> depthShaderCubeMap = nullptr;
-
 };
 
 struct SpotLight : public Light {
@@ -105,10 +95,8 @@ public:
 
 	float aspect = 1.0f;
 
-	unsigned int depthMapFBO;
-	unsigned int depthMap;
+	unsigned int depthMapFBO = 0;
+	unsigned int depthMap = 0;
 
 	glm::mat4 lightSpaceMatrix = glm::mat4(1.0f);  // Je sent le bug arriver avec celle la
-
-	std::shared_ptr<Shader> depthSpotShaderMap = nullptr;
 };

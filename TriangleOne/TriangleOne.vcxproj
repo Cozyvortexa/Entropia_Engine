@@ -138,6 +138,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\CameraSys.cpp" />
+    <ClCompile Include="src\ECS\ModelStore.cpp" />
     <ClCompile Include="src\ECS\Scheduler.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\Entity\Entity.cpp" />
@@ -147,17 +148,16 @@
     <ClCompile Include="src\Entity\Components\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Systemes\RenderModule\MeshClass.cpp" />
-    <ClCompile Include="src\Systemes\RenderModule\ModelClass.cpp" />
     <ClCompile Include="src\Systemes\RenderModule\RenderModule.cpp" />
     <ClCompile Include="src\Systemes\RenderModule\Shader.cpp" />
     <ClCompile Include="src\Systemes\RenderModule\Texture.cpp" />
     <ClCompile Include="src\Systemes\TimeModule\Time.cpp" />
-    <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\CameraSys.h" />
     <ClInclude Include="include\ECS\Component.h" />
+    <ClInclude Include="include\ECS\ModelStore.h" />
     <ClInclude Include="include\ECS\Scheduler.h" />
     <ClInclude Include="include\ECS\SpareSet.h" />
     <ClInclude Include="include\engine.h" />
@@ -172,7 +172,6 @@
     <ClInclude Include="include\Systemes\RenderModule\Shader.h" />
     <ClInclude Include="include\Systemes\RenderModule\Texture.h" />
     <ClInclude Include="include\Systemes\TimeSysteme\Time.hpp" />
-    <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\window.h" />
     <ClInclude Include="include\ECS\World.h" />
   </ItemGroup>
