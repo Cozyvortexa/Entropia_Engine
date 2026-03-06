@@ -224,7 +224,7 @@ void LightSystem::DrawShadowForSpotLight(World* world, WindowResource* windowDat
 
 	View view = world->view<ModeleHandle, SceneTag, Transform>();
 	view.each([this, world, currentLight](int entity, ModeleHandle& modeleHandle, SceneTag& sceneTag, Transform& transform) {
-		if (ModeleHandle.castShadow && sceneTag.scene_id == 0) {
+		if (modeleHandle.castShadow && sceneTag.scene_id == 0) {
 			Model currentModel = world->modelStore->Get_Model(modeleHandle.index);
 
 			currentLight->depthShader->setMatrix("model", transform.GetTransformModel());
