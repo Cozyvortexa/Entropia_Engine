@@ -40,11 +40,9 @@ public:
 	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;
 	void Shutdown(World& world) override;
 
-	glm::mat4 CalculModel(Transform* currentTransform, glm::mat4 _model);
+	void RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData);
 
-	void RenderScene(World& world, const ResourceBuffer* resourceBuffer, CameraComponent* mainCamera, glm::mat4 projection);
-
-	void UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList,
+	void UpdateLight(Shader* shader, std::vector<DirLight*> directionalLightList,
 		std::vector <std::pair<PointLight*, Transform*>> pointLightList,
 		std::vector<std::pair<SpotLight*, Transform*>> spotLightList);
 

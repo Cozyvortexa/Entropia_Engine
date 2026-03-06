@@ -48,12 +48,6 @@
     <ClCompile Include="src\Entity\Components\Light.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Entity\Entity.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Entity\Components\MeshComponent.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="src\ECS\Scheduler.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
@@ -101,9 +95,6 @@
     <ClInclude Include="include\Entity\Entity.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\Entity\Components\MeshComponent.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
     <ClInclude Include="include\ECS\Component.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
@@ -120,6 +111,9 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="include\ECS\ModelStore.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Material.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>

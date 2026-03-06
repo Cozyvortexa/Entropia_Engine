@@ -12,7 +12,7 @@
 
 #include "ECS/Component.h"
 
-class Model : Component {
+class Model {
 public:
 	Model() {};
 	//Model(std::string path)
@@ -27,12 +27,6 @@ public:
 	std::vector<Mesh> meshes;
 	std::string directory;
 	std::vector<Texture> textures_loaded;
-
-private:
-	void LoadModel(std::string path);
-	void ProcessNode(aiNode* node, const aiScene* scene);
-	Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
-	std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene);
 
 };
 

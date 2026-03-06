@@ -144,10 +144,10 @@ void LightSystem::DrawShadowForDirLight(World* world, WindowResource* windowData
 	currentLight->depthShader->Use();
 	currentLight->depthShader->setMatrix("lightSpaceMatrix", currentLight->lightMatrice);
 
-	View view = world->view<MeshHandle, SceneTag, Transform>();
-	view.each([this, world, currentLight](int entity, MeshHandle* meshHandle, SceneTag& sceneTag, Transform& transform) {
-		if (meshHandle->haveToBeDraw && meshHandle->castShadow && sceneTag.scene_id == 0) {
-			Model currentModel = world->modelStore->Get_Model(meshHandle->index);
+	View view = world->view<ModeleHandle, SceneTag, Transform>();
+	view.each([this, world, currentLight](int entity, ModeleHandle* ModeleHandle, SceneTag& sceneTag, Transform& transform) {
+		if (ModeleHandle->haveToBeDraw && ModeleHandle->castShadow && sceneTag.scene_id == 0) {
+			Model currentModel = world->modelStore->Get_Model(ModeleHandle->index);
 
 			currentLight->depthShader->setMatrix("model", transform.GetTransformModel());
 			currentModel.DrawWithoutTexture(currentLight->depthShader);
@@ -188,10 +188,10 @@ void LightSystem::DrawShadowForPointLight(World* world, WindowResource* windowDa
 	}
 
 
-	View view = world->view<MeshHandle, SceneTag, Transform>();
-	view.each([this, world, currentLight](int entity, MeshHandle& meshHandle, SceneTag& sceneTag, Transform& transform) {
-		if (meshHandle.castShadow && sceneTag.scene_id == 0) {
-			Model currentModel = world->modelStore->Get_Model(meshHandle.index);
+	View view = world->view<ModeleHandle, SceneTag, Transform>();
+	view.each([this, world, currentLight](int entity, ModeleHandle& ModeleHandle, SceneTag& sceneTag, Transform& transform) {
+		if (ModeleHandle.castShadow && sceneTag.scene_id == 0) {
+			Model currentModel = world->modelStore->Get_Model(ModeleHandle.index);
 
 			currentLight->depthShader->setMatrix("model", transform.GetTransformModel());
 			currentModel.DrawWithoutTexture(currentLight->depthShader);
@@ -222,10 +222,10 @@ void LightSystem::DrawShadowForSpotLight(World* world, WindowResource* windowDat
 	currentLight->depthShader->setMatrix("lightSpaceMatrix", lightSpaceMatrix);
 
 
-	View view = world->view<MeshHandle, SceneTag, Transform>();
-	view.each([this, world, currentLight](int entity, MeshHandle& meshHandle, SceneTag& sceneTag, Transform& transform) {
-		if (meshHandle.castShadow && sceneTag.scene_id == 0) {
-			Model currentModel = world->modelStore->Get_Model(meshHandle.index);
+	View view = world->view<ModeleHandle, SceneTag, Transform>();
+	view.each([this, world, currentLight](int entity, ModeleHandle& modeleHandle, SceneTag& sceneTag, Transform& transform) {
+		if (ModeleHandle.castShadow && sceneTag.scene_id == 0) {
+			Model currentModel = world->modelStore->Get_Model(modeleHandle.index);
 
 			currentLight->depthShader->setMatrix("model", transform.GetTransformModel());
 			currentModel.DrawWithoutTexture(currentLight->depthShader);
@@ -280,8 +280,14 @@ void SendDepthMapToMainShader(World* world, const ResourceBuffer* resourceBuffer
 	if (pointLights_DepthMap.size() >= 8) std::cout << "Max pointLight number reach" << std::endl;  // Valeur a definir a l'avenir dans un dossier config
 	if (spotLights_DepthMap.size() >= 8) std::cout << "Max spotLight number reach" << std::endl;  // Valeur a definir a l'avenir dans un dossier config
 
-	View view = world->view<MeshHandle>();
+	View view = world->view<ModeleHandle>();
+ 
 
+	View view = world->view<ModeleHandle, Transform>();
+	view.each([this, world](ModeleHandle& modeleHandle, Transform& transform) {
+
+
+	});
 
 	for (const auto& currentEntity : scene->GetEntities()) {
 		if (!currentEntity->HasComponent<MeshComponent>()) {

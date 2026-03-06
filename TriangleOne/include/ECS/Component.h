@@ -69,12 +69,15 @@ struct SceneTag : public Component {
 	uint32_t scene_id = 0;  // Zero correspond to the main scene 
 };
 
-struct MeshHandle : public Component {
+struct ModeleHandle : public Component {
 	uint32_t index = 0;
 	bool castShadow = true;
 	bool haveToBeDraw;
 };
 
+struct MaterialHandle : Component {
+	uint32_t index = 0;
+};
 
 enum LightTag {
 	None,

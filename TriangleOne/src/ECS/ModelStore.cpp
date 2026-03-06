@@ -151,14 +151,56 @@ Model& ModelStore::Get_Model(int index) {
 }
 
 std::pair<Model&, int> ModelStore::Get_Model(std::string path) {
-	auto it = pathToIndexMap.find(path);
+	auto it = pathToIndexMapModel.find(path);
 	
-	if (it == pathToIndexMap.end()) {
+	if (it == pathToIndexMapModel.end()) {
 		models.push_back(LoadModel(path));
 
 		int index = models.size() - 1;
-		pathToIndexMap[path] = index;
+		pathToIndexMapModel[path] = index;
 		return std::make_pair(std::ref(models[index]), index);
 	}
 	return std::make_pair(std::ref(models[it->second]), it->second);
+}
+
+int ModelStore::CheckExistingMat(std::string name) {
+	uint32_t hashName = std::hash<std::string>{}(name);
+	auto it = pathToIndexMapMaterial.find(hashName);
+
+	if (it == pathToIndexMapMaterial.end()) {
+		return -1;
+	}
+	return it->second;
+}
+
+
+std::pair<Material&, int> ModelStore::CreateMaterial(std::string name, const char* vertexPath, const char* fragmentPath) {
+	int index = CheckExistingMat(name);
+	if (index != -1) {  // Material already exist
+		return std::make_pair(std::ref(materials[index]), index);
+	}
+	Material material(name, vertexPath, fragmentPath);
+	materials.push_back(material);
+	int lastElementIndex = materials.size() - 1;
+	pathToIndexMapMaterial[std::hash<std::string>{}(name)] = lastElementIndex;
+
+	return std::make_pair(std::ref(materials[lastElementIndex]), lastElementIndex);
+}
+
+
+Material& ModelStore::Get_Material(std::string name) {
+	int index = CheckExistingMat(name);
+
+	if (index == -1) {
+		std::cout << "Material with the name: " << name << " do not exist in Get_Material(std::string name)" << std::endl;
+	}
+
+	return materials[index];
+}
+
+Material& ModelStore::Get_Material(int index) {  // Dedicate for the Systemes
+	assert(index < 0, "Negative index detected in Get_Material(int index)");
+	assert(index > materials.size(), "Index out of range in Get_Material(int index)");
+
+	return materials[index];
 }

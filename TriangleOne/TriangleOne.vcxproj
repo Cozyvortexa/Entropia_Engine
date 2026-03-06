@@ -141,8 +141,6 @@
     <ClCompile Include="src\ECS\ModelStore.cpp" />
     <ClCompile Include="src\ECS\Scheduler.cpp" />
     <ClCompile Include="src\engine.cpp" />
-    <ClCompile Include="src\Entity\Entity.cpp" />
-    <ClCompile Include="src\Entity\Components\MeshComponent.cpp" />
     <ClCompile Include="src\Systemes\LightSystem.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\Entity\Components\Light.cpp" />
@@ -157,13 +155,13 @@
   <ItemGroup>
     <ClInclude Include="include\CameraSys.h" />
     <ClInclude Include="include\ECS\Component.h" />
+    <ClInclude Include="include\ECS\Material.h" />
     <ClInclude Include="include\ECS\ModelStore.h" />
     <ClInclude Include="include\ECS\Scheduler.h" />
     <ClInclude Include="include\ECS\SpareSet.h" />
     <ClInclude Include="include\engine.h" />
     <ClInclude Include="include\Entity\Entity.h" />
     <ClInclude Include="include\Entity\Components\Light.h" />
-    <ClInclude Include="include\Entity\Components\MeshComponent.h" />
     <ClInclude Include="include\Systemes\LightSystem.h" />
     <ClInclude Include="include\Systemes\RenderModule\MeshClass.h" />
     <ClInclude Include="include\Systemes\RenderModule\ModelClass.h" />

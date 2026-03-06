@@ -71,7 +71,7 @@ void RenderModule::InitQuadVao(WindowResource* windowData, RenderResource* rende
 
 
 #pragma region Light
-void RenderModule::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLight*> directionalLightList,
+void RenderModule::UpdateLight(Shader* shader, std::vector<DirLight*> directionalLightList,
 	std::vector <std::pair<PointLight*, Transform*>> pointLightList,
 	std::vector<std::pair<SpotLight*, Transform*>> spotLightList) {
 	shader->Use();
@@ -123,99 +123,46 @@ void RenderModule::UpdateLight(std::shared_ptr<Shader> shader, std::vector<DirLi
 
 
 
-void RenderModule::RenderScene(World& world, const ResourceBuffer* resourceBuffer, CameraComponent* mainCamera, glm::mat4 projection) {
-	glBindFramebuffer(GL_FRAMEBUFFER, resourceBuffer->renderResource->framebuffer);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+void RenderModule::RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData) {
 
+	/////////////////////Camera
+	Entity entityCam = resourceBuffer->activeCamera->cameraID;
+	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);  // Une vue n'est pas possible dans ce contexte car c'est une caméra spécifique qui est récupérer
 
-	for (const auto& currentEntity : scene->GetEntities()) {
-		if (!currentEntity->HasComponent<MeshComponent>()) {
-			continue;
-		}
-		MeshComponent* currentModel = currentEntity->GetComponent<MeshComponent>();
-		std::shared_ptr<Shader> shader = currentModel->GetShader();
-
-		if (currentModel->haveToBeDraw) {
-			shader->Use();
-
-			// --- TEXTURE UNIT MANAGEMENT ---
-
-			const int SLOT_SHADOW_DIR = 16;
-			const int SLOT_SHADOW_POINT_START = 17;
-			const int SLOT_SHADOW_SPOT_START = 25;
-
-			// --- 2. GESTION LUMIERE DIRECTIONNELLE (Shadow Map 2D) ---
-			shader->setInt("shadowMap", SLOT_SHADOW_DIR);
-
-			glActiveTexture(GL_TEXTURE0 + SLOT_SHADOW_DIR);
-			if (star.size() > 0) {
-				glBindTexture(GL_TEXTURE_2D, renderData->depthMap);
-				shader->setMatrix("lightSpaceMatrix", star.at(0)->lightMatrice);
-			}
-			else {
-				glBindTexture(GL_TEXTURE_2D, 0);
-			}
-
-			// --- 3. GESTION POINT LIGHTS (Shadow Cube Maps) ---
-			int maxPointLights = 8;
-			int activeLights = std::min((int)pointLights.size(), maxPointLights);
-			shader->setInt("nbrPointLight", activeLights);
-
-			//PointLight
-			for (int i = 0; i < maxPointLights; i++) {
-				// Construction du nom "shadowCubeMaps[0]", "shadowCubeMaps[1]"...
-				std::string uniformName = "shadowCubeMaps[" + std::to_string(i) + "]";
-
-				int currentSlot = SLOT_SHADOW_POINT_START + i;
-
-				// 1. On dit au shader : "Le sampler i doit lire dans le slot X"
-				shader->setInt(uniformName, currentSlot);
-
-				// 2. On active le slot X
-				glActiveTexture(GL_TEXTURE0 + currentSlot);
-
-				if (i < activeLights) {
-					glBindTexture(GL_TEXTURE_CUBE_MAP, pointLights[i].first->depthCubeMap);
-				}
-				else {
-					// Nettoyage des slots inutilisés (évite les bugs de "Sampler Type Mismatch")
-					glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-				}
-			}
-
-			//// Gestion Spot Light
-			int maxSpotLights = 8;
-			for (int i = 0; i < maxSpotLights; i++) {
-				std::string uniformName = "shadowMapSpot[" + std::to_string(i) + "]";
-				std::string uniformNameMatrice = "spotLightMatrices[" + std::to_string(i) + "]";
-
-				int currentSlot = SLOT_SHADOW_SPOT_START + i;
-
-				shader->setInt(uniformName, currentSlot);
-
-
-				glActiveTexture(GL_TEXTURE0 + currentSlot);
-
-
-				if (i < activeLights) {
-					shader->setMatrix(uniformNameMatrice, spotLights[i].first->lightSpaceMatrix);
-					glBindTexture(GL_TEXTURE_2D, spotLights[i].first->depthMap);
-				}
-				else {
-					glBindTexture(GL_TEXTURE_2D, 0);
-				}
-			}
-
-			glActiveTexture(GL_TEXTURE0);
-
-			// --- END TEXTURE MANAGEMENT ---
-
-			UpdateLight(shader, star, pointLights, spotLights);
-
-			shader->setMatrix("model", CalculModel(currentEntity->GetComponent<Transform>()));
-			currentModel->modelMesh->Draw(shader);
-		}
+	Transform* transformMainCamera = world.get_component<Transform>(entityCam);
+	if (mainCamera == nullptr || transformMainCamera == nullptr) {  // Pas de main camera, pas de rendu
+		std::cout << "Main camera have a null value" << std::endl;
+		return;
 	}
+	///////////////////
+
+
+	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->zoom), (float)windowData->WIDHT / (float)windowData->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
+
+
+	View view = world.view<ModeleHandle, Transform, MaterialHandle>();
+	view.each([this, world, mainCamera, projection, transformMainCamera](ModeleHandle& modeleHandle, Transform& transform, MaterialHandle& materialHandle) {
+		if (modeleHandle.haveToBeDraw) {
+			Shader currentShader = world.modelStore->Get_Material(materialHandle.index).shader;
+			Model currentModel = world.modelStore->Get_Model(modeleHandle.index);
+
+
+			currentShader.Use();
+
+			// --- Link Matrices ---
+			currentShader.setMatrix("view", mainCamera->viewMatrice);
+			currentShader.setMatrix("projection", projection);
+			currentShader.setFloat("far_plane", mainCamera->farPlane);
+			currentShader.setVec3("viewPos", transformMainCamera->position);
+
+
+			UpdateLight(&currentShader, star, pointLights, spotLights);
+
+			currentShader.setMatrix("model", transform.GetTransformModel());
+			currentModel->modelMesh->Draw(shader);
+
+		}
+	});
 }
 
 void RenderModule::Init(World& world) {
@@ -228,7 +175,10 @@ void RenderModule::Init(World& world) {
 	}
 
 	Shader::CreateDefaultWhiteTexture();
-	renderData->mainShader = std::make_unique<Shader>("TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
+	std::pair<Material&, int> defaultMat = world.modelStore->CreateMaterial("Default_Material", "TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
+
+
+
 	renderData->depthShader = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
 	renderData->depthShaderCubeMap = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 	renderData->postProcessShader = std::make_unique<Shader>("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
@@ -292,29 +242,10 @@ void RenderModule::Init(World& world) {
 void RenderModule::Update(World& world, const ResourceBuffer* resourceBuffer)
  {
 	WindowResource* windowData = resourceBuffer->windowResource;
-	Entity entityCam = resourceBuffer->activeCamera->cameraID;
 	RenderResource* renderData = resourceBuffer->renderResource;
 
-	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);  // Une vue n'est pas possible dans ce contexte car c'est une caméra spécifique qui est récupérer
-	Transform* transformMainCamera = world.get_component<Transform>(entityCam);
 
-	if (mainCamera == nullptr || transformMainCamera == nullptr) {  // Pas de main camera, pas de rendu
-		std::cout << "Main camera have a null value" << std::endl;
-		return;
-	}
-
-	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->zoom), (float)windowData->WIDHT / (float)windowData->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
-
-	renderData->mainShader->Use();
-	renderData->mainShader->setMatrix("model", renderData->_model);
-	renderData->mainShader->setMatrix("view", mainCamera->viewMatrice);
-	renderData->mainShader->setMatrix("projection", projection);
-	renderData->mainShader->setFloat("far_plane", mainCamera->farPlane);
-
-	renderData->mainShader->setVec3("viewPos", transformMainCamera->position);
-
-
-	RenderScene(world, resourceBuffer, mainCamera, projection);
+	RenderScene(world, resourceBuffer, windowData);
 
 
 	//DrawSkyBox(projection);
