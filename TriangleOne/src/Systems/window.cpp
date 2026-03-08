@@ -1,21 +1,21 @@
-#include "window.h"
+#include "Systems/windowSystem.h"
 
-Window::Window() {}
+WindowSystem::WindowSystem() {}
 
 
-void Window::Framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void WindowSystem::Framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 }
 
-void Window::ProcessInput(GLFWwindow* window)
+void WindowSystem::ProcessInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
 
-void Window::Init(World& world) {
+void WindowSystem::Init(World& world) {
 	WindowResource* windowData = world.get_ressource<WindowResource>();
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -65,7 +65,7 @@ void Window::Init(World& world) {
 	//glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
-bool Window::ShouldClose(World& world) {
+bool WindowSystem::ShouldClose(World& world) {
 	WindowResource* ressource = world.get_ressource<WindowResource>();  // WARNING
 	if (!glfwWindowShouldClose(ressource->window)) {
 		return true;
@@ -74,13 +74,13 @@ bool Window::ShouldClose(World& world) {
 }
 
 
-void Window::Update(World& world, const ResourceBuffer* resourceBuffer) {
+void WindowSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	WindowResource* windowData = resourceBuffer->windowResource;
 	ProcessInput(windowData->window);  // gere les inputs 
 }
 
 
-void Window::Shutdown(World& world) {
+void WindowSystem::Shutdown(World& world) {
 	WindowResource* Resource = world.get_ressource<WindowResource>();
 
 	std::cout << "Window shutting down" << std::endl;

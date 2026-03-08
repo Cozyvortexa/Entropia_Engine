@@ -1,5 +1,5 @@
 #pragma once
-#include "Systemes/RenderModule/ModelClass.h"
+#include "Render/ModelClass.h"
 #include <vector>
 #include <unordered_map>
 
@@ -7,7 +7,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include "ECS/Material.h"
+#include "Render/Material.h"
 
 class ModelStore {
 public:

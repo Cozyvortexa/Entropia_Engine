@@ -1,4 +1,4 @@
-  #include "Systemes/LightSystem.h"
+  #include "Systems/LightSystem.h"
 
 void LightSystem::Init(World& world) {
 	static_assert(sizeof(Padding_DirLight) == 64, "Invalide alignement");

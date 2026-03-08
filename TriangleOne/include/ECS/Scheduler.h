@@ -1,8 +1,10 @@
 #pragma once
 #include "ECS/System.h"
 #include "ECS/World.h"
+#include "Systems/CameraSystem.h"
 
-#include "Systemes/TimeSysteme/Time.hpp"
+
+#include "Systems/TimeSystem.hpp"
 //#include <Systemes/RenderModule/RenderModule.h>
 #include <vector>
 
@@ -10,7 +12,7 @@
 
 class Scheduler {
 public:
-	Scheduler(World* world, Window* window);
+	Scheduler(World* world, WindowSystem* window);
 	~Scheduler();
 
 	Scheduler* Init();
@@ -25,7 +27,7 @@ private:
 
 	World* world;
 
-	Window* window;  // Systeme a part
+	WindowSystem* window;  // Systeme a part
 
-	ResourceBuffer* resourceBuffer;
+	std::unique_ptr<ResourceBuffer> resourceBuffer;
 };

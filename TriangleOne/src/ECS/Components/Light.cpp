@@ -1,4 +1,4 @@
-#include <Entity/Components/Light.h>
+#include <ECS/Components/Light.h>
 
 #pragma region Init
 void Light::InitBaseLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float newIntensity) {

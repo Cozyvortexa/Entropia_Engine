@@ -1,7 +1,7 @@
-#include <Systemes/RenderModule/RenderModule.h>
+#include <Systems/RenderSystem.h>
 
 
-void RenderModule::DrawTextureOnScreen(WindowResource* windowData, RenderResource* renderData) {
+void RenderSystem::DrawTextureOnScreen(WindowResource* windowData, RenderResource* renderData) {
 
 	renderData->postProcessShader->Use();
 	glBindVertexArray(renderData->quadVAO);
@@ -20,7 +20,7 @@ void RenderModule::DrawTextureOnScreen(WindowResource* windowData, RenderResourc
 	glEnable(GL_DEPTH_TEST);
 }
 
-void RenderModule::InitQuadVao(WindowResource* windowData, RenderResource* renderData) {
+void RenderSystem::InitQuadVao(WindowResource* windowData, RenderResource* renderData) {
 	//Init fbo
 	glGenFramebuffers(1, &renderData->framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->framebuffer);
@@ -69,7 +69,7 @@ void RenderModule::InitQuadVao(WindowResource* windowData, RenderResource* rende
 	glBindVertexArray(0);
 }
 
-void RenderModule::RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData) {
+void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData) {
 
 	/////////////////////Camera
 	Entity entityCam = resourceBuffer->activeCamera->cameraID;
@@ -109,7 +109,7 @@ void RenderModule::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 	});
 }
 
-void RenderModule::Init(World& world) {
+void RenderSystem::Init(World& world) {
 	WindowResource* windowData = world.get_ressource<WindowResource>();
 	RenderResource* renderData = world.get_ressource<RenderResource>();
 
@@ -183,7 +183,7 @@ void RenderModule::Init(World& world) {
 	//InitSkyBox();
 }
 
-void RenderModule::Update(World& world, const ResourceBuffer* resourceBuffer)
+void RenderSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
  {
 	WindowResource* windowData = resourceBuffer->windowResource;
 	RenderResource* renderData = resourceBuffer->renderResource;
@@ -205,6 +205,6 @@ void RenderModule::Update(World& world, const ResourceBuffer* resourceBuffer)
 	glfwPollEvents();
 }
 
-void RenderModule::Shutdown(World& world) {
-	std::cout << "Shuting down RenderModule" << std::endl;
+void RenderSystem::Shutdown(World& world) {
+	std::cout << "Shuting down RenderSystem" << std::endl;
 }

@@ -1,6 +1,7 @@
 #include "ECS/Scheduler.h"
 
-Scheduler::Scheduler(World* world, Window* window) {
+Scheduler::Scheduler(World* world, WindowSystem* window) {
+	resourceBuffer = std::make_unique<ResourceBuffer>();
 	this->world = world;
 
 	this->window = window;  // Window est géré indépendamment du reste
@@ -13,8 +14,11 @@ Scheduler::~Scheduler() {};
 
 
 void Scheduler::CreateSystemes() {
-	systemes.push_back(std::make_unique<Time>());
+	systemes.push_back(std::make_unique<TimeSystem>());
 	world->add_ressource<TimeResource>();
+
+	systemes.push_back(std::make_unique<CameraSys>());
+	world->add_ressource<ActiveCamera>();
 
 	//systemes.push_back(std::make_unique<RenderModule>());
 
@@ -33,12 +37,12 @@ Scheduler* Scheduler::Init() {
 }
 
 void Scheduler::Update() {
-
-	window->Update(*world, resourceBuffer);
-
 	FillResourceBuffer();
+	window->Update(*world, resourceBuffer.get());
+
+
 	for (auto& Systeme : systemes) {
-		Systeme->Update(*world, resourceBuffer);
+		Systeme->Update(*world, resourceBuffer.get());
 	}
 }
 

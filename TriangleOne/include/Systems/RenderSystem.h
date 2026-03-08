@@ -8,25 +8,21 @@
 #include <iostream>
 #include <vector>
 
-#include "Shader.h"
-#include "window.h"
-#include "Systemes/TimeSysteme/Time.hpp"
-#include "Texture.h"
-#include "CameraSys.h"
+#include "Render/Shader.h"
+#include "Systems/windowSystem.h"
+#include "Systems/TimeSystem.hpp"
+#include "Render/Texture.h"
+#include "Systems/CameraSystem.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "ModelClass.h"
-
-
-#include "Entity/Entity.h"
-#include "Entity/Components/Light.h"
+#include "Render/ModelClass.h"
 
 #include "ECS/World.h"
 
-class RenderModule : public System {
+class RenderSystem : public System {
 public:
 	void DrawTextureOnScreen(WindowResource* windowData, RenderResource* renderData);
 

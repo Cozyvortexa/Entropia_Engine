@@ -11,7 +11,7 @@ Engine::Engine() {
 Engine::~Engine() {};
 
 void Engine::InitEngine() {
-	window = std::make_unique<Window>();
+	window = std::make_unique<WindowSystem>();
 
 	modelStore = std::make_unique<ModelStore>();
 
@@ -26,9 +26,9 @@ void Engine::InitEngine() {
 int Engine::Run() {
 	InitEngine();
 
-	//while (window->ShouldClose()) {
-	//	scheduler->Update();
-	//}
+	while (window->ShouldClose(*world)) {
+		scheduler->Update();
+	}
 
 	//Entity entity = 10;
 	//Position position;

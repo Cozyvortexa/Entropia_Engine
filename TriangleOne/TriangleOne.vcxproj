@@ -137,40 +137,39 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\CameraSys.cpp" />
+    <ClCompile Include="src\Systems\CameraSystem.cpp" />
     <ClCompile Include="src\ECS\ModelStore.cpp" />
     <ClCompile Include="src\ECS\Scheduler.cpp" />
     <ClCompile Include="src\engine.cpp" />
-    <ClCompile Include="src\Systemes\LightSystem.cpp" />
+    <ClCompile Include="src\Systems\LightSystem.cpp" />
     <ClCompile Include="src\glad.c" />
-    <ClCompile Include="src\Entity\Components\Light.cpp" />
+    <ClCompile Include="src\ECS\Components\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\Systemes\RenderModule\MeshClass.cpp" />
-    <ClCompile Include="src\Systemes\RenderModule\RenderModule.cpp" />
-    <ClCompile Include="src\Systemes\RenderModule\Shader.cpp" />
-    <ClCompile Include="src\Systemes\RenderModule\Texture.cpp" />
-    <ClCompile Include="src\Systemes\TimeModule\Time.cpp" />
-    <ClCompile Include="src\window.cpp" />
+    <ClCompile Include="src\Render\MeshClass.cpp" />
+    <ClCompile Include="src\Systems\RenderSystem.cpp" />
+    <ClCompile Include="src\Render\Shader.cpp" />
+    <ClCompile Include="src\Render\Texture.cpp" />
+    <ClCompile Include="src\Systems\TimeSystem.cpp" />
+    <ClCompile Include="src\Systems\window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\CameraSys.h" />
-    <ClInclude Include="include\ECS\Component.h" />
-    <ClInclude Include="include\ECS\Material.h" />
+    <ClInclude Include="include\Systems\CameraSystem.h" />
+    <ClInclude Include="include\ECS\Components\Component.h" />
+    <ClInclude Include="include\Render\Material.h" />
     <ClInclude Include="include\ECS\ModelStore.h" />
     <ClInclude Include="include\ECS\Scheduler.h" />
     <ClInclude Include="include\ECS\SpareSet.h" />
     <ClInclude Include="include\engine.h" />
-    <ClInclude Include="include\Entity\Entity.h" />
-    <ClInclude Include="include\Entity\Components\Light.h" />
-    <ClInclude Include="include\Systemes\LightSystem.h" />
-    <ClInclude Include="include\Systemes\RenderModule\MeshClass.h" />
-    <ClInclude Include="include\Systemes\RenderModule\ModelClass.h" />
+    <ClInclude Include="include\ECS\Components\Light.h" />
+    <ClInclude Include="include\Systems\LightSystem.h" />
+    <ClInclude Include="include\Render\MeshClass.h" />
+    <ClInclude Include="include\Render\ModelClass.h" />
     <ClInclude Include="include\ECS\System.h" />
-    <ClInclude Include="include\Systemes\RenderModule\RenderModule.h" />
-    <ClInclude Include="include\Systemes\RenderModule\Shader.h" />
-    <ClInclude Include="include\Systemes\RenderModule\Texture.h" />
-    <ClInclude Include="include\Systemes\TimeSysteme\Time.hpp" />
-    <ClInclude Include="include\window.h" />
+    <ClInclude Include="include\Systems\RenderSystem.h" />
+    <ClInclude Include="include\Render\Shader.h" />
+    <ClInclude Include="include\Render\Texture.h" />
+    <ClInclude Include="include\Systems\TimeSystem.hpp" />
+    <ClInclude Include="include\Systems\windowSystem.h" />
     <ClInclude Include="include\ECS\World.h" />
   </ItemGroup>
   <ItemGroup>

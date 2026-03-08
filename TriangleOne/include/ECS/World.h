@@ -3,13 +3,13 @@
 #include <glad/glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <window.h>
+#include <Systems/windowSystem.h>
 #include <tuple>
 
 #include <iostream>
 #include <vector>
 #include "ECS/SpareSet.h"
-#include "ECS/Component.h"
+#include "ECS/Components/Component.h"
 #include "ECS/ModelStore.h"
 
 #include <unordered_map>

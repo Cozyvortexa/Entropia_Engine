@@ -7,7 +7,7 @@
 #include <sstream>
 
 //#include <Modules/Module.h>
-#include <window.h>
+#include <Systems/windowSystem.h>
 //#include <Modules/TimeModule/Time.hpp>
 
 #include <iostream>
@@ -30,7 +30,7 @@ private:
 	int WIDHT = 800;
 	int HEIGHT = 600;
 	static Engine* instance;
-	std::unique_ptr<Window> window;
+	std::unique_ptr<WindowSystem> window;
 
 
 	std::unique_ptr<World> world;

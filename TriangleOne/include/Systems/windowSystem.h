@@ -4,14 +4,14 @@
 #include <GLFW/glfw3.h>
 
 #include "ECS/System.h"
-#include "ECS/Component.h"
+#include "ECS/Components/Component.h"
 #include "iostream"
 
 #include "ECS/World.h"
 
-class Window : public System {
+class WindowSystem : public System {
 public:
-	Window();
+	WindowSystem();
 
 	static void Framebuffer_size_callback(GLFWwindow* window, int width, int height);
 	void ProcessInput(GLFWwindow* window);

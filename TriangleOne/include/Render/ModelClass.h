@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <Systemes/RenderModule/MeshClass.h>
+#include <Render/MeshClass.h>
 #include <vector>
 
 #include <assimp/Importer.hpp>
@@ -10,7 +10,7 @@
 
 #include "Texture.h"
 
-#include "ECS/Component.h"
+#include "ECS/Components/Component.h"
 
 class Model {
 public:

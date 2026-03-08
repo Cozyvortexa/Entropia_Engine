@@ -1,9 +1,9 @@
 #pragma once
 #include "ECS/System.h"
-#include "ECS/Component.h"
+#include "ECS/Components/Component.h"
 
 #include "ECS/World.h"
-#include "Entity/Components/Light.h"
+#include "ECS/Components/Light.h"
 
 #include <tuple>
 

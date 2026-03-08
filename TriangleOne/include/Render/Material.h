@@ -1,6 +1,6 @@
 #pragma once
 #include "string.h"
-#include "Systemes/RenderModule/Shader.h"
+#include "Render/Shader.h"
 
 struct Material {
 	Material(std::string name, const char* vertexPath, const char* fragmentPath) {

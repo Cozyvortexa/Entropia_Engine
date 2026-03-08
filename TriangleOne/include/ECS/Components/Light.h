@@ -6,9 +6,9 @@
 
 #include <vector>
 
-#include "CameraSys.h"
-#include "Systemes/RenderModule/Shader.h"
-#include "ECS/Component.h"
+#include "Systems/CameraSystem.h"
+#include "Render/Shader.h"
+#include "ECS/Components/Component.h"
 
 struct AABB {
 	AABB() { min = glm::vec3(0);  max = glm::vec3(0);};

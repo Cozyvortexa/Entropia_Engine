@@ -1,4 +1,4 @@
-#include <Systemes/RenderModule/MeshClass.h>
+#include <Render/MeshClass.h>
 
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)

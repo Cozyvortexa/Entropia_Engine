@@ -6,9 +6,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Systemes/RenderModule/Shader.h"
+#include "Render/Shader.h"
 
-#include "SpareSet.h"
+#include "ECS/SpareSet.h"
 
 struct Component {
 	virtual ~Component() = default;
