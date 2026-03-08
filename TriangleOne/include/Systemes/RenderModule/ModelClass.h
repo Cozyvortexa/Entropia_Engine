@@ -19,8 +19,11 @@ public:
 	//{
 	//	LoadModel(path);
 	//}
-	//void Draw(std::shared_ptr<Shader> shader);
-	void DrawWithoutTexture(std::shared_ptr<Shader> shader) {
+	void Draw(Shader* shader) {
+		for (Mesh& mesh : meshes)
+			mesh.Draw(shader);
+	}
+	void DrawWithoutTexture(Shader* shader) {
 		for (Mesh& mesh : meshes)
 			mesh.DrawWithoutTexture(shader);
 	}
@@ -29,8 +32,3 @@ public:
 	std::vector<Texture> textures_loaded;
 
 };
-
-//void Model::Draw(std::shared_ptr<Shader> shader) {
-//	for (Mesh& mesh : meshes)
-//		mesh.Draw(shader);
-//}

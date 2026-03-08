@@ -69,65 +69,11 @@ void RenderModule::InitQuadVao(WindowResource* windowData, RenderResource* rende
 	glBindVertexArray(0);
 }
 
-
-#pragma region Light
-void RenderModule::UpdateLight(Shader* shader, std::vector<DirLight*> directionalLightList,
-	std::vector <std::pair<PointLight*, Transform*>> pointLightList,
-	std::vector<std::pair<SpotLight*, Transform*>> spotLightList) {
-	shader->Use();
-	for (DirLight* dirLight : directionalLightList) {
-		shader->setVec3("dirLight.direction", glm::normalize(dirLight->direction));
-		shader->setVec3("dirLight.ambient", dirLight->ambient);
-		shader->setVec3("dirLight.diffuse", dirLight->diffuse);
-		shader->setVec3("dirLight.specular", dirLight->specular);
-	}
-
-	for (int i = 0; i < pointLightList.size(); i++) {
-		shader->setVec3("pointLights[" + std::to_string(i) + "].position", pointLightList[i].second->position);
-
-		shader->setVec3("pointLights[" + std::to_string(i) + "].ambient", pointLightList[i].first->ambient);
-		shader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", pointLightList[i].first->diffuse);
-		shader->setVec3("pointLights[" + std::to_string(i) + "].specular", pointLightList[i].first->specular);
-
-		shader->setFloat("pointLights[" + std::to_string(i) + "].range", pointLightList[i].first->range);
-
-	}
-	for (int i = 0; i < spotLightList.size(); i++) {
-		shader->setVec3("spotLights[" + std::to_string(i) + "].position", spotLightList[i].second->position);
-
-		glm::mat4 rot(1.0f);
-
-		rot = glm::rotate(rot, glm::radians(spotLightList[i].second->rotation.x), glm::vec3(1, 0, 0));
-		rot = glm::rotate(rot, glm::radians(spotLightList[i].second->rotation.y), glm::vec3(0, 1, 0));
-		rot = glm::rotate(rot, glm::radians(spotLightList[i].second->rotation.z), glm::vec3(0, 0, 1));
-
-		shader->setVec3("spotLights[" + std::to_string(i) + "].direction", glm::normalize(glm::vec3(rot * glm::vec4(spotLightList[i].first->direction, 0.0f))));
-
-		shader->setVec3("spotLights[" + std::to_string(i) + "].ambient", spotLightList[i].first->ambient);
-		shader->setVec3("spotLights[" + std::to_string(i) + "].diffuse", spotLightList[i].first->diffuse);
-		shader->setVec3("spotLights[" + std::to_string(i) + "].specular", spotLightList[i].first->specular);
-
-		shader->setFloat("spotLights[" + std::to_string(i) + "].cutOff", glm::cos(glm::radians(spotLightList[i].first->cutOff)));
-		shader->setFloat("spotLights[" + std::to_string(i) + "].outerCutOff", glm::cos(glm::radians(spotLightList[i].first->outerCutOff)));
-		shader->setFloat("spotLights[" + std::to_string(i) + "].range", spotLightList[i].first->range);
-	}
-	int activePointLights = std::min((int)pointLightList.size(), 8); // Bloquer à 8 max
-	int activeSpotLights = std::min((int)spotLightList.size(), 8); // Bloquer à 8 max
-
-	shader->setInt("nbrPointLight", activePointLights);
-	shader->setInt("nbrSpotLight", activeSpotLights);
-}
-
-
-#pragma endregion Light
-
-
-
 void RenderModule::RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData) {
 
 	/////////////////////Camera
 	Entity entityCam = resourceBuffer->activeCamera->cameraID;
-	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);  // Une vue n'est pas possible dans ce contexte car c'est une caméra spécifique qui est récupérer
+	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);
 
 	Transform* transformMainCamera = world.get_component<Transform>(entityCam);
 	if (mainCamera == nullptr || transformMainCamera == nullptr) {  // Pas de main camera, pas de rendu
@@ -141,7 +87,7 @@ void RenderModule::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 
 
 	View view = world.view<ModeleHandle, Transform, MaterialHandle>();
-	view.each([this, world, mainCamera, projection, transformMainCamera](ModeleHandle& modeleHandle, Transform& transform, MaterialHandle& materialHandle) {
+	view.each([&](int entity, ModeleHandle& modeleHandle, Transform& transform, MaterialHandle& materialHandle) {
 		if (modeleHandle.haveToBeDraw) {
 			Shader currentShader = world.modelStore->Get_Material(materialHandle.index).shader;
 			Model currentModel = world.modelStore->Get_Model(modeleHandle.index);
@@ -156,10 +102,8 @@ void RenderModule::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 			currentShader.setVec3("viewPos", transformMainCamera->position);
 
 
-			UpdateLight(&currentShader, star, pointLights, spotLights);
-
 			currentShader.setMatrix("model", transform.GetTransformModel());
-			currentModel->modelMesh->Draw(shader);
+			currentModel.Draw(&currentShader);
 
 		}
 	});

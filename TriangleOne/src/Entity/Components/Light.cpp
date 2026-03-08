@@ -97,7 +97,7 @@ std::vector<glm::vec3> DirLight::WorldCornerToLightSpace(glm::mat4 lightViewMatr
 	return lightCorners;
 }
 
-void DirLight::UpdateMatrix(glm::mat4 projection, const glm::mat4 viewMatrice) {
+glm::mat4 DirLight::UpdateMatrix(const glm::mat4 viewMatrice) {
 	if (glm::length(direction) < 0.001f) direction = glm::vec3(0, -1, 0); // Valeur par défaut
 
 	std::vector<glm::vec3> worldCorners = CalcWorldCorner(projection, viewMatrice);
@@ -119,9 +119,11 @@ void DirLight::UpdateMatrix(glm::mat4 projection, const glm::mat4 viewMatrice) {
 	box = CalcBoundingBox(lightCorners);
 
 
-	lightProjection = glm::ortho(box.min.x, box.max.x, box.min.y, box.max.y, box.min.z , box.max.z);
+	projection = glm::ortho(box.min.x, box.max.x, box.min.y, box.max.y, box.min.z , box.max.z);
 
-	lightMatrice = lightProjection * lightViewMatrice;
+	lightMatrice = projection * lightViewMatrice;
+
+	return lightMatrice;
 }
 
 #pragma endregion DirLight

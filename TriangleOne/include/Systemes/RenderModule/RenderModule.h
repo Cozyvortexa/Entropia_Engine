@@ -42,9 +42,4 @@ public:
 
 	void RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData);
 
-	void UpdateLight(Shader* shader, std::vector<DirLight*> directionalLightList,
-		std::vector <std::pair<PointLight*, Transform*>> pointLightList,
-		std::vector<std::pair<SpotLight*, Transform*>> spotLightList);
-
-
 };

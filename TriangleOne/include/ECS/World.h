@@ -55,10 +55,12 @@ public:
 
     template<typename T>
     void add_component(int entity, T component) {
+        static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
         get_pool<T>()->insert(entity, component);
     }
     template<typename T>
     T* get_component(Entity entity) {
+        static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
         auto it = pools.find(std::type_index(typeid(T)));
         if (it == pools.end()) return nullptr;
 
@@ -66,6 +68,7 @@ public:
     }
     template<typename T>
     bool remove_component(Entity entity) {
+        static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
         auto it = pools.find(std::type_index(typeid(T)));
         if (it == pools.end()) {
             assert(true, "La supression d'un composant sur l'entité numéro: " + entity + " à échouer");
@@ -76,6 +79,7 @@ public:
 
     template<typename T>
     T* get_ressource() {
+        static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
         auto type_id = std::type_index(typeid(T));
 
         if (ressources.find(type_id) == ressources.end()) {
@@ -98,7 +102,7 @@ private:
         auto type_id = std::type_index(typeid(T));
 
         if (pools.find(type_id) == pools.end()) {
-            pools[type_id] = std::make_unique<SparseSet<T>>();
+            pools.emplace(type_id, std::make_unique<SparseSet<T>>());
         }
 
         // Cast
@@ -107,10 +111,11 @@ private:
 
     template<typename T>
     T* add_ressource() {
+        static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
         auto type_id = std::type_index(typeid(T));
 
         if (ressources.find(type_id) == ressources.end()) {
-            ressources[type_id] = std::make_unique<T>();
+            ressources.emplace(type_id, std::make_unique<T>());
         }
 
         // Cast

@@ -54,13 +54,13 @@ struct DirLight : public Light {
 	float near_plane = 0.1f, far_plane = 100.0f;
 	float orthoSize = 40.0f;
 
-	glm::mat4 lightProjection = glm::mat4(1);
+	glm::mat4 projection = glm::mat4(1);
 	glm::vec3 lightPos = glm::vec3(0);
 	glm::mat4 lightViewMatrice = glm::mat4(1);
 	glm::mat4 lightMatrice = glm::mat4(1);
 
 
-	void UpdateMatrix(glm::mat4 projection,const glm::mat4 viewMatrice);
+	glm::mat4 UpdateMatrix(const glm::mat4 viewMatrice);
 
 private:
 	glm::vec3 FrustumCenter(const std::vector<glm::vec3> corners);

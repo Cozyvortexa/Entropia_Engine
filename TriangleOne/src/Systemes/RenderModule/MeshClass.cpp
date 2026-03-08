@@ -38,7 +38,7 @@ void Mesh::SetupMesh()
 	glBindVertexArray(0);
 }
 
-void Mesh::Draw(std::shared_ptr<Shader> shader)
+void Mesh::Draw(Shader* shader)
 {
 	assert(glIsVertexArray(VAO));
 	assert(glIsBuffer(EBO));
@@ -88,7 +88,7 @@ void Mesh::Draw(std::shared_ptr<Shader> shader)
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
-void Mesh::DrawWithoutTexture(std::shared_ptr<Shader> shader) {
+void Mesh::DrawWithoutTexture(Shader* shader) {
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);

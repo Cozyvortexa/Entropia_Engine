@@ -10,7 +10,9 @@
 
 #include "SpareSet.h"
 
-struct Component {};
+struct Component {
+	virtual ~Component() = default;
+};
 
 struct Transform : public Component
 {
@@ -90,9 +92,17 @@ struct LightToInitTag : public Component {
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct Resource {};
+struct Resource {
+	Resource() = default;
+	virtual ~Resource() = default;
+
+	Resource(const Resource&) = delete;	// Pas de copie
+	Resource& operator=(const Resource&) = delete;	// Pas d'affectation
+};
 
 struct WindowResource : public Resource {
+	WindowResource() = default;
+
 	inline static int WIDHT = 800;
 	inline static int HEIGHT = 600;
 
@@ -113,13 +123,6 @@ struct RenderResource : public Resource {
 	std::unique_ptr<Shader> depthShaderCubeMap = nullptr;
 	std::unique_ptr<Shader> postProcessShader = nullptr;
 
-
-	GLFWwindow* window = nullptr;
-	//Camera* mainCamera = nullptr;
-
-
-	std::vector<unsigned int> shaders;
-
 	glm::mat4 _model = glm::mat4(1.0f);
 
 	int sample = 4;
@@ -131,11 +134,7 @@ struct RenderResource : public Resource {
 	//Final render
 	unsigned int quadVAO;
 	unsigned int quadVBO;
-
-	//Scene* currentScene = nullptr;
-
-
-
+	 
 	float quadVertices[24] = {
 		// Position      // Text
 		-1.0f,  1.0f,     0.0f, 1.0f,
@@ -146,7 +145,6 @@ struct RenderResource : public Resource {
 		 1.0f,  1.0f,     1.0f, 1.0f,
 		 1.0f, -1.0f,     1.0f, 0.0f
 	};
-
 };
 
 struct ActiveCamera : public Resource {
