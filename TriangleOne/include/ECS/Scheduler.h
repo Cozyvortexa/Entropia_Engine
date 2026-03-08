@@ -1,6 +1,7 @@
 #pragma once
 #include "ECS/System.h"
 #include "ECS/World.h"
+#include "Systems/RenderSystem.h"
 #include "Systems/CameraSystem.h"
 
 

@@ -10,7 +10,7 @@
 #include "Systems/windowSystem.h"
 #include "Systems/TimeSystem.hpp"
 
-class CameraSys : public System {
+class CameraSystem : public System {
 public:
 	void Init(World& world) override;
 

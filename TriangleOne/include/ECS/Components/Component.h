@@ -37,7 +37,12 @@ struct Transform : public Component
 };
 
 struct CameraComponent : public Component {
-
+	CameraComponent(unsigned int SCR_WIDTH, unsigned int SCR_HEIGHT) {
+		this->SCR_WIDTH = SCR_WIDTH;
+		this->SCR_HEIGHT = SCR_HEIGHT;
+		lastX = SCR_WIDTH / 2.0f;
+		lastY = SCR_HEIGHT / 2.0f;
+	}
 	glm::mat4 projection = glm::mat4(1.0f);
 	glm::mat4 model = glm::mat4(1.0f);
 	glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -58,11 +63,11 @@ struct CameraComponent : public Component {
 
 	bool firstMouse = true;
 
-	unsigned int SCR_WIDTH;
-	unsigned int SCR_HEIGHT;
+	unsigned int SCR_WIDTH = 0;
+	unsigned int SCR_HEIGHT = 0;
 
-	float lastX = SCR_WIDTH / 2.0f;
-	float lastY = SCR_HEIGHT / 2.0f;
+	float lastX = 1.0f;
+	float lastY = 1.0f;
 
 	glm::mat4 viewMatrice = glm::mat4(1.0f);  // Juste pour pas qu'il soit init a zero
 };

@@ -127,6 +127,15 @@ void RenderSystem::Init(World& world) {
 	renderData->depthShaderCubeMap = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 	renderData->postProcessShader = std::make_unique<Shader>("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
 
+	//Create the main cam  // TEMP / WARNING
+	Entity camEntity = 0;
+	CameraComponent cameraComponent(windowData->WIDHT, windowData->HEIGHT);
+	Transform transform;
+	world.add_component(camEntity, cameraComponent);
+	world.add_component(camEntity, transform);
+
+	world.get_ressource<ActiveCamera>()->cameraID = camEntity;
+
 
 
 	//currentScene = new Scene();

@@ -19,8 +19,8 @@ void Engine::InitEngine() {
 	scheduler = std::make_unique<Scheduler>(world.get(), window.get());
 
 	//Scheduler
-	scheduler->Init();
 	scheduler->CreateSystemes();
+	scheduler->Init();
 }
 
 int Engine::Run() {

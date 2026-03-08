@@ -54,7 +54,7 @@ public:
     }
 
     template<typename T>
-    void add_component(int entity, T component) {
+    void add_component(int entity, T component) {  // WARNING, component is a copy 
         static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
         get_pool<T>()->insert(entity, component);
     }

@@ -8,6 +8,9 @@ Scheduler::Scheduler(World* world, WindowSystem* window) {
 	world->add_ressource<WindowResource>();
 	window->Init(*world); // Systeme a part
 
+	world->add_ressource<RenderResource>();
+	world->add_ressource<TimeResource>();
+	world->add_ressource<ActiveCamera>();
 }
 
 Scheduler::~Scheduler() {};
@@ -15,21 +18,17 @@ Scheduler::~Scheduler() {};
 
 void Scheduler::CreateSystemes() {
 	systemes.push_back(std::make_unique<TimeSystem>());
-	world->add_ressource<TimeResource>();
+	systemes.push_back(std::make_unique<CameraSystem>());
+	systemes.push_back(std::make_unique<RenderSystem>());
 
-	systemes.push_back(std::make_unique<CameraSys>());
-	world->add_ressource<ActiveCamera>();
-
-	//systemes.push_back(std::make_unique<RenderModule>());
-
-	std::cout << "CreateSystemes done\n";
+	std::cout << "CreateSystemes done" << std::endl;;
 }
 
 Scheduler* Scheduler::Init() {
 	std::cout << "Init Starting" << std::endl;
 
-	for (auto& Systeme : systemes) {
-		Systeme->Init(*world);
+	for (auto& systeme : systemes) {
+		systeme->Init(*world);
 	}
 
 	std::cout << "Init Done" << std::endl;
@@ -41,18 +40,20 @@ void Scheduler::Update() {
 	window->Update(*world, resourceBuffer.get());
 
 
-	for (auto& Systeme : systemes) {
-		Systeme->Update(*world, resourceBuffer.get());
+	for (auto& systeme : systemes) {
+		systeme->Update(*world, resourceBuffer.get());
 	}
 }
 
 void Scheduler::Shutdown() {
+	std::cout << "Shutdown Start" << std::endl;
 	window->Shutdown(*world);
 
 
-	for (auto&  System : systemes) {
-		System->Shutdown(*world);
+	for (auto&  system : systemes) {
+		system->Shutdown(*world);
 	}
+	std::cout << "Shutdown Done" << std::endl;
 }
 
 void Scheduler::FillResourceBuffer() {

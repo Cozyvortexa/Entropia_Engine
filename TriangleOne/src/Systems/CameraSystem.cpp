@@ -64,7 +64,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double ypos) {
 }
 
 
-void CameraSys::Init(World& world) {
+void CameraSystem::Init(World& world) {
 	GLFWwindow* window = world.get_ressource<WindowResource>()->window;
 
 	glfwSetWindowUserPointer(window, &world);  // Bind du world a la fenetre
@@ -72,7 +72,7 @@ void CameraSys::Init(World& world) {
 	glfwSetScrollCallback(window, ScrollCallback);
 }
 
-void CameraSys::Update(World& world, const ResourceBuffer* resourceBuffer) {
+void CameraSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	View view = world.view<CameraComponent, Transform>();
 	view.each([&](int entity, CameraComponent& currentCamera, Transform& transform) {
 		currentCamera.viewMatrice = glm::lookAt(transform.position, transform.position + currentCamera.cameraFront, currentCamera.cameraUp);
@@ -87,7 +87,7 @@ void CameraSys::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	//
 }
 
-void CameraSys::ProcessInput(GLFWwindow* window, CameraComponent* mainCamera, Transform* transformMainCamera, float deltaTime)	
+void CameraSystem::ProcessInput(GLFWwindow* window, CameraComponent* mainCamera, Transform* transformMainCamera, float deltaTime)	
 {
 	const float cameraSpeed = 9.0f * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
