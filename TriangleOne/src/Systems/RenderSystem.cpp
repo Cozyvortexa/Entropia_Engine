@@ -163,25 +163,30 @@ void RenderSystem::Init(World& world) {
 	float cutOff = 15.5f;
 	float outerCutOff = 25.5f;
 
-	Entity light = 2;
-	//DirLight dirlight(ambient, diffuse, specular, worldLightDir, renderData->depthShader.get(), intensity);
+	Entity pointLight = 2;
+	DirLight dirLight(ambient, diffuse, specular, worldLightDir, renderData->depthShader.get(), intensity);
 	//PointLight pointLight(ambient, diffuse, specular, 5.0f, renderData->depthShaderCubeMap.get(), intensity);
-	SpotLight spotLight(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->depthShader.get(), 10.0f);
-	LightToInitTag lightToInitTag;
+
+	LightToInitTag tag1;
 	Transform lightTransform;
 	lightTransform.position = glm::vec3(0.0f, 4.0f, -6.0f);
-	lightToInitTag.tag = LightTag::SpotLight_Tag;
+	tag1.tag = LightTag::Directional_Tag;
 
-	world.add_component(light, transform);
-	world.add_component(light, spotLight);
-	world.add_component(light, lightToInitTag);
+	world.add_component(pointLight, transform);
+	world.add_component(pointLight, dirLight);
+	world.add_component(pointLight, tag1);
 
-	//currentScene = new Scene();
-	////Maison
-	//Entity* entity = currentScene->CreateNewEntity();
-	//entity->AddComponent<Transform>();
-	//entity->AddComponent<MeshComponent>("Assets/ImpScene/autumn_house.glb", mainShader);
-	////std::shared_ptr<MeshComponent> meshAttachToEntity = currentScene->AddComponent<MeshComponent>(entity, "Assets/ImpScene/autumn_house.glb", mainShader);
+
+	//Entity spotLightEntity = 3;
+	//SpotLight spotLight(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->depthShader.get(), 10.0f);
+	//LightToInitTag tag2;
+	//tag1.tag = LightTag::SpotLight_Tag;
+
+
+
+	//world.add_component(spotLightEntity, transform);
+	//world.add_component(spotLightEntity, spotLight);
+	//world.add_component(spotLightEntity, tag2);
 
 
 	glEnable(GL_MULTISAMPLE);

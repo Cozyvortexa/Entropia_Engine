@@ -97,12 +97,13 @@ std::vector<glm::vec3> DirLight::WorldCornerToLightSpace(glm::mat4 lightViewMatr
 	return lightCorners;
 }
 
-glm::mat4 DirLight::UpdateMatrix(const glm::mat4 viewMatrice) {
-	if (glm::length(direction) < 0.001f) direction = glm::vec3(0, -1, 0); // Valeur par défaut
+glm::mat4 DirLight::UpdateMatrix(const glm::mat4 viewMatrice, const glm::mat4 projectionCamera) {
+	if (glm::length(direction) < 0.001f) direction = glm::vec3(0, -0.95, 0); // Valeur par défaut
 
-	std::vector<glm::vec3> worldCorners = CalcWorldCorner(projection, viewMatrice);
+	std::vector<glm::vec3> worldCorners = CalcWorldCorner(projectionCamera, viewMatrice);
 
 	lightPos =  normalize(direction) * 10.0f;
+	// Premier passage
 	lightViewMatrice = glm::lookAt(lightPos, glm::vec3(0), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	std::vector<glm::vec3> lightCorners = WorldCornerToLightSpace(lightViewMatrice, worldCorners);

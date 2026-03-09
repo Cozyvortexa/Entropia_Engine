@@ -24,6 +24,7 @@ private:
 	std::unordered_map<std::string, int> pathToIndexMapModel;
 
 	std::vector<Material> materials;
+	friend class LightSystem;  // WARNING, temp
 	std::unordered_map<uint32_t, int> pathToIndexMapMaterial;
 
 	int CheckExistingMat(std::string name);

@@ -1,4 +1,6 @@
 #pragma once
+#include <glm/gtc/type_ptr.hpp>
+
 #include "ECS/System.h"
 #include "ECS/Components/Component.h"
 
@@ -85,7 +87,7 @@ class LightSystem : public System {
 private:
 	All_Light* DataCollector(World* world, WindowResource* windowResource, CameraComponent* mainCamera);
 
-	void UpdateLight(Shader* shader, All_Light& lights);
+	void UpdateLight(World* world, All_Light& lights);
 
 	void SendDepthMapToMainShader(World* world, const ResourceBuffer* resourceBuffer, All_Light* lights); // Temp
 

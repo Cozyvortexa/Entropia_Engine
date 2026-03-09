@@ -51,11 +51,17 @@ public:
 	{
 		unsigned int projLoc = glGetUniformLocation(shaderID, name.c_str());
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(matrix));
+		if (projLoc == -1) {
+			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
+		}
 	}
 	void setMatrix(const std::string& name, glm::mat3 matrix)
 	{
 		unsigned int projLoc = glGetUniformLocation(shaderID, name.c_str());
 		glUniformMatrix3fv(projLoc, 1, GL_FALSE, glm::value_ptr(matrix));
+		if (projLoc == -1) {
+			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
+		}
 	}
 
 	void DebugValueInShader() {

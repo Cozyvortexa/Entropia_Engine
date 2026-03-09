@@ -46,7 +46,7 @@ protected:
 
 struct DirLight : public Light {
 	DirLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, Shader* _depthShader, float newIntensity);
-	glm::vec3 direction = glm::vec3(0.0f,-1.0f,0.0f);
+	glm::vec3 direction = glm::vec3(0.0f,-0.80f,0.0f);
 	unsigned int depthMap = 0;
 	unsigned int depthMapFBO = 0;
 
@@ -60,7 +60,7 @@ struct DirLight : public Light {
 	glm::mat4 lightMatrice = glm::mat4(1);
 
 
-	glm::mat4 UpdateMatrix(const glm::mat4 viewMatrice);
+	glm::mat4 UpdateMatrix(const glm::mat4 viewMatrice, const glm::mat4 projectionCamera);
 
 private:
 	glm::vec3 FrustumCenter(const std::vector<glm::vec3> corners);

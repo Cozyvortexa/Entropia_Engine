@@ -24,11 +24,11 @@ void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	All_Light* lights = DataCollector(&world, windowResource, mainCamera);
 
 	ShadowPass(&world, renderResource, windowResource, lights);
-	UpdateLight(renderResource->mainShader.get(), *lights);
+	UpdateLight(&world, *lights);
 	SendDepthMapToMainShader(&world, resourceBuffer, lights);
 	
 
-	//delete lights;  // WARNING, in case for some misc reason lights is delete before all values are copy in the gpu
+	delete lights;  // WARNING, in case for some misc reason lights is delete before all values are copy in the gpu
 }
 
 #pragma region Init shadow buffer 
@@ -219,7 +219,7 @@ void LightSystem::DrawShadowForPointLight(World* world, RenderResource& renderRe
 
 	View view = world->view<ModeleHandle, SceneTag, Transform>();
 	view.each([&](int entity, ModeleHandle& modeleHandle, SceneTag& sceneTag, Transform& transform) {
-		if (modeleHandle.castShadow && sceneTag.scene_id == 0) {
+		if (modeleHandle.haveToBeDraw && modeleHandle.castShadow && sceneTag.scene_id == 0) {
 			Model currentModel = world->modelStore->Get_Model(modeleHandle.index);
 
 			depthShader->setMatrix("model", transform.GetTransformModel());
@@ -235,7 +235,7 @@ void LightSystem::DrawShadowForSpotLight(World* world, RenderResource& renderRes
 	std::pair<unsigned int, unsigned int> shadowSize = lights.spotLights_Shadow_Size[index];
 	glm::vec3 position = lights.spotLights[index].position;
 	glm::vec3 direction = lights.spotLights[index].direction;
-	Shader* depthShader = renderResource.depthShaderCubeMap.get();
+	Shader* depthShader = renderResource.depthShader.get();
 
 
 	float aspect = (float)shadowSize.first / (float)shadowSize.second;
@@ -249,7 +249,7 @@ void LightSystem::DrawShadowForSpotLight(World* world, RenderResource& renderRes
 
 	glViewport(0, 0, shadowSize.first, shadowSize.second);
 	glBindFramebuffer(GL_FRAMEBUFFER, lights.spotLights_DepthMapFBO[index]);  // Fbo unique par spot light
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 
 	depthShader->Use();
@@ -289,44 +289,48 @@ void LightSystem::ShadowPass(World* world, RenderResource* renderResource, Windo
 #pragma endregion
 
 #pragma region Light
-void LightSystem::UpdateLight(Shader* shader, All_Light& lights) {
-	shader->Use();
+void LightSystem::UpdateLight(World* world, All_Light& lights) {
+	for (auto& material : world->modelStore->materials) {
+		Shader* shader = &material.shader;
+		shader->Use();
 
-	//Directional light
-	shader->setVec3("dirLight.direction", glm::normalize(lights.dirLight.direction));
-	shader->setVec3("dirLight.ambient", lights.dirLight.ambient);
-	shader->setVec3("dirLight.diffuse", lights.dirLight.diffuse);
-	shader->setVec3("dirLight.specular", lights.dirLight.specular);
+		//Directional light
+		shader->setVec3("dirLight.direction", glm::normalize(lights.dirLight.direction));
+		shader->setVec3("dirLight.ambient", lights.dirLight.ambient);
+		shader->setVec3("dirLight.diffuse", lights.dirLight.diffuse);
+		shader->setVec3("dirLight.specular", lights.dirLight.specular);
 
-	for (int i = 0; i < lights.pointLights.size(); i++) {
-		shader->setVec3("pointLights[" + std::to_string(i) + "].position", lights.pointLights[i].position);
+		for (int i = 0; i < lights.pointLights.size(); i++) {
+			shader->setVec3("pointLights[" + std::to_string(i) + "].position", lights.pointLights[i].position);
 
-		shader->setVec3("pointLights[" + std::to_string(i) + "].ambient", lights.pointLights[i].ambient);
-		shader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", lights.pointLights[i].diffuse);
-		shader->setVec3("pointLights[" + std::to_string(i) + "].specular", lights.pointLights[i].specular);
+			shader->setVec3("pointLights[" + std::to_string(i) + "].ambient", lights.pointLights[i].ambient);
+			shader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", lights.pointLights[i].diffuse);
+			shader->setVec3("pointLights[" + std::to_string(i) + "].specular", lights.pointLights[i].specular);
 
-		shader->setFloat("pointLights[" + std::to_string(i) + "].range", lights.pointLights[i].range);
+			shader->setFloat("pointLights[" + std::to_string(i) + "].range", lights.pointLights[i].range);
 
+		}
+		for (int i = 0; i < lights.spotLights.size(); i++) {
+			shader->setVec3("spotLights[" + std::to_string(i) + "].position", lights.spotLights[i].position);
+
+
+			shader->setVec3("spotLights[" + std::to_string(i) + "].direction", lights.spotLights[i].direction);
+
+			shader->setVec3("spotLights[" + std::to_string(i) + "].ambient", lights.spotLights[i].ambient);
+			shader->setVec3("spotLights[" + std::to_string(i) + "].diffuse", lights.spotLights[i].diffuse);
+			shader->setVec3("spotLights[" + std::to_string(i) + "].specular", lights.spotLights[i].specular);
+
+			shader->setFloat("spotLights[" + std::to_string(i) + "].cutOff", glm::cos(glm::radians(lights.spotLights[i].cutOff)));
+			shader->setFloat("spotLights[" + std::to_string(i) + "].outerCutOff", glm::cos(glm::radians(lights.spotLights[i].outerCutOff)));
+			shader->setFloat("spotLights[" + std::to_string(i) + "].range", lights.spotLights[i].range);
+		}
+		int activePointLights = std::min((int)lights.pointLights.size(), 8); // Bloquer à 8 max
+		int activeSpotLights = std::min((int)lights.spotLights.size(), 8); // Bloquer à 8 max
+
+		shader->setInt("nbrPointLight", activePointLights);
+		shader->setInt("nbrSpotLight", activeSpotLights);
 	}
-	for (int i = 0; i < lights.spotLights.size(); i++) {
-		shader->setVec3("spotLights[" + std::to_string(i) + "].position", lights.spotLights[i].position);
 
-
-		shader->setVec3("spotLights[" + std::to_string(i) + "].direction", lights.spotLights[i].direction);
-
-		shader->setVec3("spotLights[" + std::to_string(i) + "].ambient", lights.spotLights[i].ambient);
-		shader->setVec3("spotLights[" + std::to_string(i) + "].diffuse", lights.spotLights[i].diffuse);
-		shader->setVec3("spotLights[" + std::to_string(i) + "].specular", lights.spotLights[i].specular);
-
-		shader->setFloat("spotLights[" + std::to_string(i) + "].cutOff", glm::cos(glm::radians(lights.spotLights[i].cutOff)));
-		shader->setFloat("spotLights[" + std::to_string(i) + "].outerCutOff", glm::cos(glm::radians(lights.spotLights[i].outerCutOff)));
-		shader->setFloat("spotLights[" + std::to_string(i) + "].range", lights.spotLights[i].range);
-	}
-	int activePointLights = std::min((int)lights.pointLights.size(), 8); // Bloquer à 8 max
-	int activeSpotLights = std::min((int)lights.spotLights.size(), 8); // Bloquer à 8 max
-
-	shader->setInt("nbrPointLight", activePointLights);
-	shader->setInt("nbrSpotLight", activeSpotLights);
 }
 
 
@@ -439,7 +443,7 @@ All_Light* LightSystem::DataCollector(World* world , WindowResource* windowResou
 		starCompteur++;
 		if (starCompteur <= 1) {
 
-			//Light
+			//Dir_Light
 			p_DirLight.ambient = dirLight.ambient;
 			p_DirLight.diffuse = dirLight.diffuse;
 			p_DirLight.direction = dirLight.direction;
@@ -452,7 +456,8 @@ All_Light* LightSystem::DataCollector(World* world , WindowResource* windowResou
 			lights->dirLight_Shadow_Size = std::make_pair(dirLight.SHADOW_WIDTH, dirLight.SHADOW_HEIGHT);
 
 			//Matrices
-			lights->dirLight_Matrice = dirLight.UpdateMatrix(mainCamera->viewMatrice);
+			glm::mat4 projectionCamera = glm::perspective(glm::radians(mainCamera->zoom), (float)windowResource->WIDHT / (float)windowResource->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
+			lights->dirLight_Matrice = dirLight.UpdateMatrix(mainCamera->viewMatrice, projectionCamera);
 		}
 		else {
 			std::cout << "Multiple dir light detected, only the first one will be take into consideration" << std::endl;
@@ -463,7 +468,7 @@ All_Light* LightSystem::DataCollector(World* world , WindowResource* windowResou
 	View viewPointLight = world->view<PointLight, Transform>();
 	viewPointLight.each([&](int entity, PointLight& pointLight, Transform& transform) {
 		Padding_PointLight p_pointLight;
-		//Light
+		//Point_Light
 		p_pointLight.position = transform.position;
 		p_pointLight.ambient = pointLight.ambient;
 		p_pointLight.diffuse = pointLight.diffuse;
@@ -480,7 +485,7 @@ All_Light* LightSystem::DataCollector(World* world , WindowResource* windowResou
 	View viewSpotLight = world->view<SpotLight, Transform>();
 	viewSpotLight.each([&](int entity, SpotLight& spotLight, Transform& transform) {
 		Padding_SpotLight p_spotLight;
-		//Light
+		//Spot_Light
 		p_spotLight.position = transform.position;
 		p_spotLight.direction = Calc_SpotLightDirection(transform.GetTransformModel(), spotLight.direction);
 		p_spotLight.ambient = spotLight.ambient;
