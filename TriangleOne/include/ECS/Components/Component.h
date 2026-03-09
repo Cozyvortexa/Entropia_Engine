@@ -79,7 +79,7 @@ struct SceneTag : public Component {
 struct ModeleHandle : public Component {
 	uint32_t index = 0;
 	bool castShadow = true;
-	bool haveToBeDraw;
+	bool haveToBeDraw = true;
 };
 
 struct MaterialHandle : Component {

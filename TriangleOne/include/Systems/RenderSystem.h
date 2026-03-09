@@ -21,6 +21,7 @@
 #include "Render/ModelClass.h"
 
 #include "ECS/World.h"
+#include "ECS/Components/Light.h"
 
 class RenderSystem : public System {
 public:

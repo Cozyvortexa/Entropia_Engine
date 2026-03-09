@@ -70,7 +70,8 @@ void RenderSystem::InitQuadVao(WindowResource* windowData, RenderResource* rende
 }
 
 void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData) {
-
+	glBindFramebuffer(GL_FRAMEBUFFER, resourceBuffer->renderResource->framebuffer);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	/////////////////////Camera
 	Entity entityCam = resourceBuffer->activeCamera->cameraID;
 	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);
@@ -122,7 +123,7 @@ void RenderSystem::Init(World& world) {
 	std::pair<Material&, int> defaultMat = world.modelStore->CreateMaterial("Default_Material", "TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
 
 
-
+	renderData->mainShader = std::make_unique<Shader>("TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
 	renderData->depthShader = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
 	renderData->depthShaderCubeMap = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 	renderData->postProcessShader = std::make_unique<Shader>("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
@@ -136,7 +137,44 @@ void RenderSystem::Init(World& world) {
 
 	world.get_ressource<ActiveCamera>()->cameraID = camEntity;
 
+	Entity model = 1;
+	Transform modelTransform;
+	std::pair<Model&, int> value = world.modelStore->Get_Model("Assets/ImpScene/autumn_house.glb");
+	ModeleHandle modeleHandle;
+	modeleHandle.index = value.second;
+	SceneTag sceneTag;
+	MaterialHandle materialHandle;
+	materialHandle.index = defaultMat.second;
 
+	world.add_component(model, sceneTag);
+	world.add_component(model, materialHandle);
+	world.add_component(model, modeleHandle);
+	world.add_component(model, modelTransform);
+
+
+	glm::vec3 ambient = glm::vec3(0.002f, 0.002f, 0.002f);
+	glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 specular = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	float intensity = 3.0f;
+
+	glm::vec3 worldLightDir = glm::normalize(glm::vec3(-2.0f, 4.0f, -1.0f));
+
+	float cutOff = 15.5f;
+	float outerCutOff = 25.5f;
+
+	Entity light = 2;
+	//DirLight dirlight(ambient, diffuse, specular, worldLightDir, renderData->depthShader.get(), intensity);
+	//PointLight pointLight(ambient, diffuse, specular, 5.0f, renderData->depthShaderCubeMap.get(), intensity);
+	SpotLight spotLight(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->depthShader.get(), 10.0f);
+	LightToInitTag lightToInitTag;
+	Transform lightTransform;
+	lightTransform.position = glm::vec3(0.0f, 4.0f, -6.0f);
+	lightToInitTag.tag = LightTag::SpotLight_Tag;
+
+	world.add_component(light, transform);
+	world.add_component(light, spotLight);
+	world.add_component(light, lightToInitTag);
 
 	//currentScene = new Scene();
 	////Maison
@@ -146,14 +184,12 @@ void RenderSystem::Init(World& world) {
 	////std::shared_ptr<MeshComponent> meshAttachToEntity = currentScene->AddComponent<MeshComponent>(entity, "Assets/ImpScene/autumn_house.glb", mainShader);
 
 
+	glEnable(GL_MULTISAMPLE);
 
-	//glm::vec3 ambient = glm::vec3(0.002f, 0.002f, 0.002f);
-	//glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-	//glm::vec3 specular = glm::vec3(0.0f, 0.0f, 0.0f);
+	glEnable(GL_DEPTH_TEST);
 
-	//float intensity = 3.0f;
 
-	//glm::vec3 worldLightDir = glm::normalize(glm::vec3(-2.0f, 4.0f, -1.0f));
+
 
 	////DirLight   	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader)
 	//Entity* entityLight = currentScene->CreateNewEntity();

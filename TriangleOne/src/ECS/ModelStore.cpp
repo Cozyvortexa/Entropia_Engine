@@ -146,7 +146,7 @@ std::vector<Texture> ModelStore::LoadMaterialTextures(aiMaterial* mat, aiTexture
 }
 
 Model& ModelStore::Get_Model(int index) {
-	assert(index > models.size() - 1, "Index out of range in Get_Model, ModelStore");
+	assert(index <= models.size() - 1, "Index out of range in Get_Model, ModelStore");
 	return models[index];
 }
 
@@ -199,8 +199,8 @@ Material& ModelStore::Get_Material(std::string name) {
 }
 
 Material& ModelStore::Get_Material(int index) {  // Dedicate for the Systemes
-	assert(index < 0, "Negative index detected in Get_Material(int index)");
-	assert(index > materials.size(), "Index out of range in Get_Material(int index)");
+	assert(index >= 0, "Negative index detected in Get_Material(int index)");
+	assert(index < materials.size(), "Index out of range in Get_Material(int index)");
 
 	return materials[index];
 }

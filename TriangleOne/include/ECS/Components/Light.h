@@ -39,13 +39,13 @@ public:
 
 	unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 
-	std::shared_ptr<Shader> depthShader = nullptr;
+Shader* depthShader = nullptr;
 protected:
 	void InitBaseLight(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float newIntensity);
 };
 
 struct DirLight : public Light {
-	DirLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, std::shared_ptr<Shader> _depthShader, float newIntensity);
+	DirLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, Shader* _depthShader, float newIntensity);
 	glm::vec3 direction = glm::vec3(0.0f,-1.0f,0.0f);
 	unsigned int depthMap = 0;
 	unsigned int depthMapFBO = 0;
@@ -73,7 +73,7 @@ private:
 
 struct PointLight : public Light{
 public:
-	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _range, std::shared_ptr<Shader> depthShaderCubeMap, float newIntesity);
+	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _range, Shader* depthShaderCubeMap, float newIntesity);
 	float range = 5.0f;
 
 	unsigned int depthCubeMapFBO = 0;
@@ -86,7 +86,7 @@ public:
 
 struct SpotLight : public Light {
 public: 
-	SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, std::shared_ptr<Shader> depthShaderSpotMap, float newIntensity);
+	SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Shader* depthShaderSpotMap, float newIntensity);
 	float range = 1.0f;
 
 	glm::vec3 direction = glm::vec3(0);

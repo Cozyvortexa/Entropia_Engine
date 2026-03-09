@@ -6,6 +6,8 @@
 #include "ECS/Components/Light.h"
 
 #include <tuple>
+#include <iostream>
+#include <vector>
 
 #pragma region Padding_Structures
 struct Padding_DirLight {  // To be identical to the memory alignment of structs in shaders, UBO
@@ -61,7 +63,7 @@ struct All_Light {
 #pragma endregion
 
 
-class LightSystem : System {
+class LightSystem : public System {
 	 void Init(World& world) override;
 	 void Update(World& world, const ResourceBuffer* resourceBuffer) override;
 

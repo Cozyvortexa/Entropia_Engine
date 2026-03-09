@@ -24,11 +24,11 @@ void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	All_Light* lights = DataCollector(&world, windowResource, mainCamera);
 
 	ShadowPass(&world, renderResource, windowResource, lights);
-	//UpdateLight()
+	UpdateLight(renderResource->mainShader.get(), *lights);
 	SendDepthMapToMainShader(&world, resourceBuffer, lights);
 	
 
-	delete lights;  // WARNING, in case for some misc reason lights is delete before all values are copy in the gpu
+	//delete lights;  // WARNING, in case for some misc reason lights is delete before all values are copy in the gpu
 }
 
 #pragma region Init shadow buffer 
@@ -347,6 +347,7 @@ void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* r
 	view.each([&](int entity, ModeleHandle& modeleHandle, Transform& transform, MaterialHandle& materialHandle) {
 		if (modeleHandle.castShadow) {
 			Shader currentShader = world->modelStore->Get_Material(materialHandle.index).shader;
+			currentShader.Use();
 			// --- TEXTURE UNIT MANAGEMENT ---
 
 			const int SLOT_SHADOW_DIR = 16;
@@ -396,6 +397,7 @@ void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* r
 
 			//// Gestion Spot Light
 			int maxSpotLights = 8;
+			int activeSpotLights = std::min((int)lights->spotLights_DepthMap.size(), maxSpotLights);
 			for (int i = 0; i < maxSpotLights; i++) {
 				std::string uniformName = "shadowMapSpot[" + std::to_string(i) + "]";
 				std::string uniformNameMatrice = "spotLightMatrices[" + std::to_string(i) + "]";
@@ -408,7 +410,7 @@ void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* r
 				glActiveTexture(GL_TEXTURE0 + currentSlot);
 
 
-				if (i < activeLights) {
+				if (i < activeSpotLights) {
 					currentShader.setMatrix(uniformNameMatrice, lights->spotLight_Matrice[i]);
 					glBindTexture(GL_TEXTURE_2D, lights->spotLights_DepthMap[i]);
 				}
