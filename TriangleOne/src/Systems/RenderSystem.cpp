@@ -123,7 +123,7 @@ void RenderSystem::Init(World& world) {
 	std::pair<Material&, int> defaultMat = world.modelStore->CreateMaterial("Default_Material", "TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
 
 
-	renderData->mainShader = std::make_unique<Shader>("TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
+	renderData->mainMaterialHandle = defaultMat.second;
 	renderData->depthShader = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
 	renderData->depthShaderCubeMap = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 	renderData->postProcessShader = std::make_unique<Shader>("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
@@ -163,30 +163,42 @@ void RenderSystem::Init(World& world) {
 	float cutOff = 15.5f;
 	float outerCutOff = 25.5f;
 
-	Entity pointLight = 2;
+	Entity dirLight_E = 2;
 	DirLight dirLight(ambient, diffuse, specular, worldLightDir, renderData->depthShader.get(), intensity);
-	//PointLight pointLight(ambient, diffuse, specular, 5.0f, renderData->depthShaderCubeMap.get(), intensity);
 
 	LightToInitTag tag1;
 	Transform lightTransform;
 	lightTransform.position = glm::vec3(0.0f, 4.0f, -6.0f);
 	tag1.tag = LightTag::Directional_Tag;
 
-	world.add_component(pointLight, transform);
-	world.add_component(pointLight, dirLight);
-	world.add_component(pointLight, tag1);
+	world.add_component(dirLight_E, transform);
+	world.add_component(dirLight_E, dirLight);
+	world.add_component(dirLight_E, tag1);
 
 
 	//Entity spotLightEntity = 3;
 	//SpotLight spotLight(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->depthShader.get(), 10.0f);
 	//LightToInitTag tag2;
-	//tag1.tag = LightTag::SpotLight_Tag;
+	//tag1.tag = LightTag::PointLight_Tag;
 
 
 
 	//world.add_component(spotLightEntity, transform);
 	//world.add_component(spotLightEntity, spotLight);
 	//world.add_component(spotLightEntity, tag2);
+
+
+
+	Entity pointLightEntity = 3;
+	Transform transformPointLight;
+	transformPointLight.position = glm::vec3(1.0f, 3.0f, 0.0f);
+	PointLight pointLight(ambient, diffuse, specular, 8.0f, renderData->depthShaderCubeMap.get(), intensity);
+	LightToInitTag tag3;
+	tag1.tag = LightTag::PointLight_Tag;
+
+	world.add_component(pointLightEntity, transformPointLight);
+	world.add_component(pointLightEntity, pointLight);
+	world.add_component(pointLightEntity, tag3);
 
 
 	glEnable(GL_MULTISAMPLE);

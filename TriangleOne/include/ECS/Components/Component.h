@@ -123,7 +123,7 @@ struct TimeResource : public Resource {
 };
 
 struct RenderResource : public Resource {
-	std::unique_ptr<Shader> mainShader = nullptr;
+	unsigned int mainMaterialHandle;
 	std::unique_ptr<Shader> depthShader = nullptr;
 	std::unique_ptr<Shader> depthShaderCubeMap = nullptr;
 	std::unique_ptr<Shader> postProcessShader = nullptr;
@@ -135,6 +135,9 @@ struct RenderResource : public Resource {
 	unsigned int framebuffer;
 	GLuint finalTxtColorOutput;
 	GLuint finalTxtOutput;
+
+	//Light UBO
+	GLuint light_UBO;
 
 	//Final render
 	unsigned int quadVAO;

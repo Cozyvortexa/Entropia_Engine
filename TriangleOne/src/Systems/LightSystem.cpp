@@ -24,7 +24,7 @@ void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	All_Light* lights = DataCollector(&world, windowResource, mainCamera);
 
 	ShadowPass(&world, renderResource, windowResource, lights);
-	UpdateLight(&world, *lights);
+	UpdateLight(&world, renderResource, *lights);
 	SendDepthMapToMainShader(&world, resourceBuffer, lights);
 	
 
@@ -289,7 +289,16 @@ void LightSystem::ShadowPass(World* world, RenderResource* renderResource, Windo
 #pragma endregion
 
 #pragma region Light
-void LightSystem::UpdateLight(World* world, All_Light& lights) {
+void LightSystem::UpdateLight(World* world, RenderResource* renderResource, All_Light& lights) {
+
+	//New Methode UBO, i know its not better that a differed lightning system
+	//glBindBuffer(GL_UNIFORM_BUFFER, renderResource->light_UBO);
+	//glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Padding_DirLight), &lights.dirLight); // DirLight
+	//glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Padding_DirLight), MAX_POINT_LIGHT * sizeof(Padding_PointLight), lights.pointLights.data()); // PointLight
+	//glBufferSubData(GL_UNIFORM_BUFFER, MAX_POINT_LIGHT * sizeof(Padding_PointLight), MAX_SPOT_LIGHT * sizeof(Padding_SpotLight), lights.spotLights.data()); // SpotLight
+	//glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	//
+
 	for (auto& material : world->modelStore->materials) {
 		Shader* shader = &material.shader;
 		shader->Use();
@@ -338,16 +347,90 @@ glm::vec3 LightSystem::Calc_SpotLightDirection(glm::mat4 transformModel, glm::ve
 	return glm::normalize(glm::vec3(transformModel * glm::vec4(lightDirection, 0.0f)));
 }
 
-#pragma endregion Light
+All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResource, CameraComponent* mainCamera) {
+	All_Light* lights = new All_Light();
+	View viewDirLight = world->view<DirLight>();
+
+	int starCompteur = 0;
+
+	viewDirLight.each([&](int entity, DirLight& dirLight) {
+		Padding_DirLight p_DirLight;
+
+		starCompteur++;
+		if (starCompteur <= 1) {
+
+			//Dir_Light
+			p_DirLight.ambient = dirLight.ambient;
+			p_DirLight.diffuse = dirLight.diffuse;
+			p_DirLight.direction = dirLight.direction;
+			p_DirLight.specular = dirLight.specular;
+			lights->dirLight = p_DirLight;
+
+			//Shadow
+			lights->dirLight_DepthMap = dirLight.depthMap;
+			lights->dirLight_DepthMapFBO = dirLight.depthMapFBO;
+			lights->dirLight_Shadow_Size = std::make_pair(dirLight.SHADOW_WIDTH, dirLight.SHADOW_HEIGHT);
+
+			//Matrices
+			glm::mat4 projectionCamera = glm::perspective(glm::radians(mainCamera->zoom), (float)windowResource->WIDHT / (float)windowResource->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
+			lights->dirLight_Matrice = dirLight.UpdateMatrix(mainCamera->viewMatrice, projectionCamera);
+		}
+		else {
+			std::cout << "Multiple dir light detected, only the first one will be take into consideration" << std::endl;
+		}
+
+		});
+
+	View viewPointLight = world->view<PointLight, Transform>();
+	viewPointLight.each([&](int entity, PointLight& pointLight, Transform& transform) {
+		Padding_PointLight p_pointLight;
+		//Point_Light
+		p_pointLight.position = transform.position;
+		p_pointLight.ambient = pointLight.ambient;
+		p_pointLight.diffuse = pointLight.diffuse;
+		p_pointLight.specular = pointLight.specular;
+		p_pointLight.range = pointLight.range;
+		lights->pointLights.push_back(p_pointLight);
+
+		//Shadow
+		lights->pointLights_DepthMap.push_back(pointLight.depthCubeMap);
+		lights->pointLights_DepthMapFBO.push_back(pointLight.depthCubeMapFBO);
+		lights->pointLights_Shadow_Size.push_back(std::make_pair(pointLight.SHADOW_WIDTH, pointLight.SHADOW_HEIGHT));
+		});
+
+	View viewSpotLight = world->view<SpotLight, Transform>();
+	viewSpotLight.each([&](int entity, SpotLight& spotLight, Transform& transform) {
+		Padding_SpotLight p_spotLight;
+		//Spot_Light
+		p_spotLight.position = transform.position;
+		p_spotLight.direction = Calc_SpotLightDirection(transform.GetTransformModel(), spotLight.direction);
+		p_spotLight.ambient = spotLight.ambient;
+		p_spotLight.diffuse = spotLight.diffuse;
+		p_spotLight.specular = spotLight.specular;
+		p_spotLight.range = spotLight.range;
+		lights->spotLights.push_back(p_spotLight);
+
+		//Shadow
+		lights->spotLights_DepthMap.push_back(spotLight.depthMap);
+		lights->spotLights_DepthMapFBO.push_back(spotLight.depthMapFBO);
+		lights->spotLights_Shadow_Size.push_back(std::make_pair(spotLight.SHADOW_WIDTH, spotLight.SHADOW_HEIGHT));
+
+		//Matrices
+		lights->spotLight_Matrice.push_back(spotLight.lightSpaceMatrix);
+		});
+
+	return lights;
+}
+
+
+#pragma endregion
 
 void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* resourceBuffer, All_Light* lights) {  // Temp
-
 	if (lights->pointLights_DepthMap.size() >= 8) std::cout << "Max pointLight number reach" << std::endl;  // Valeur a definir a l'avenir dans un dossier config
 	if (lights->spotLights_DepthMap.size() >= 8) std::cout << "Max spotLight number reach" << std::endl;  // Valeur a definir a l'avenir dans un dossier config
 
-
  
-	View view = world->view<ModeleHandle, Transform, MaterialHandle>();
+	View view = world->view<ModeleHandle, Transform, MaterialHandle>();  // Temporary view, gonna be UBO in the futur 
 	view.each([&](int entity, ModeleHandle& modeleHandle, Transform& transform, MaterialHandle& materialHandle) {
 		if (modeleHandle.castShadow) {
 			Shader currentShader = world->modelStore->Get_Material(materialHandle.index).shader;
@@ -375,9 +458,10 @@ void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* r
 			int activeLights = std::min((int)lights->pointLights_DepthMap.size(), maxPointLights);
 			currentShader.setInt("nbrPointLight", activeLights);
 
+			
 			//PointLight
 			for (int i = 0; i < maxPointLights; i++) {
-				if ( i >= lights->pointLights_DepthMap.size() - 1) break;
+				if (i > lights->pointLights_DepthMap.size() - 1) break;
 
 				// Construction du nom "shadowCubeMaps[0]", "shadowCubeMaps[1]"...
 				std::string uniformName = "shadowCubeMaps[" + std::to_string(i) + "]";
@@ -430,78 +514,15 @@ void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* r
 	});
 }
 
+void LightSystem::InitLightUbo(const ResourceBuffer* resourceBuffer) {
+	RenderResource* renderResource = resourceBuffer->renderResource;
 
-All_Light* LightSystem::DataCollector(World* world , WindowResource* windowResource, CameraComponent* mainCamera){
-	All_Light* lights = new All_Light();
-	View viewDirLight = world->view<DirLight>();
+	glGenBuffers(1, &renderResource->light_UBO);
+	glBindBuffer(GL_UNIFORM_BUFFER, renderResource->light_UBO);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(Padding_DirLight) + MAX_POINT_LIGHT * sizeof(Padding_PointLight) + MAX_SPOT_LIGHT * sizeof(Padding_SpotLight), NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	// BINDING UBO slot 1, light
+	glBindBufferRange(GL_UNIFORM_BUFFER, 1, renderResource->light_UBO, 0, sizeof(Padding_DirLight) + MAX_POINT_LIGHT * sizeof(Padding_PointLight) + MAX_SPOT_LIGHT * sizeof(Padding_SpotLight));
 
-	int starCompteur = 0;
 
-	viewDirLight.each([&](int entity, DirLight& dirLight) {
-		Padding_DirLight p_DirLight;
-
-		starCompteur++;
-		if (starCompteur <= 1) {
-
-			//Dir_Light
-			p_DirLight.ambient = dirLight.ambient;
-			p_DirLight.diffuse = dirLight.diffuse;
-			p_DirLight.direction = dirLight.direction;
-			p_DirLight.specular = dirLight.specular;
-			lights->dirLight = p_DirLight;
-
-			//Shadow
-			lights->dirLight_DepthMap = dirLight.depthMap;
-			lights->dirLight_DepthMapFBO = dirLight.depthMapFBO;
-			lights->dirLight_Shadow_Size = std::make_pair(dirLight.SHADOW_WIDTH, dirLight.SHADOW_HEIGHT);
-
-			//Matrices
-			glm::mat4 projectionCamera = glm::perspective(glm::radians(mainCamera->zoom), (float)windowResource->WIDHT / (float)windowResource->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
-			lights->dirLight_Matrice = dirLight.UpdateMatrix(mainCamera->viewMatrice, projectionCamera);
-		}
-		else {
-			std::cout << "Multiple dir light detected, only the first one will be take into consideration" << std::endl;
-		}
-
-	});
-
-	View viewPointLight = world->view<PointLight, Transform>();
-	viewPointLight.each([&](int entity, PointLight& pointLight, Transform& transform) {
-		Padding_PointLight p_pointLight;
-		//Point_Light
-		p_pointLight.position = transform.position;
-		p_pointLight.ambient = pointLight.ambient;
-		p_pointLight.diffuse = pointLight.diffuse;
-		p_pointLight.specular = pointLight.specular;
-		p_pointLight.range = pointLight.range;
-		lights->pointLights.push_back(p_pointLight);
-
-		//Shadow
-		lights->pointLights_DepthMap.push_back(pointLight.depthCubeMap);
-		lights->pointLights_DepthMapFBO.push_back(pointLight.depthCubeMapFBO);
-		lights->pointLights_Shadow_Size.push_back(std::make_pair(pointLight.SHADOW_WIDTH, pointLight.SHADOW_HEIGHT));
-	});
-
-	View viewSpotLight = world->view<SpotLight, Transform>();
-	viewSpotLight.each([&](int entity, SpotLight& spotLight, Transform& transform) {
-		Padding_SpotLight p_spotLight;
-		//Spot_Light
-		p_spotLight.position = transform.position;
-		p_spotLight.direction = Calc_SpotLightDirection(transform.GetTransformModel(), spotLight.direction);
-		p_spotLight.ambient = spotLight.ambient;
-		p_spotLight.diffuse = spotLight.diffuse;
-		p_spotLight.specular = spotLight.specular;
-		p_spotLight.range = spotLight.range;
-		lights->spotLights.push_back(p_spotLight);
-
-		//Shadow
-		lights->spotLights_DepthMap.push_back(spotLight.depthMap);
-		lights->spotLights_DepthMapFBO.push_back(spotLight.depthMapFBO);
-		lights->spotLights_Shadow_Size.push_back(std::make_pair(spotLight.SHADOW_WIDTH, spotLight.SHADOW_HEIGHT));
-
-		//Matrices
-		lights->spotLight_Matrice.push_back(spotLight.lightSpaceMatrix);
-	});
-
-	return lights;
 }

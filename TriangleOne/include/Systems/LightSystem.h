@@ -11,6 +11,9 @@
 #include <iostream>
 #include <vector>
 
+#define MAX_POINT_LIGHT 8
+#define MAX_SPOT_LIGHT 8
+
 #pragma region Padding_Structures
 struct Padding_DirLight {  // To be identical to the memory alignment of structs in shaders, UBO
 	alignas(16) glm::vec3 direction;
@@ -70,7 +73,7 @@ class LightSystem : public System {
 	 void Update(World& world, const ResourceBuffer* resourceBuffer) override;
 
 
-
+	 void InitLightUbo(const ResourceBuffer* resourceBuffer);
 #pragma region Init shadow buffer 
 	 void InitShadowMap(DirLight* currentLight);
 	 void InitCubeMap(PointLight* currentLight);
@@ -87,7 +90,7 @@ class LightSystem : public System {
 private:
 	All_Light* DataCollector(World* world, WindowResource* windowResource, CameraComponent* mainCamera);
 
-	void UpdateLight(World* world, All_Light& lights);
+	void UpdateLight(World* world, RenderResource* renderResource, All_Light& lights);
 
 	void SendDepthMapToMainShader(World* world, const ResourceBuffer* resourceBuffer, All_Light* lights); // Temp
 
