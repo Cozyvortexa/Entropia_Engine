@@ -194,7 +194,7 @@ void RenderSystem::Init(World& world) {
 	transformPointLight.position = glm::vec3(1.0f, 3.0f, 0.0f);
 	PointLight pointLight(ambient, diffuse, specular, 8.0f, renderData->depthShaderCubeMap.get(), intensity);
 	LightToInitTag tag3;
-	tag1.tag = LightTag::PointLight_Tag;
+	tag3.tag = LightTag::PointLight_Tag;
 
 	world.add_component(pointLightEntity, transformPointLight);
 	world.add_component(pointLightEntity, pointLight);

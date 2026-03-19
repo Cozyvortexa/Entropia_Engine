@@ -118,6 +118,7 @@ void LightSystem::InitSpotShadowMap(SpotLight* currentLight) {
 }
 
 void LightSystem::InitShadowBuffer(World& world) {
+	std::vector<int> to_remove;
 	View view = world.view<LightToInitTag>();
 	view.each([&](int entity, LightToInitTag& lightTag) {
 		switch (lightTag.tag)
@@ -129,6 +130,7 @@ void LightSystem::InitShadowBuffer(World& world) {
 			PointLight* currentLight = world.get_component<PointLight>(entity);
 			if (currentLight != nullptr) {
 				InitCubeMap(currentLight);
+				to_remove.push_back(entity);
 				break;
 			}
 		}
@@ -136,6 +138,7 @@ void LightSystem::InitShadowBuffer(World& world) {
 			SpotLight* currentLight = world.get_component<SpotLight>(entity);
 			if (currentLight != nullptr) {
 				InitSpotShadowMap(currentLight);
+				to_remove.push_back(entity);
 				break;
 			}
 		}
@@ -143,6 +146,7 @@ void LightSystem::InitShadowBuffer(World& world) {
 			DirLight* currentLight = world.get_component<DirLight>(entity);
 			if (currentLight != nullptr) {
 				InitShadowMap(currentLight);
+				to_remove.push_back(entity);
 				break;
 			}
 		}
@@ -150,8 +154,10 @@ void LightSystem::InitShadowBuffer(World& world) {
 			assert(true, "Unexpected Error in InitShadowBuffer");
 			break;
 		}
-		world.remove_component<LightToInitTag>(entity);
 	});
+	for (int entity : to_remove) {
+		world.remove_component<LightToInitTag>(entity);
+	}
 }
 
 #pragma endregion 
@@ -476,6 +482,7 @@ void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* r
 
 				if (i < activeLights) {
 					glBindTexture(GL_TEXTURE_CUBE_MAP, lights->pointLights_DepthMap[i]);
+					std::cout << lights->pointLights_DepthMap[i] << std::endl;
 				}
 				else {
 					// Nettoyage des slots inutilisés (évite les bugs de "Sampler Type Mismatch")
