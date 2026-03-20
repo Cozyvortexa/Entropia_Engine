@@ -467,7 +467,6 @@ void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* r
 			
 			//PointLight
 			for (int i = 0; i < maxPointLights; i++) {
-				if (i > lights->pointLights_DepthMap.size() - 1) break;
 
 				// Construction du nom "shadowCubeMaps[0]", "shadowCubeMaps[1]"...
 				std::string uniformName = "shadowCubeMaps[" + std::to_string(i) + "]";
@@ -482,7 +481,6 @@ void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* r
 
 				if (i < activeLights) {
 					glBindTexture(GL_TEXTURE_CUBE_MAP, lights->pointLights_DepthMap[i]);
-					std::cout << lights->pointLights_DepthMap[i] << std::endl;
 				}
 				else {
 					// Nettoyage des slots inutilisés (évite les bugs de "Sampler Type Mismatch")

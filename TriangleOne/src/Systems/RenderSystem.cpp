@@ -105,7 +105,6 @@ void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 
 			currentShader.setMatrix("model", transform.GetTransformModel());
 			currentModel.Draw(&currentShader);
-
 		}
 	});
 }
@@ -192,7 +191,7 @@ void RenderSystem::Init(World& world) {
 	Entity pointLightEntity = 3;
 	Transform transformPointLight;
 	transformPointLight.position = glm::vec3(1.0f, 3.0f, 0.0f);
-	PointLight pointLight(ambient, diffuse, specular, 8.0f, renderData->depthShaderCubeMap.get(), intensity);
+	PointLight pointLight(ambient, diffuse, specular, 8.0f, renderData->depthShaderCubeMap.get(), 20.0f);
 	LightToInitTag tag3;
 	tag3.tag = LightTag::PointLight_Tag;
 
