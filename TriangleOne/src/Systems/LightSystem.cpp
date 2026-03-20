@@ -414,6 +414,9 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 		p_spotLight.diffuse = spotLight.diffuse;
 		p_spotLight.specular = spotLight.specular;
 		p_spotLight.range = spotLight.range;
+		p_spotLight.cutOff = spotLight.cutOff;
+		p_spotLight.outerCutOff = spotLight.outerCutOff;
+
 		lights->spotLights.push_back(p_spotLight);
 
 		//Shadow
@@ -422,6 +425,15 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 		lights->spotLights_Shadow_Size.push_back(std::make_pair(spotLight.SHADOW_WIDTH, spotLight.SHADOW_HEIGHT));
 
 		//Matrices
+		spotLight.aspect = (float)spotLight.SHADOW_WIDTH / (float)spotLight.SHADOW_HEIGHT;
+		glm::mat4 projection = glm::perspective(glm::radians(p_spotLight.outerCutOff * 2.0f), spotLight.aspect, 0.1f, p_spotLight.range);
+
+		glm::vec3 up = (glm::abs(p_spotLight.direction.y) > 0.99f) ? glm::vec3(1, 0, 0) : glm::vec3(0, 1, 0);
+		glm::mat4 lightView = glm::lookAt(p_spotLight.position, p_spotLight.position + p_spotLight.direction, up);
+
+
+		spotLight.lightSpaceMatrix = projection * lightView;
+
 		lights->spotLight_Matrice.push_back(spotLight.lightSpaceMatrix);
 		});
 

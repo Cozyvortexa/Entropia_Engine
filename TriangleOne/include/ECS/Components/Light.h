@@ -98,5 +98,5 @@ public:
 	unsigned int depthMapFBO = 0;
 	unsigned int depthMap = 0;
 
-	glm::mat4 lightSpaceMatrix = glm::mat4(1.0f);  // Je sent le bug arriver avec celle la
+	glm::mat4 lightSpaceMatrix = glm::mat4(1.0f);  
 };
