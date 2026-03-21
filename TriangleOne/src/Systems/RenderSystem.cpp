@@ -118,11 +118,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 		abort();
 	}
 
-	Shader::CreateDefaultWhiteTexture();
-	std::pair<Material&, int> defaultMat = world.modelStore->CreateMaterial("Default_Material", "TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
-
-
-	renderData->mainMaterialHandle = defaultMat.second;
+	// Main shader is created in the init of the lightSystem 
 	renderData->depthShader = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
 	renderData->depthShaderCubeMap = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 	renderData->postProcessShader = std::make_unique<Shader>("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
@@ -143,7 +139,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	modeleHandle.index = value.second;
 	SceneTag sceneTag;
 	MaterialHandle materialHandle;
-	materialHandle.index = defaultMat.second;
+	materialHandle.index = renderData->mainMaterialHandle;
 
 	world.add_component(model, sceneTag);
 	world.add_component(model, materialHandle);

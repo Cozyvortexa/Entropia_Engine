@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 struct Material {
 	sampler2D diffuseText[8];
 	sampler2D specularText[8];
@@ -26,8 +26,6 @@ struct SpotLight {
 	float range;
 };
 #define NBR_MAX_SPOT_LIGHTS 8 // A setup dans config si possible ( quand il existera) 
-uniform SpotLight spotLights[NBR_MAX_SPOT_LIGHTS];
-uniform int nbrSpotLight;
 uniform mat4 spotLightMatrices[NBR_MAX_SPOT_LIGHTS];
 
 struct PointLight {
@@ -40,8 +38,8 @@ struct PointLight {
 	float range;
 };
 #define NBR_MAX_POINT_LIGHTS 8  // A setup dans config si possible ( quand il existera) 
-uniform PointLight pointLights[NBR_MAX_POINT_LIGHTS];
-uniform int nbrPointLight;
+
+
 
 struct DirLight{
 	vec3 direction;
@@ -49,12 +47,23 @@ struct DirLight{
 	vec3 diffuse;
 	vec3 specular;
 };
-uniform DirLight dirLight;
+
+
+//SSBO
+layout (std430, binding = 1) buffer Lights
+{
+	DirLight dirLight;
+	PointLight pointLights[NBR_MAX_POINT_LIGHTS];
+	SpotLight spotLights[NBR_MAX_SPOT_LIGHTS];
+	int nbrPointLight;
+	int nbrSpotLight;
+};
+
 
 //Shadow
-uniform sampler2D shadowMap;
-uniform samplerCube shadowCubeMaps[NBR_MAX_POINT_LIGHTS];
-uniform sampler2D shadowMapSpot [NBR_MAX_SPOT_LIGHTS];
+uniform sampler2DShadow shadowMap;
+uniform samplerCubeShadow shadowCubeMaps[NBR_MAX_POINT_LIGHTS];
+uniform sampler2DShadow shadowMapSpot [NBR_MAX_SPOT_LIGHTS];
 uniform float far_plane;
 
 uniform vec3 viewPos;
@@ -197,10 +206,8 @@ vec3 CalcPointLight(PointLight light, int lightIndex,vec3 viewDir, vec3 norm,vec
 
 	vec3 finalColor = diffuse * finalDiffuse.rgb;
 
-    // FIX 4: Pass index to shadow function
 	float shadow = ShadowPointLight(light, lightIndex, norm);
     
-    // FIX 5: Invert shadow. If shadow is 1.0 (occluded), modifier is 0.0.
 	float lightModifier = (1.0 - shadow); 
 
 	vec3 light_contribution = vec3(0.0);
@@ -293,8 +300,8 @@ void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular){
 		discard;
 }
 
-float GetDirShadowMapValue(int index, vec2 dir) {
-    if (index == 0) return texture(shadowMap, dir).r;
+float GetDirShadowMapValue(int index, vec3 dir) {
+    if (index == 0) return texture(shadowMap, dir);
     return 0.0;
 }
 
@@ -306,8 +313,6 @@ float ShadowDirLight(){
 	if (projCoords.z > 1.0) 
 		return 0.0;
 
-	float closestDepth = texture(shadowMap, projCoords.xy).r;
-	float currentDepth = projCoords.z ;
 
 	vec3 lightDir = normalize(-dirLight.direction );
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
@@ -318,24 +323,23 @@ float ShadowDirLight(){
 	{
 		for(int y = -1; y <= 1; ++y)
 		{
-			float pcfDepth = GetDirShadowMapValue(0, projCoords.xy + vec2(x, y) * texelSize);
-			shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+			shadow += texture(shadowMap, vec3(projCoords.xy + vec2(x, y) * texelSize, projCoords.z - bias));
 		}
 	}
 	shadow /= 9.0;
 
-	return shadow;
+	return 1.0 - shadow;
 }
 
-float GetShadowMapValue(int index, vec3 dir) {
-    if (index == 0) return texture(shadowCubeMaps[0], dir).r;
-    if (index == 1) return texture(shadowCubeMaps[1], dir).r;
-    if (index == 2) return texture(shadowCubeMaps[2], dir).r;
-    if (index == 3) return texture(shadowCubeMaps[3], dir).r;
-    if (index == 4) return texture(shadowCubeMaps[4], dir).r;
-    if (index == 5) return texture(shadowCubeMaps[5], dir).r;
-    if (index == 6) return texture(shadowCubeMaps[6], dir).r;
-    if (index == 7) return texture(shadowCubeMaps[7], dir).r;
+float GetShadowMapValue(int index, vec4 dirDepth) {
+    if (index == 0) return texture(shadowCubeMaps[0], dirDepth);
+    if (index == 1) return texture(shadowCubeMaps[1], dirDepth);
+    if (index == 2) return texture(shadowCubeMaps[2], dirDepth);
+    if (index == 3) return texture(shadowCubeMaps[3], dirDepth);
+    if (index == 4) return texture(shadowCubeMaps[4], dirDepth);
+    if (index == 5) return texture(shadowCubeMaps[5], dirDepth);
+    if (index == 6) return texture(shadowCubeMaps[6], dirDepth);
+    if (index == 7) return texture(shadowCubeMaps[7], dirDepth);
     return 0.0;
 }
 
@@ -348,52 +352,45 @@ float ShadowPointLight(PointLight light, int lightIndex, vec3 norm){
 		vec3( 1, 0, 1), vec3(-1, 0, 1), vec3( 1, 0, -1), vec3(-1, 0, -1),
 		vec3( 0, 1, 1), vec3( 0, -1, 1), vec3( 0, -1, -1), vec3( 0, 1, -1)
 	);
-	
+
     vec3 fragToLight = FragPos - light.position;
 	float currentDepth = length(fragToLight);
 
 	if(currentDepth >= light.range)
-        return 0.0; // Not in shadow if out of range
+        return 1.0; // Not in shadow if out of range
 
 	float shadow = 0.0;
 	float samples = 20.0;
 	float viewDistance = length(viewPos- FragPos);
+
     
-    // NOTE: Ensure your light.range matches the far_plane used in shadow generation
     float lightFar_plane = light.range; 
 
 	float bias = 0.05;
 	float diskRadius = (1.0 + (viewDistance / lightFar_plane)) / 25.0;
+	float currentDepthNormalized = (currentDepth - bias) / light.range;
 
 	for(int i = 0; i < samples; ++i)
 	{
-        // FIX 7: Sample from the specific map index using array
-		float closestDepth = GetShadowMapValue(lightIndex, fragToLight + (sampleOffsetDirections[i] * diskRadius));
-		
-        // FIX 8: Un-normalize the depth. The texture stores [0,1], we need [0, range]
-		closestDepth *= lightFar_plane; 
-
-        // FIX 9: Proper comparison. If fragment is further than closest occluder, it is in shadow.
-		if(currentDepth - bias > closestDepth){
-			shadow += 1.0;
-		}
+		vec3 dir = fragToLight + (sampleOffsetDirections[i] * diskRadius);
+        shadow += GetShadowMapValue(lightIndex, vec4(dir, currentDepthNormalized));
 	}
     
     // Average the results
 	shadow /= samples;
 
-	return shadow;
+	return 1.0 - shadow;
 }
 
-float GetSpotShadowMapValue(int index, vec2 dir) {
-    if (index == 0) return texture(shadowMapSpot[0], dir).r;
-    if (index == 1) return texture(shadowMapSpot[1], dir).r;
-    if (index == 2) return texture(shadowMapSpot[2], dir).r;
-    if (index == 3) return texture(shadowMapSpot[3], dir).r;
-    if (index == 4) return texture(shadowMapSpot[4], dir).r;
-    if (index == 5) return texture(shadowMapSpot[5], dir).r;
-    if (index == 6) return texture(shadowMapSpot[6], dir).r;
-    if (index == 7) return texture(shadowMapSpot[7], dir).r;
+float GetSpotShadowMapValue(int index, vec3 coords) {
+    if (index == 0) return texture(shadowMapSpot[0], coords);
+    if (index == 1) return texture(shadowMapSpot[1], coords);
+    if (index == 2) return texture(shadowMapSpot[2], coords);
+    if (index == 3) return texture(shadowMapSpot[3], coords);
+    if (index == 4) return texture(shadowMapSpot[4], coords);
+    if (index == 5) return texture(shadowMapSpot[5], coords);
+    if (index == 6) return texture(shadowMapSpot[6], coords);
+    if (index == 7) return texture(shadowMapSpot[7], coords);
     return 0.0;
 }
 
@@ -415,15 +412,15 @@ float ShadowSpotLight(SpotLight light, int lightIndex){
 
 	float shadow = 0.0;
 	vec2 texelSize = 1.0 / textureSize(shadowMapSpot[lightIndex], 0);
-	for(int x = -1; x <= 1; ++x)
-	{
-		for(int y = -1; y <= 1; ++y)
-		{
-			float pcfDepth = GetSpotShadowMapValue(lightIndex, projCoords.xy + vec2(x, y) * texelSize);
-			shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
-		}
-	}
+	for(int x = -1; x <= 1; ++x) {
+        for(int y = -1; y <= 1; ++y) {
+            vec2 offset = vec2(x, y) * texelSize;
+            vec3 shadowCoords = vec3(projCoords.xy + offset, projCoords.z - bias);
+            
+            shadow += GetSpotShadowMapValue(lightIndex, shadowCoords);
+        }
+    }
 	shadow /= 9.0;
 
-	return shadow;
+	return 1.0 - shadow;
 }

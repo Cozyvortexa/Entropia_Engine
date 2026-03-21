@@ -2,6 +2,34 @@
 
 WindowSystem::WindowSystem() {}
 
+void GLAPIENTRY DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+	GLsizei length, const GLchar* message, const void* userParam) {
+
+	if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;  // Ignore warning
+
+	std::cerr << "--- OPENGL DEBUG MESSAGE ---" << std::endl;
+	std::cerr << "Source: " << source << " | Type: " << type << std::endl;
+	std::cerr << "ID: " << id << " | Severity: " << severity << std::endl;
+	std::cerr << "Message: " << message << std::endl;
+	std::cerr << "----------------------------" << std::endl;
+
+	if (severity == GL_DEBUG_SEVERITY_HIGH) {
+		std::cerr << "CRITICAL ERROR DETECTED!" << std::endl;
+		__debugbreak(); // abort() like
+	}
+}
+void GLAPIENTRY Debug_Critical_MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+	GLsizei length, const GLchar* message, const void* userParam) {
+	if (severity == GL_DEBUG_SEVERITY_HIGH) {
+		std::cerr << "--- OPENGL DEBUG MESSAGE ---" << std::endl;
+		std::cerr << "Source: " << source << " | Type: " << type << std::endl;
+		std::cerr << "ID: " << id << " | Severity: " << severity << std::endl;
+		std::cerr << "Message: " << message << std::endl;
+		std::cerr << "----------------------------" << std::endl;
+		std::cerr << "CRITICAL ERROR DETECTED!" << std::endl;
+		__debugbreak(); // abort() like
+	}
+}
 
 void WindowSystem::Framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -40,6 +68,14 @@ void WindowSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		abort();
 	}
+#ifndef NDEBUG
+
+	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	glDebugMessageCallback(Debug_Critical_MessageCallback, 0);
+
+#endif
+
 	glfwSetFramebufferSizeCallback(windowData->window, Framebuffer_size_callback); // Pour adapter le viewport si la fenetre est resize pendant le court du programme 
 	glViewport(0, 0, windowData->WIDHT, windowData->HEIGHT);
 
@@ -90,3 +126,4 @@ void WindowSystem::Shutdown(World& world) {
 	}
 	glfwTerminate();
 }
+

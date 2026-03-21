@@ -15,7 +15,7 @@
 #define MAX_SPOT_LIGHT 8
 
 #pragma region Padding_Structures
-struct Padding_DirLight {  // To be identical to the memory alignment of structs in shaders, UBO
+struct Padding_DirLight {  // To be identical to the memory alignment of structs in shaders, SSBO
 	alignas(16) glm::vec3 direction;
 	alignas(16) glm::vec3 ambient;
 	alignas(16) glm::vec3 diffuse;
@@ -27,7 +27,6 @@ struct Padding_PointLight {
 	alignas(16) glm::vec3 diffuse;
 	alignas(16) glm::vec3 specular;
 	float range = 0.0f;
-	float padding[3];
 };
 struct Padding_SpotLight {
 	alignas(16) glm::vec3 position;
@@ -72,13 +71,14 @@ class LightSystem : public System {
 	 void Init(World& world, const ResourceBuffer* resourceBuffer) override;
 	 void Update(World& world, const ResourceBuffer* resourceBuffer) override;
 
-
-	 void InitLightUbo(const ResourceBuffer* renderResource);
+	 void InitLightSSBO(World& world, const ResourceBuffer* renderResource);
 #pragma region Init shadow buffer 
 	 void InitShadowMap(DirLight* currentLight);
 	 void InitCubeMap(PointLight* currentLight);
 	 void InitSpotShadowMap(SpotLight* currentLight);
 	 void InitShadowBuffer(World& world);
+
+	 std::pair<unsigned int, unsigned int> CreateDummyShadowTextures();
 #pragma endregion
 
 #pragma region Draw Shadow

@@ -136,8 +136,13 @@ struct RenderResource : public Resource {
 	GLuint finalTxtColorOutput;
 	GLuint finalTxtOutput;
 
-	//Light UBO
-	GLuint light_UBO;
+	//Shadow
+	unsigned int dummyDepthMap2D = 0;
+	unsigned int dummyDepthCubeMap = 0;
+
+	//Light SSBO
+	std::vector<size_t> lightSSBO_Data_Size;
+	GLuint light_SSBO;
 
 	//Final render
 	unsigned int quadVAO;
