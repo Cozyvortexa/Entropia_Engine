@@ -1,6 +1,6 @@
   #include "Systems/LightSystem.h"
 
-void LightSystem::Init(World& world) {
+void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	static_assert(sizeof(Padding_DirLight) == 64, "Invalide alignement");
 	static_assert(alignof(Padding_DirLight) == 16);
 
@@ -9,6 +9,8 @@ void LightSystem::Init(World& world) {
 
 	static_assert(sizeof(Padding_SpotLight) == 96, "Invalide alignement");
 	static_assert(alignof(Padding_SpotLight) == 16);
+
+	InitLightUbo(resourceBuffer);
 }
 
 void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {

@@ -17,7 +17,7 @@ public:
 	void ProcessInput(GLFWwindow* window);
 	bool ShouldClose(World& world);
 
-	void Init(World& world) override;
+	void Init(World& world, const ResourceBuffer* resourceBuffer) override;
 	void Update(World& world, const ResourceBuffer* resourceBuffer) override;
 	void Shutdown(World& world) override;
 };

@@ -64,8 +64,8 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double ypos) {
 }
 
 
-void CameraSystem::Init(World& world) {
-	GLFWwindow* window = world.get_ressource<WindowResource>()->window;
+void CameraSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
+	GLFWwindow* window = resourceBuffer->windowResource->window;
 
 	glfwSetWindowUserPointer(window, &world);  // Bind du world a la fenetre
 	glfwSetCursorPosCallback(window, MouseCallback);  // Pour permetre le mouvement de la cam

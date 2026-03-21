@@ -109,7 +109,7 @@ void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 	});
 }
 
-void RenderSystem::Init(World& world) {
+void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	WindowResource* windowData = world.get_ressource<WindowResource>();
 	RenderResource* renderData = world.get_ressource<RenderResource>();
 
@@ -137,7 +137,7 @@ void RenderSystem::Init(World& world) {
 	world.get_ressource<ActiveCamera>()->cameraID = camEntity;
 
 	Entity model = 1;
-	Transform modelTransform;
+	Transform modelTransform; // ("Assets/main_sponza/main_sponza/NewSponza_Main_Yup_003.fbx");
 	std::pair<Model&, int> value = world.modelStore->Get_Model("Assets/ImpScene/autumn_house.glb");
 	ModeleHandle modeleHandle;
 	modeleHandle.index = value.second;

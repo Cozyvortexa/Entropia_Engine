@@ -15,8 +15,8 @@ void WindowSystem::ProcessInput(GLFWwindow* window)
 		glfwSetWindowShouldClose(window, true);
 }
 
-void WindowSystem::Init(World& world) {
-	WindowResource* windowData = world.get_ressource<WindowResource>();
+void WindowSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
+	WindowResource* windowData = resourceBuffer->windowResource;
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);

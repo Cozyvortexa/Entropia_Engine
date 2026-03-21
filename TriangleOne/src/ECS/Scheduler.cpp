@@ -6,11 +6,11 @@ Scheduler::Scheduler(World* world, WindowSystem* window) {
 
 	this->window = window;  // Window est géré indépendamment du reste
 	world->add_ressource<WindowResource>();
-	window->Init(*world); // Systeme a part
-
 	world->add_ressource<RenderResource>();
 	world->add_ressource<TimeResource>();
 	world->add_ressource<ActiveCamera>();
+	FillResourceBuffer();
+	window->Init(*world, resourceBuffer.get()); // Systeme a part
 }
 
 Scheduler::~Scheduler() {};
@@ -27,9 +27,10 @@ void Scheduler::CreateSystemes() {
 
 Scheduler* Scheduler::Init() {
 	std::cout << "Init Starting" << std::endl;
+	FillResourceBuffer();
 
 	for (auto& systeme : systemes) {
-		systeme->Init(*world);
+		systeme->Init(*world, resourceBuffer.get());
 	}
 
 	std::cout << "Init Done" << std::endl;

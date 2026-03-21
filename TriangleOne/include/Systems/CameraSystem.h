@@ -12,7 +12,7 @@
 
 class CameraSystem : public System {
 public:
-	void Init(World& world) override;
+	void Init(World& world, const ResourceBuffer* resourceBuffer) override;
 
 	void Update(World& world, const ResourceBuffer* resourceBuffer) override;
 

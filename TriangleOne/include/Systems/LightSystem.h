@@ -69,11 +69,11 @@ struct All_Light {
 
 
 class LightSystem : public System {
-	 void Init(World& world) override;
+	 void Init(World& world, const ResourceBuffer* resourceBuffer) override;
 	 void Update(World& world, const ResourceBuffer* resourceBuffer) override;
 
 
-	 void InitLightUbo(const ResourceBuffer* resourceBuffer);
+	 void InitLightUbo(const ResourceBuffer* renderResource);
 #pragma region Init shadow buffer 
 	 void InitShadowMap(DirLight* currentLight);
 	 void InitCubeMap(PointLight* currentLight);

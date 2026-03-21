@@ -33,7 +33,7 @@ public:
 	//void InitSkyBox();
 	//void DrawSkyBox(glm::mat4 projectionMatrix);
 
-	void Init(World& world) override;
+	void Init(World& world, const ResourceBuffer* resourceBuffer) override;
 	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;
 	void Shutdown(World& world) override;
 
