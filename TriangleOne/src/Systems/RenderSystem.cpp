@@ -124,27 +124,21 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	renderData->postProcessShader = std::make_unique<Shader>("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
 
 	//Create the main cam  // TEMP / WARNING
-	Entity camEntity = 0;
+	Entity camEntity = world.Register();
 	CameraComponent cameraComponent(windowData->WIDHT, windowData->HEIGHT);
 	Transform transform;
-	world.add_component(camEntity, cameraComponent);
-	world.add_component(camEntity, transform);
+	world.add_components(camEntity, cameraComponent, transform);
 
 	world.get_ressource<ActiveCamera>()->cameraID = camEntity;
 
-	Entity model = 1;
+	Entity model = world.Register();
 	Transform modelTransform; // ("Assets/main_sponza/main_sponza/NewSponza_Main_Yup_003.fbx");
 	std::pair<Model&, int> value = world.modelStore->Get_Model("Assets/ImpScene/autumn_house.glb");
-	ModeleHandle modeleHandle;
-	modeleHandle.index = value.second;
+	ModeleHandle modeleHandle(value.second);
 	SceneTag sceneTag;
-	MaterialHandle materialHandle;
-	materialHandle.index = renderData->mainMaterialHandle;
+	MaterialHandle materialHandle(renderData->mainMaterialHandle);
 
-	world.add_component(model, sceneTag);
-	world.add_component(model, materialHandle);
-	world.add_component(model, modeleHandle);
-	world.add_component(model, modelTransform);
+	world.add_components(model, sceneTag, materialHandle, modeleHandle, modelTransform);
 
 
 	glm::vec3 ambient = glm::vec3(0.002f, 0.002f, 0.002f);
@@ -158,44 +152,42 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	float cutOff = 5.5f;
 	float outerCutOff = 15.5f;
 
-	Entity dirLight_E = 2;
+	Entity dirLight_E = world.Register();
 	DirLight dirLight(ambient, diffuse, specular, worldLightDir, renderData->depthShader.get(), intensity);
 
-	LightToInitTag tag;
-	Transform lightTransform;
-	lightTransform.position = glm::vec3(0.0f, 4.0f, -6.0f);
-	tag.tag = LightTag::Directional_Tag;
+	LightToInitTag tag(LightTag::Directional_Tag);
+	Transform lightTransform(glm::vec3(0.0f, 4.0f, -6.0f));
 
-	world.add_component(dirLight_E, transform);
-	world.add_component(dirLight_E, dirLight);
-	world.add_component(dirLight_E, tag);
+	world.add_components(dirLight_E, transform, dirLight, tag);
 
 	/////////////////////////////////////
 
-	Transform spotTransform;
-	spotTransform.position = glm::vec3(0.0f, 4.0f, -6.0f);
-	Entity spotLightEntity = 3;
+	Entity spotLightEntity = world.Register();
+	Transform spotTransform(glm::vec3(0.0f, 4.0f, -6.0f));
 	SpotLight spotLight(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->depthShader.get(), 10.0f);
-	LightToInitTag spotTag;
-	spotTag.tag = LightTag::SpotLight_Tag;
+	LightToInitTag spotTag(LightTag::SpotLight_Tag);
 
-	world.add_component(spotLightEntity, spotTransform);
-	world.add_component(spotLightEntity, spotLight);
-	world.add_component(spotLightEntity, spotTag);
+	world.add_components(spotLightEntity, spotTransform, spotLight, spotTag);
 
 
 	/////////////////////////////////////
 
-	Entity pointLightEntity = 4;
-	Transform transformPointLight;
-	transformPointLight.position = glm::vec3(1.0f, 3.0f, 0.0f);
+	Entity pointLightEntity = world.Register();
+	Transform transformPointLight(glm::vec3(1.0f, 3.0f, 0.0f));
 	PointLight pointLight(ambient, diffuse, specular, 8.0f, renderData->depthShaderCubeMap.get(), 40.0f);
-	LightToInitTag pointTag;
-	pointTag.tag = LightTag::PointLight_Tag;
+	LightToInitTag pointTag(LightTag::PointLight_Tag);
 
-	world.add_component(pointLightEntity, transformPointLight);
-	world.add_component(pointLightEntity, pointLight);
-	world.add_component(pointLightEntity, pointTag);
+	world.add_components(pointLightEntity, transformPointLight, pointLight, pointTag);
+
+	/////////////////////////////////////
+
+	Entity backpack = world.Register();
+	Transform backPackTransform(glm::vec3(10.0f, 3.0f, 2.0f));
+	std::pair<Model&, int> backpackValue = world.modelStore->Get_Model("Assets/backpack/backpack.obj");
+	ModeleHandle backpackModeleHandle(backpackValue.second);
+
+	world.add_components(backpack, backPackTransform, sceneTag, materialHandle, backpackModeleHandle);
+
 
 
 	glEnable(GL_MULTISAMPLE);

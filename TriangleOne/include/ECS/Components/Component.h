@@ -16,6 +16,10 @@ struct Component {
 
 struct Transform : public Component
 {
+	Transform() {};
+	Transform(glm::vec3 position) { this->position = position; }
+	Transform(glm::vec3 position, glm::vec3 rotation) { this->position = position; this->rotation = rotation; }
+	Transform(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) { this->position = position; this->rotation = rotation; this->scale = scale; }
 	glm::vec3 position = glm::vec3(0.0f);
 	glm::vec3 rotation = glm::vec3(1.0f);
 	glm::vec3 scale = glm::vec3(1.0f);
@@ -77,12 +81,17 @@ struct SceneTag : public Component {
 };
 
 struct ModeleHandle : public Component {
+	ModeleHandle() {};
+	ModeleHandle(uint32_t index) { this->index = index; }
+	ModeleHandle(uint32_t index, bool castShadow, bool haveToBeDraw = true) { this->index = index; this->castShadow = castShadow; this->haveToBeDraw = haveToBeDraw; }
 	uint32_t index = 0;
 	bool castShadow = true;
 	bool haveToBeDraw = true;
 };
 
 struct MaterialHandle : Component {
+	MaterialHandle() {};
+	MaterialHandle(uint32_t index) { this->index = index; }
 	uint32_t index = 0;
 };
 
@@ -93,6 +102,8 @@ enum LightTag {
 	SpotLight_Tag
 };
 struct LightToInitTag : public Component {
+	LightToInitTag() {};
+	LightToInitTag(LightTag tag) { this->tag = tag; }
 	LightTag tag = LightTag::None;
 };
 

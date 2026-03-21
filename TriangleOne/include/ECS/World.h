@@ -48,6 +48,11 @@ public:
         this->modelStore = modelStore;
     }
 
+    Entity Register() {
+        Entity newEntity(entity_Register++);
+        return newEntity;
+    }
+
     template<typename... Components>
     View<Components...> view() {
         return View<Components...>(get_pool<Components>()...);
@@ -57,6 +62,11 @@ public:
     void add_component(int entity, T component) {  // WARNING, component is a copy 
         static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
         get_pool<T>()->insert(entity, component);
+    }
+    template<typename... Args>
+    void add_components(int entity, Args ... args) {
+        static_assert((std::is_base_of_v<Component, Args>&& ...), "T must inherit from Component");
+        (add_component(entity, args), ...);
     }
     template<typename T>
     T* get_component(Entity entity) {
@@ -95,6 +105,7 @@ public:
 private:
     std::unordered_map<std::type_index, std::unique_ptr<ISparseSet>> pools;
     std::unordered_map<std::type_index, std::unique_ptr<Resource>> ressources;
+    uint32_t entity_Register = 0;
 
     // Recupére/crée un pool spécifique
     template<typename T>

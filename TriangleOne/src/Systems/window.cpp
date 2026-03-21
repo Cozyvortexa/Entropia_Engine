@@ -61,7 +61,7 @@ void WindowSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	}
 
 	glfwMakeContextCurrent(windowData->window);
-
+	//glfwSwapInterval(0);  //Disable VSYNC
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
