@@ -18,7 +18,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Render/ModelClass.h"
+#include "Render/Mesh.h"
 
 #include "ECS/World.h"
 #include "ECS/Components/Light.h"

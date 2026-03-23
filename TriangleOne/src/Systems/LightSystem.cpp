@@ -14,7 +14,7 @@ void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	Shader::CreateDefaultWhiteTexture();
 	Shader::CreateNeutralNormalText();
-	std::pair<Material&, int> defaultMat = world.modelStore->CreateMaterial("Default_Material", "TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
+	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
 	renderRessource->mainMaterialHandle = defaultMat.second;
 
 	InitLightSSBO(world, resourceBuffer);
@@ -229,13 +229,13 @@ void LightSystem::DrawShadowForDirLight(World* world, RenderResource& renderReso
 	depthShader->Use();
 	depthShader->setMatrix("lightSpaceMatrix", lights.dirLight_Matrice);
 
-	View view = world->view<ModeleHandle, SceneTag, Transform>();
-	view.each([&](int entity, ModeleHandle& modeleHandle, SceneTag& sceneTag, Transform& transform) {
-		if (modeleHandle.haveToBeDraw && modeleHandle.castShadow && sceneTag.scene_id == 0) {
-			Model currentModel = world->modelStore->Get_Model(modeleHandle.index);
+	View view = world->view<MeshHandle, SceneTag, Transform>();
+	view.each([&](int entity, MeshHandle& meshHandle, SceneTag& sceneTag, Transform& transform) {
+		if (meshHandle.haveToBeDraw && meshHandle.castShadow && sceneTag.scene_id == 0) {
+			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
 
 			depthShader->setMatrix("model", transform.GetTransformModel());
-			currentModel.DrawWithoutTexture(depthShader);
+			currentMesh.DrawWithoutTexture(depthShader);
 		}
 
 	});
@@ -278,13 +278,13 @@ void LightSystem::DrawShadowForPointLight(World* world, RenderResource& renderRe
 	}
 
 
-	View view = world->view<ModeleHandle, SceneTag, Transform>();
-	view.each([&](int entity, ModeleHandle& modeleHandle, SceneTag& sceneTag, Transform& transform) {
-		if (modeleHandle.haveToBeDraw && modeleHandle.castShadow && sceneTag.scene_id == 0) {
-			Model currentModel = world->modelStore->Get_Model(modeleHandle.index);
+	View view = world->view<MeshHandle, SceneTag, Transform>();
+	view.each([&](int entity, MeshHandle& meshHandle, SceneTag& sceneTag, Transform& transform) {
+		if (meshHandle.haveToBeDraw && meshHandle.castShadow && sceneTag.scene_id == 0) {
+			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
 
 			depthShader->setMatrix("model", transform.GetTransformModel());
-			currentModel.DrawWithoutTexture(depthShader);
+			currentMesh.DrawWithoutTexture(depthShader);
 		}
 	});
 
@@ -317,13 +317,13 @@ void LightSystem::DrawShadowForSpotLight(World* world, RenderResource& renderRes
 	depthShader->setMatrix("lightSpaceMatrix", lightSpaceMatrix);
 
 
-	View view = world->view<ModeleHandle, SceneTag, Transform>();
-	view.each([&](int entity, ModeleHandle& modeleHandle, SceneTag& sceneTag, Transform& transform) {
-		if (modeleHandle.castShadow && sceneTag.scene_id == 0) {
-			Model currentModel = world->modelStore->Get_Model(modeleHandle.index);
+	View view = world->view<MeshHandle, SceneTag, Transform>();
+	view.each([&](int entity, MeshHandle& meshHandle, SceneTag& sceneTag, Transform& transform) {
+		if (meshHandle.castShadow && sceneTag.scene_id == 0) {
+			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
 
 			depthShader->setMatrix("model", transform.GetTransformModel());
-			currentModel.DrawWithoutTexture(depthShader);
+			currentMesh.DrawWithoutTexture(depthShader);
 		}
 	});
 
@@ -496,10 +496,10 @@ void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* r
 	if (lights->spotLights_DepthMap.size() >= MAX_SPOT_LIGHT) std::cout << "Max spotLight number reach" << std::endl;  
 
  
-	View view = world->view<ModeleHandle, Transform, MaterialHandle>();  // Temporary view, gonna be SSBO in the futur 
-	view.each([&](int entity, ModeleHandle& modeleHandle, Transform& transform, MaterialHandle& materialHandle) {
-		if (modeleHandle.castShadow) {
-			Shader currentShader = world->modelStore->Get_Material(materialHandle.index).shader;
+	View view = world->view<MeshHandle, Transform, MaterialHandle>();  // Temporary view, gonna be SSBO in the futur 
+	view.each([&](int entity, MeshHandle& meshHandle, Transform& transform, MaterialHandle& materialHandle) {
+		if (meshHandle.castShadow) {
+			Shader currentShader = world->assetStore->Get_Material(materialHandle.index).shader;
 			currentShader.Use();
 			// --- TEXTURE UNIT MANAGEMENT ---
 

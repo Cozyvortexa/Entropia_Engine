@@ -1,15 +1,15 @@
-#include <Render/MeshClass.h>
+#include <Render/SubMesh.h>
 
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
+SubMesh::SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
 {
 	this->vertices = vertices;
 	this->indices = indices;
 	this->textures = textures;
-	SetupMesh();
+	SetupSubMesh();
 }
 
-void Mesh::SetupMesh() 
+void SubMesh::SetupSubMesh() 
 {
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -38,7 +38,7 @@ void Mesh::SetupMesh()
 	glBindVertexArray(0);
 }
 
-void Mesh::Draw(Shader* shader)
+void SubMesh::Draw(Shader* shader)
 {
 	assert(glIsVertexArray(VAO));
 	assert(glIsBuffer(EBO));
@@ -83,13 +83,13 @@ void Mesh::Draw(Shader* shader)
 	shader->setInt("specularNbr", specularNbr);
 	glActiveTexture(GL_TEXTURE0);
 
-	// draw mesh
+	// draw SubMesh
 	glBindVertexArray(VAO);
 	
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
-void Mesh::DrawWithoutTexture(Shader* shader) {
+void SubMesh::DrawWithoutTexture(Shader* shader) {
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);

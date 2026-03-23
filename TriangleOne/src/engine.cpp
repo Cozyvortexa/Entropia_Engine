@@ -13,9 +13,9 @@ Engine::~Engine() {};
 void Engine::InitEngine() {
 	window = std::make_unique<WindowSystem>();
 
-	modelStore = std::make_unique<ModelStore>();
+	assetStore = std::make_unique<AssetStore>();
 
-	world = std::make_unique<World>(modelStore.get());
+	world = std::make_unique<World>(assetStore.get());
 	scheduler = std::make_unique<Scheduler>(world.get(), window.get());
 
 	//Scheduler

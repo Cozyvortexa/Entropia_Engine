@@ -87,11 +87,11 @@ void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->zoom), (float)windowData->WIDHT / (float)windowData->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
 
 
-	View view = world.view<ModeleHandle, Transform, MaterialHandle>();
-	view.each([&](int entity, ModeleHandle& modeleHandle, Transform& transform, MaterialHandle& materialHandle) {
-		if (modeleHandle.haveToBeDraw) {
-			Shader currentShader = world.modelStore->Get_Material(materialHandle.index).shader;
-			Model currentModel = world.modelStore->Get_Model(modeleHandle.index);
+	View view = world.view<MeshHandle, Transform, MaterialHandle>();
+	view.each([&](int entity, MeshHandle& meshHandle, Transform& transform, MaterialHandle& materialHandle) {
+		if (meshHandle.haveToBeDraw) {
+			Shader currentShader = world.assetStore->Get_Material(materialHandle.index).shader;
+			Mesh currentMesh = world.assetStore->Get_Mesh(meshHandle.index);
 
 
 			currentShader.Use();
@@ -104,7 +104,7 @@ void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 
 
 			currentShader.setMatrix("model", transform.GetTransformModel());
-			currentModel.Draw(&currentShader);
+			currentMesh.Draw(&currentShader);
 		}
 	});
 }
@@ -133,12 +133,12 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	Entity model = world.Register();
 	Transform modelTransform; // ("Assets/main_sponza/main_sponza/NewSponza_Main_Yup_003.fbx");
-	std::pair<Model&, int> value = world.modelStore->Get_Model("Assets/ImpScene/autumn_house.glb");
-	ModeleHandle modeleHandle(value.second);
+	std::pair<Mesh&, int> value = world.assetStore->Get_Mesh("Assets/ImpScene/autumn_house.glb");
+	MeshHandle meshHandle(value.second);
 	SceneTag sceneTag;
 	MaterialHandle materialHandle(renderData->mainMaterialHandle);
 
-	world.add_components(model, sceneTag, materialHandle, modeleHandle, modelTransform);
+	world.add_components(model, sceneTag, materialHandle, meshHandle, modelTransform);
 
 
 	glm::vec3 ambient = glm::vec3(0.002f, 0.002f, 0.002f);
@@ -183,8 +183,8 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	Entity backpack = world.Register();
 	Transform backPackTransform(glm::vec3(10.0f, 3.0f, 2.0f));
-	std::pair<Model&, int> backpackValue = world.modelStore->Get_Model("Assets/backpack/backpack.obj");
-	ModeleHandle backpackModeleHandle(backpackValue.second);
+	std::pair<Mesh&, int> backpackValue = world.assetStore->Get_Mesh("Assets/backpack/backpack.obj");
+	MeshHandle backpackModeleHandle(backpackValue.second);
 
 	world.add_components(backpack, backPackTransform, sceneTag, materialHandle, backpackModeleHandle);
 
@@ -219,7 +219,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	//Entity* cubeTest = currentScene->CreateNewEntity();
 	//cubeTest->AddComponent<Transform>()->position = glm::vec3(4.0f, 0.0f, 0.0f);
-	//cubeTest->AddComponent<MeshComponent>("Assets/ImpScene/BasicCube.glb", mainShader);
+	//cubeTest->AddComponent<Sub_MeshComponent>("Assets/ImpScene/BasicCube.glb", mainShader);
 
 
 

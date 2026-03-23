@@ -15,7 +15,7 @@
 
 #include "ECS/World.h"
 #include "ECS/Scheduler.h"
-#include "ECS/ModelStore.h"
+#include "ECS/AssetStore.h"
 
 class Engine {
 public:
@@ -35,5 +35,5 @@ private:
 
 	std::unique_ptr<World> world;
 	std::unique_ptr<Scheduler> scheduler;
-	std::unique_ptr<ModelStore> modelStore;
+	std::unique_ptr<AssetStore> assetStore;
 };

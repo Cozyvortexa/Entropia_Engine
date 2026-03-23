@@ -80,10 +80,10 @@ struct SceneTag : public Component {
 	uint32_t scene_id = 0;  // Zero correspond to the main scene 
 };
 
-struct ModeleHandle : public Component {
-	ModeleHandle() {};
-	ModeleHandle(uint32_t index) { this->index = index; }
-	ModeleHandle(uint32_t index, bool castShadow, bool haveToBeDraw = true) { this->index = index; this->castShadow = castShadow; this->haveToBeDraw = haveToBeDraw; }
+struct MeshHandle : public Component {
+	MeshHandle() {};
+	MeshHandle(uint32_t index) { this->index = index; }
+	MeshHandle(uint32_t index, bool castShadow, bool haveToBeDraw = true) { this->index = index; this->castShadow = castShadow; this->haveToBeDraw = haveToBeDraw; }
 	uint32_t index = 0;
 	bool castShadow = true;
 	bool haveToBeDraw = true;
@@ -93,6 +93,9 @@ struct MaterialHandle : Component {
 	MaterialHandle() {};
 	MaterialHandle(uint32_t index) { this->index = index; }
 	uint32_t index = 0;
+	//Texture diffuse_Text;
+	//Texture specular_Text;
+	//Texture normal_Text;
 };
 
 enum LightTag {

@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <Render/MeshClass.h>
+#include <Render/SubMesh.h>
 #include <vector>
 
 #include <assimp/Importer.hpp>
@@ -12,22 +12,22 @@
 
 #include "ECS/Components/Component.h"
 
-class Model {
+class Mesh {
 public:
-	Model() {};
-	//Model(std::string path)
+	Mesh() {};
+	//Mesh(std::string path)
 	//{
-	//	LoadModel(path);
+	//	LoadMesh(path);
 	//}
 	void Draw(Shader* shader) {
-		for (Mesh& mesh : meshes)
-			mesh.Draw(shader);
+		for (SubMesh& sub_Mesh : subMeshs)
+			sub_Mesh.Draw(shader);
 	}
 	void DrawWithoutTexture(Shader* shader) {
-		for (Mesh& mesh : meshes)
-			mesh.DrawWithoutTexture(shader);
+		for (SubMesh& sub_Mesh : subMeshs)
+			sub_Mesh.DrawWithoutTexture(shader);
 	}
-	std::vector<Mesh> meshes;
+	std::vector<SubMesh> subMeshs;
 	std::string directory;
 	std::vector<Texture> textures_loaded;
 	bool hasUV = true;

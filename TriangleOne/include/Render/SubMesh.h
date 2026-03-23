@@ -31,18 +31,18 @@ struct Texture {
 	std::string path;
 };
 
-class Mesh {
+class SubMesh {
 public:
-	// mesh data
+	// SubMesh data
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
-	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+	SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
 
 	void Draw(Shader* shader);
 	void DrawWithoutTexture(Shader* shader);
 private:
 	// render data
 	unsigned int VAO, VBO, EBO;
-	void SetupMesh();
+	void SetupSubMesh();
 };

@@ -10,7 +10,7 @@
 #include <vector>
 #include "ECS/SpareSet.h"
 #include "ECS/Components/Component.h"
-#include "ECS/ModelStore.h"
+#include "ECS/AssetStore.h"
 
 #include <unordered_map>
 #include <typeindex>
@@ -44,8 +44,8 @@ public:
 
 class World {
 public:
-    World(ModelStore* modelStore) {
-        this->modelStore = modelStore;
+    World(AssetStore* assetStore) {
+        this->assetStore = assetStore;
     }
 
     Entity Register() {
@@ -101,7 +101,7 @@ public:
         return static_cast<T*>(ressources[type_id].get());
     }
 
-    ModelStore* modelStore;
+    AssetStore* assetStore;
 private:
     std::unordered_map<std::type_index, std::unique_ptr<ISparseSet>> pools;
     std::unordered_map<std::type_index, std::unique_ptr<Resource>> ressources;

@@ -138,14 +138,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Systems\CameraSystem.cpp" />
-    <ClCompile Include="src\ECS\ModelStore.cpp" />
+    <ClCompile Include="src\ECS\AssetStore.cpp" />
     <ClCompile Include="src\ECS\Scheduler.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\Systems\LightSystem.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\ECS\Components\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\Render\MeshClass.cpp" />
+    <ClCompile Include="src\Render\SubMesh.cpp" />
     <ClCompile Include="src\Systems\RenderSystem.cpp" />
     <ClCompile Include="src\Render\Shader.cpp" />
     <ClCompile Include="src\Render\Texture.cpp" />
@@ -156,14 +156,14 @@
     <ClInclude Include="include\Systems\CameraSystem.h" />
     <ClInclude Include="include\ECS\Components\Component.h" />
     <ClInclude Include="include\Render\Material.h" />
-    <ClInclude Include="include\ECS\ModelStore.h" />
+    <ClInclude Include="include\ECS\AssetStore.h" />
     <ClInclude Include="include\ECS\Scheduler.h" />
     <ClInclude Include="include\ECS\SpareSet.h" />
     <ClInclude Include="include\engine.h" />
     <ClInclude Include="include\ECS\Components\Light.h" />
     <ClInclude Include="include\Systems\LightSystem.h" />
-    <ClInclude Include="include\Render\MeshClass.h" />
-    <ClInclude Include="include\Render\ModelClass.h" />
+    <ClInclude Include="include\Render\SubMesh.h" />
+    <ClInclude Include="include\Render\Mesh.h" />
     <ClInclude Include="include\ECS\System.h" />
     <ClInclude Include="include\Systems\RenderSystem.h" />
     <ClInclude Include="include\Render\Shader.h" />
