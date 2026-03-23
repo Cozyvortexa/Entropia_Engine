@@ -3,7 +3,7 @@
 Model ModelStore::LoadModel(std::string path) {
 	Model model = Model();
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
@@ -25,6 +25,7 @@ void ModelStore::ProcessNode(aiNode* node, const aiScene* scene, Model& currentM
 	for (unsigned int i = 0; i < node->mNumMeshes; i++)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		if (!mesh->HasTextureCoords(0)) currentModel.hasUV = false;
 		currentModel.meshes.push_back(ProcessMesh(mesh, scene, currentModel));
 	}
 	// then do the same for each of its children
@@ -60,6 +61,16 @@ Mesh ModelStore::ProcessMesh(aiMesh* mesh, const aiScene* scene, Model& currentM
 		else
 			vertex.TexCoords = glm::vec2(0.0f, 0.0f);
 
+		//Tangent
+		if (mesh->HasTangentsAndBitangents()) {
+			glm::vec3 tangentVec;
+			tangentVec.x = mesh->mTangents[i].x;
+			tangentVec.y = mesh->mTangents[i].y;
+			tangentVec.z = mesh->mTangents[i].z;
+			vertex.Tangent = tangentVec;
+		}
+		else
+			currentModel.hasTBN = false;
 
 		vertices.push_back(vertex);
 	}

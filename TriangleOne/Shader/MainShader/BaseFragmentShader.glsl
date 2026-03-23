@@ -88,6 +88,7 @@ in vec4 FragPosLightSpace;
 
 out vec4 FragColor;
 
+in mat3 TBN;
 
 void main()
 {
@@ -104,7 +105,11 @@ void main()
 	vec3 final_lightning = ambientLight;
 
 	vec3 norm = normalize(normal);
-
+	if (material.haveNormalText){  // Application de la normal map si elle existe 
+		norm = texture(material.normalText, TexCoords).rgb;
+		norm = normalize(normal * 2.0 - 1.0);
+		norm = normalize(TBN * normal);
+	}
 
 
 	final_lightning += CalcDirLight(dirLight, viewDir, norm, finalDiffuse, finalSpecular); // Une seule lumiere dir dans la scene 
@@ -137,11 +142,6 @@ void main()
 
 vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular)
 {
-//	if (material.haveNormalText){  // Application de la normal map si elle existe 
-//		norm = texture(material.normalText, TexCoords).rgb;
-//		norm = normalize(normal * 2.0 - 1.0);
-//	}
-
 	vec3 lightDir = normalize(-light.direction);
 
 

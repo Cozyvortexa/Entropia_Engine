@@ -13,6 +13,7 @@ void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	RenderResource* renderRessource = resourceBuffer->renderResource;
 
 	Shader::CreateDefaultWhiteTexture();
+	Shader::CreateNeutralNormalText();
 	std::pair<Material&, int> defaultMat = world.modelStore->CreateMaterial("Default_Material", "TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
 	renderRessource->mainMaterialHandle = defaultMat.second;
 

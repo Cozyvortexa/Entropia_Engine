@@ -1,7 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include "Render/Texture.h"
-#include <glad/glad/glad.h> 
-
+#include "Render/Texture.h" 
+#include "glad/glad/glad.h"
 
 unsigned int TextureClass::LoadTextureFromFile(std::string name, std::string directory) {
 	unsigned int textureID;

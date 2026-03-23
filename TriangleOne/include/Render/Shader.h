@@ -88,13 +88,16 @@ public:
 	}
 
 	static void CreateDefaultWhiteTexture();
+	static void CreateNeutralNormalText();
 
 	unsigned int shaderID = NULL;
-	static unsigned int GetDefaultText() { return defaultText; }
+	static unsigned int GetDefaultText() { assert(defaultText != 0); return defaultText; }
+	static GLuint GetNeutralNormalText() { assert(neutralNormalText != 0); return neutralNormalText; }
 private:
 	std::string ReadFile(const char* shaderPath);
 	int AssertShader(unsigned int& shader);
 
+	static GLuint neutralNormalText;
 	static unsigned int defaultText;
 };
 
