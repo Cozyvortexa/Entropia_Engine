@@ -4,10 +4,11 @@ struct Material {
 	sampler2D specularText;
 	sampler2D normalText;
 
-	float shininess;
+	float shininess;  // Not use, 32.0f
 };
 uniform Material material;
 
+uniform bool have_NormalMap;
 uniform	bool have_Specular;
 
 struct SpotLight {
@@ -104,9 +105,15 @@ void main()
 	vec3 ambientLight = dirLight.ambient; // pourquoi pas   
 	vec3 final_lightning = ambientLight;
 
-	vec3 norm = texture(material.normalText, TexCoords).rgb;
-	norm = normalize(norm * 2.0 - 1.0);
-	norm = normalize(TBN * norm);
+	vec3 norm = vec3(0,0,0);
+	if (have_NormalMap){
+		norm = texture(material.normalText, TexCoords).rgb;
+		norm = normalize(norm * 2.0 - 1.0);
+		norm = normalize(TBN * norm);
+	}
+	else {
+		norm = normalize(normal);
+	}
 
 
 
@@ -153,7 +160,7 @@ vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, ve
 	if (diff > 0.0) {
 		// diffuse shading
 		vec3 reflectDir = reflect(- lightDir, norm);
-		float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess); 
+		float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0f); 
 
 
 		diffuse = light.diffuse * diff * vec3(finalDiffuse);
@@ -199,7 +206,7 @@ vec3 CalcPointLight(PointLight light, int lightIndex,vec3 viewDir, vec3 norm,vec
 	 // Specular
 	vec3 V = normalize(viewPos - FragPos);
 	vec3 halfwayVec = normalize(lightDir + V);
-	float spec = pow(max(dot(viewDir, halfwayVec), 0.0), material.shininess); // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
+	float spec = pow(max(dot(viewDir, halfwayVec), 0.0), 32.0f); // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
 	vec3 specular = light.specular * spec * finalSpecular.rgb * attenuation;
 
 	vec3 finalColor = diffuse * finalDiffuse.rgb;
@@ -235,7 +242,7 @@ vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 norm, vec
 
 	vec3 reflectDir = reflect(-lightDir, norm); // on inverse lightDir car c'est pas la bonne direction
 
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);  // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0f);  // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
 
 
 	vec3 ambient = light.ambient * finalDiffuse.rgb; 

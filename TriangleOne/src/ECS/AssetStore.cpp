@@ -90,6 +90,7 @@ SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh
 		if (normalMap_handle == -1) {
 			normalMap_handle = LoadMaterialTextures(material, aiTextureType_HEIGHT, scene, currentMesh);
 		}
+		if (normalMap_handle == -1) {currentMesh.hasNormalMap = false; }
 
 		//Create the id key of the mat
 		MaterialKey key(diffuseMap_handle, specularMap_handle, normalMap_handle);

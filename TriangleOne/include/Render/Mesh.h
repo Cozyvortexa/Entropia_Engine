@@ -23,4 +23,5 @@ public:
 	std::string directory;
 	bool hasUV = true;
 	bool hasTBN = true;
+	bool hasNormalMap = true;
 };

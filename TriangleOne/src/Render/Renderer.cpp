@@ -54,6 +54,7 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, normal_Text);
 		shader->setInt("material.normalText", i);
+		shader->setBool("have_NormalMap", currentMesh.hasTBN && currentMesh.hasUV && currentMesh.hasNormalMap);
 		i++;
 
 		glActiveTexture(GL_TEXTURE0);
