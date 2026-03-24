@@ -18,6 +18,8 @@ void Engine::InitEngine() {
 	world = std::make_unique<World>(assetStore.get());
 	scheduler = std::make_unique<Scheduler>(world.get(), window.get());
 
+	renderer = std::make_unique<Renderer>(assetStore.get());
+	world->renderer = renderer.get();
 	//Scheduler
 	scheduler->CreateSystemes();
 	scheduler->Init();

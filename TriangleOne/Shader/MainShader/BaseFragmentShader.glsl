@@ -1,16 +1,14 @@
 #version 430 core
 struct Material {
-	sampler2D diffuseText[8];
-	sampler2D specularText[8];
+	sampler2D diffuseText;
+	sampler2D specularText;
 	sampler2D normalText;
 
 	float shininess;
-	bool haveNormalText;
 };
 uniform Material material;
 
-uniform	int diffuseNbr;
-uniform	int specularNbr;
+uniform	bool have_Specular;
 
 struct SpotLight {
 	vec3 position;
@@ -68,8 +66,8 @@ uniform float far_plane;
 
 uniform vec3 viewPos;
 
-vec4 CalcFinalDiffuse();
-vec4 CalcFinalSpecular();
+//vec4 CalcFinalDiffuse();
+//vec4 CalcFinalSpecular();
 
 vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
 vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular);
@@ -92,24 +90,24 @@ in mat3 TBN;
 
 void main()
 {
-	vec4 finalDiffuse = CalcFinalDiffuse();
-	vec4 finalSpecular = CalcFinalSpecular();
+	vec4 finalDiffuse = texture(material.diffuseText, TexCoords);
+	vec4 finalSpecular = texture(material.specularText, TexCoords);
 
 	CheckOpacity(finalDiffuse, finalSpecular);
 
 	vec3 viewDir = normalize(viewPos - FragPos);
-	vec3 _ambient, _diffuse, _specular = vec3(0,0,0);
+	vec3 _ambient = vec3(0,0,0);
+	vec3 _diffuse = vec3(0,0,0);
+	vec3 _specular = vec3(0,0,0);
 
 
 	vec3 ambientLight = dirLight.ambient; // pourquoi pas   
 	vec3 final_lightning = ambientLight;
 
-	vec3 norm = normalize(normal);
-	if (material.haveNormalText){  // Application de la normal map si elle existe 
-		norm = texture(material.normalText, TexCoords).rgb;
-		norm = normalize(normal * 2.0 - 1.0);
-		norm = normalize(TBN * normal);
-	}
+	vec3 norm = texture(material.normalText, TexCoords).rgb;
+	norm = normalize(norm * 2.0 - 1.0);
+	norm = normalize(TBN * norm);
+
 
 
 	final_lightning += CalcDirLight(dirLight, viewDir, norm, finalDiffuse, finalSpecular); // Une seule lumiere dir dans la scene 
@@ -164,7 +162,7 @@ vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, ve
 		vec3 light_contribution = vec3(0);
 
 		shadow = ShadowDirLight();
-		if (specularNbr == 0 ){
+		if (!have_Specular){
 			light_contribution = diffuse  * (1.0 - shadow);
 		}
 		else{
@@ -212,7 +210,7 @@ vec3 CalcPointLight(PointLight light, int lightIndex,vec3 viewDir, vec3 norm,vec
 
 	vec3 light_contribution = vec3(0.0);
 
-	if (specularNbr == 0 ){
+	if (!have_Specular){
 		light_contribution = finalColor * attenuation * lightModifier ;
 	}
 	else{ 
@@ -258,7 +256,7 @@ vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 norm, vec
 
 	vec3 light_contribution = vec3(0.0);
 
-	if (specularNbr == 0 ){
+	if (!have_Specular){
 		light_contribution = ambient + (diffuse) * (1.0 - shadow);
 	}
 	else{ 
@@ -268,32 +266,32 @@ vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 norm, vec
 	return light_contribution;
 }
 
-vec4 CalcFinalDiffuse(){
-	vec4 finalDiffuse = texture(material.diffuseText[0], TexCoords);
-	if (diffuseNbr == 0)
-		return finalDiffuse;
+//vec4 CalcFinalDiffuse(){
+//	vec4 finalDiffuse = texture(material.diffuseText[0], TexCoords);
+//	if (diffuseNbr == 0)
+//		return finalDiffuse;
+//
+//
+//	for (int i = 1; i < diffuseNbr; i++)
+//	{
+//		finalDiffuse += texture(material.diffuseText[i], TexCoords);
+//	}
+//
+//	return clamp(finalDiffuse, 0.0, 1.0);
+//}
 
-
-	for (int i = 1; i < diffuseNbr; i++)
-	{
-		finalDiffuse += texture(material.diffuseText[i], TexCoords);
-	}
-
-	return clamp(finalDiffuse, 0.0, 1.0);
-}
-
-vec4 CalcFinalSpecular(){
-	vec4 finalSpecular = texture(material.specularText[0], TexCoords);
-	if (specularNbr == 0 )
-		return finalSpecular;
-
-	for (int i = 1; i < specularNbr; i++)
-	{
-		finalSpecular += texture(material.specularText[i], TexCoords);
-	}
-
-	return clamp(finalSpecular, 0.0, 1.0);;
-}
+//vec4 CalcFinalSpecular(){
+//	vec4 finalSpecular = texture(material.specularText[0], TexCoords);
+//	if (specularNbr == 0 )
+//		return finalSpecular;
+//
+//	for (int i = 1; i < specularNbr; i++)
+//	{
+//		finalSpecular += texture(material.specularText[i], TexCoords);
+//	}
+//
+//	return clamp(finalSpecular, 0.0, 1.0);;
+//}
 
 void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular){
 	if(	finalDiffuse.a +  finalSpecular.a < 0.1)

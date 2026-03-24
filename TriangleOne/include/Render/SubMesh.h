@@ -36,13 +36,12 @@ public:
 	// SubMesh data
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
-	std::vector<Texture> textures;
-	SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+	unsigned int material_Handle;
+	SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle);
 
-	void Draw(Shader* shader);
-	void DrawWithoutTexture(Shader* shader);
 private:
 	// render data
 	unsigned int VAO, VBO, EBO;
+	friend class Renderer;
 	void SetupSubMesh();
 };

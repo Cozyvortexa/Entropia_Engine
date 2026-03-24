@@ -15,6 +15,9 @@ void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	Shader::CreateDefaultWhiteTexture();
 	Shader::CreateNeutralNormalText();
 	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
+	defaultMat.first.diffuse_Text_Handle = Shader::GetDefaultText();
+	defaultMat.first.normal_Text_Handle = Shader::GetNeutralNormalText();
+	defaultMat.first.specular_Text_Handle = -1;
 	renderRessource->mainMaterialHandle = defaultMat.second;
 
 	InitLightSSBO(world, resourceBuffer);
@@ -235,7 +238,7 @@ void LightSystem::DrawShadowForDirLight(World* world, RenderResource& renderReso
 			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
 
 			depthShader->setMatrix("model", transform.GetTransformModel());
-			currentMesh.DrawWithoutTexture(depthShader);
+			world->renderer->DrawMesh_Without_Texture(currentMesh);
 		}
 
 	});
@@ -284,7 +287,7 @@ void LightSystem::DrawShadowForPointLight(World* world, RenderResource& renderRe
 			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
 
 			depthShader->setMatrix("model", transform.GetTransformModel());
-			currentMesh.DrawWithoutTexture(depthShader);
+			world->renderer->DrawMesh_Without_Texture(currentMesh);
 		}
 	});
 
@@ -323,7 +326,7 @@ void LightSystem::DrawShadowForSpotLight(World* world, RenderResource& renderRes
 			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
 
 			depthShader->setMatrix("model", transform.GetTransformModel());
-			currentMesh.DrawWithoutTexture(depthShader);
+			world->renderer->DrawMesh_Without_Texture(currentMesh);
 		}
 	});
 

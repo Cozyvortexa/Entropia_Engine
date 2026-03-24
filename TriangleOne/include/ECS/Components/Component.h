@@ -93,9 +93,6 @@ struct MaterialHandle : Component {
 	MaterialHandle() {};
 	MaterialHandle(uint32_t index) { this->index = index; }
 	uint32_t index = 0;
-	//Texture diffuse_Text;
-	//Texture specular_Text;
-	//Texture normal_Text;
 };
 
 enum LightTag {

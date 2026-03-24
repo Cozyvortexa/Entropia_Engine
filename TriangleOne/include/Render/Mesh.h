@@ -19,18 +19,8 @@ public:
 	//{
 	//	LoadMesh(path);
 	//}
-	void Draw(Shader* shader) {
-		for (SubMesh& sub_Mesh : subMeshs)
-			sub_Mesh.Draw(shader);
-	}
-	void DrawWithoutTexture(Shader* shader) {
-		for (SubMesh& sub_Mesh : subMeshs)
-			sub_Mesh.DrawWithoutTexture(shader);
-	}
 	std::vector<SubMesh> subMeshs;
 	std::string directory;
-	std::vector<Texture> textures_loaded;
 	bool hasUV = true;
 	bool hasTBN = true;
-
 };

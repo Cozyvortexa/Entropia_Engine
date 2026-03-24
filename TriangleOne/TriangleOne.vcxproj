@@ -137,6 +137,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Render\Renderer.cpp" />
     <ClCompile Include="src\Systems\CameraSystem.cpp" />
     <ClCompile Include="src\ECS\AssetStore.cpp" />
     <ClCompile Include="src\ECS\Scheduler.cpp" />
@@ -153,6 +154,7 @@
     <ClCompile Include="src\Systems\window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Render\Renderer.h" />
     <ClInclude Include="include\Systems\CameraSystem.h" />
     <ClInclude Include="include\ECS\Components\Component.h" />
     <ClInclude Include="include\Render\Material.h" />

@@ -3,13 +3,14 @@
 
 #include "ECS/System.h"
 #include "ECS/Components/Component.h"
-
 #include "ECS/World.h"
 #include "ECS/Components/Light.h"
 
 #include <tuple>
 #include <iostream>
 #include <vector>
+
+#include "Render/Renderer.h"
 
 #define MAX_POINT_LIGHT 8
 #define MAX_SPOT_LIGHT 8

@@ -19,6 +19,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Render/Mesh.h"
+#include "Render/Renderer.h"
 
 #include "ECS/World.h"
 #include "ECS/Components/Light.h"

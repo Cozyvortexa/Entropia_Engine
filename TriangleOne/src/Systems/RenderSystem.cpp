@@ -104,7 +104,7 @@ void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 
 
 			currentShader.setMatrix("model", transform.GetTransformModel());
-			currentMesh.Draw(&currentShader);
+			world.renderer->DrawMesh(currentMesh);
 		}
 	});
 }

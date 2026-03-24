@@ -39,7 +39,6 @@ SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh
 {
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
-	std::vector<Texture> textures;
 	for (unsigned int i = 0; i < sub_Mesh->mNumVertices; i++)
 	{
 		Vertex vertex;
@@ -81,79 +80,91 @@ SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh
 		for (unsigned int j = 0; j < face.mNumIndices; j++)
 			indices.push_back(face.mIndices[j]);
 	}
-
+	unsigned int material_Handle = 0;
 	if (sub_Mesh->mMaterialIndex >= 0)
 	{
 		aiMaterial* material = scene->mMaterials[sub_Mesh->mMaterialIndex];
+		unsigned int diffuseMap_handle = LoadMaterialTextures(material, aiTextureType_DIFFUSE, scene, currentMesh);
+		unsigned int specularMap_handle = LoadMaterialTextures(material, aiTextureType_SPECULAR, scene, currentMesh);
+		unsigned int normalMap_handle = LoadMaterialTextures(material, aiTextureType_NORMALS, scene, currentMesh);
+		if (normalMap_handle == -1) {
+			normalMap_handle = LoadMaterialTextures(material, aiTextureType_HEIGHT, scene, currentMesh);
+		}
 
-		std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, scene, currentMesh);
-		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+		//Create the id key of the mat
+		MaterialKey key(diffuseMap_handle, specularMap_handle, normalMap_handle);
+		size_t hash_ID = std::hash<MaterialKey>{}(key);
+
+		auto result = keyTo_MaterialHandle.try_emplace(hash_ID);
+		auto it = result.first;
+		auto is_Inserted = result.second;
 
 
-		std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, scene, currentMesh);
-		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+		if (is_Inserted) {  // Create a new material if the key don't exist
+			Material material(Get_Material(0).shader);  // Material at index 0 corresponds to the default mat who has all default value
+			material.diffuse_Text_Handle = diffuseMap_handle;
+			material.specular_Text_Handle = specularMap_handle;
+			material.normal_Text_Handle = normalMap_handle;
 
+			//material.name  // maybe add a custom name
 
-		std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_NORMALS, scene, currentMesh);
-		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+			materials.push_back(material);
+			material_Handle = materials.size() - 1;
+			it->second = material_Handle;
+		}
+		else {  // or return the existing material one
+			material_Handle = it->second;
+		}
+
 	}
 
-	return SubMesh(vertices, indices, textures);
+	return SubMesh(vertices, indices, material_Handle);
 }
 
-std::vector<Texture> AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh)
+unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh)
 {
-	std::vector<Texture> textures;
-	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
-	{
-		aiString str;
-		mat->GetTexture(type, i, &str);
-		bool skip = false;
+	unsigned int texture_Handle = 0;
+	aiString str;
+	aiReturn succes = mat->GetTexture(type, 0, &str);  // Only take the first texture
+	if (succes == aiReturn_FAILURE) {return -1;}
 
-		for (unsigned int j = 0; j < currentMesh.textures_loaded.size(); j++)
-		{
-			//std::string fullPath = directory + "/" + std::string(str.C_Str());
-			if (std::strcmp(currentMesh.textures_loaded[j].path.data(), str.C_Str()) == 0)  // Verifie si la texture a deja etait charger
-			{
-				textures.push_back(currentMesh.textures_loaded[j]);
-				skip = true;
-				break;
-			}
+	auto result = pathToIndexMap_Texture.try_emplace(str.C_Str());
+	auto it = result.first;
+	auto is_Inserted = result.second;
+
+	if (is_Inserted) { // Create a new texture if the key don't exist
+		Texture texture;
+
+		if (str.C_Str()[0] == '*') {  // texture embarquer detecter
+			int texIndex = atoi(str.C_Str() + 1);
+			aiTexture* EmbeddedTex = scene->mTextures[texIndex];
+			texture.id = TextureClass::LoadEmbeddedTexture(EmbeddedTex);
+		}
+		else
+			texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), currentMesh.directory);
+
+		texture.path = str.C_Str();
+
+		switch (type) {  // la texture est charger meme si elle ne serra pas utiliser
+		case aiTextureType_DIFFUSE:
+			texture.textureType = Texture::Diffuse;
+			break;
+		case aiTextureType_SPECULAR:
+			texture.textureType = Texture::Specular;
+			break;
+		case aiTextureType_NORMALS:
+			texture.textureType = Texture::Normal;
+			break;
 		}
 
-		if (!skip)
-		{
-			Texture texture;
-
-			if (str.C_Str()[0] == '*') {  // texture embarquer detecter
-				int texIndex = atoi(str.C_Str() + 1);
-				aiTexture* EmbeddedTex = scene->mTextures[texIndex];
-				texture.id = TextureClass::LoadEmbeddedTexture(EmbeddedTex);
-			}
-			else
-				texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), currentMesh.directory);
-
-			texture.path = str.C_Str();
-
-			switch (type) {  // la texture est charger meme si elle ne serra pas utiliser
-			case aiTextureType_DIFFUSE:
-				texture.textureType = Texture::Diffuse;
-				break;
-			case aiTextureType_SPECULAR:
-				texture.textureType = Texture::Specular;
-				break;
-			case aiTextureType_NORMALS:
-				texture.textureType = Texture::Normal;
-				break;
-			}
-
-			textures.push_back(texture);
-			currentMesh.textures_loaded.push_back(texture);
-
-		}
-
+		textures.push_back(texture);
+		texture_Handle = textures.size() - 1;
+		it->second = texture_Handle;
 	}
-	return textures;
+	else { // or return the existing texture one
+		texture_Handle = it->second;
+	}
+	return texture_Handle;
 }
 
 Mesh& AssetStore::Get_Mesh(int index) {
@@ -209,9 +220,14 @@ Material& AssetStore::Get_Material(std::string name) {
 	return materials[index];
 }
 
-Material& AssetStore::Get_Material(int index) {  // Dedicate for the Systemes
-	assert(index >= 0, "Negative index detected in Get_Material(int index)");
-	assert(index < materials.size(), "Index out of range in Get_Material(int index)");
+Material& AssetStore::Get_Material(unsigned int index) {  // Dedicate to the Systemes
+	if (index >= materials.size()) {  // Index out of range in Get_Material(int index)
+		return materials[0];
+	}
 
 	return materials[index];
+}
+Texture* AssetStore::Get_Texture(unsigned int index) {  // Dedicate to the Systemes
+	if (index >= textures.size()) {return nullptr;} // "Index out of range in Get_textures(int index)"
+	return &textures[index];
 }

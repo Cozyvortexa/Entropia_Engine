@@ -1,11 +1,11 @@
 #include <Render/SubMesh.h>
 
 
-SubMesh::SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
+SubMesh::SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle)
 {
 	this->vertices = vertices;
 	this->indices = indices;
-	this->textures = textures;
+	this->material_Handle = material_Handle;
 	SetupSubMesh();
 }
 
@@ -35,62 +35,5 @@ void SubMesh::SetupSubMesh()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
 
 
-	glBindVertexArray(0);
-}
-
-void SubMesh::Draw(Shader* shader)
-{
-	assert(glIsVertexArray(VAO));
-	assert(glIsBuffer(EBO));
-	int diffuseNbr = 0;
-	int specularNbr = 0;
-
-	if (textures.empty())
-	{
-		// Si pas de texture, on lie une texture blanche par défaut au slot 0
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, Shader::GetDefaultText());
-		shader->setInt("material.diffuseText[0]", 0);
-		diffuseNbr++;
-	}
-	for (unsigned int i = 0; i < textures.size(); i++)
-	{
-		glActiveTexture(GL_TEXTURE0 + i);
-		// retrieve texture number (the N in diffuse_textureN)
-		std::string number;
-
-		if (textures[i].textureType == Texture::Type::Diffuse) 
-		{
-			number = std::to_string(diffuseNbr++);
-			shader->setInt("material.diffuseText[" + number + "]", i);
-		}
-
-		else if (textures[i].textureType == Texture::Type::Specular) 
-		{
-			number = std::to_string(specularNbr++);
-			shader->setInt("material.specularText[" + number + "]", i);
-		}
-		
-		else if (textures[i].textureType == Texture::Type::Normal) 
-		{
-			shader->setBool("material.normalText", i);
-			shader->setInt("material.haveNormalText", true);
-		}
-
-		glBindTexture(GL_TEXTURE_2D, textures[i].id);
-	}
-	shader->setInt("diffuseNbr", diffuseNbr);
-	shader->setInt("specularNbr", specularNbr);
-	glActiveTexture(GL_TEXTURE0);
-
-	// draw SubMesh
-	glBindVertexArray(VAO);
-	
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-}
-void SubMesh::DrawWithoutTexture(Shader* shader) {
-	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
