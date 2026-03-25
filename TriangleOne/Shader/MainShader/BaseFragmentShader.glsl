@@ -320,7 +320,7 @@ float ShadowDirLight(){
 
 
 	vec3 lightDir = normalize(-dirLight.direction );
-    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    float bias = 0.005;
 
 	float shadow = 0.0;
 	vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
@@ -371,7 +371,7 @@ float ShadowPointLight(PointLight light, int lightIndex, vec3 norm){
     
     float lightFar_plane = light.range; 
 
-	float bias = 0.05;
+	float bias = 0.005;
 	float diskRadius = (1.0 + (viewDistance / lightFar_plane)) / 25.0;
 	float currentDepthNormalized = (currentDepth - bias) / light.range;
 
@@ -413,7 +413,7 @@ float ShadowSpotLight(SpotLight light, int lightIndex){
 	float currentDepth = projCoords.z ;
 
 	vec3 lightDir = normalize(light.position - FragPos);
-    float bias = max(0.01 * (1.0 - dot(normal, lightDir)), 0.001);
+    float bias = 0.005;
 
 	float shadow = 0.0;
 	vec2 texelSize = 1.0 / textureSize(shadowMapSpot[lightIndex], 0);

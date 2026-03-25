@@ -181,12 +181,12 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	/////////////////////////////////////
 
-	Entity backpack = world.Register();
-	Transform backPackTransform(glm::vec3(10.0f, 3.0f, 2.0f));
-	std::pair<Mesh&, int> backpackValue = world.assetStore->Get_Mesh("Assets/backpack/backpack.obj");
-	MeshHandle backpackModeleHandle(backpackValue.second);
+	//Entity backpack = world.Register();
+	//Transform backPackTransform(glm::vec3(10.0f, 3.0f, 2.0f));
+	//std::pair<Mesh&, int> backpackValue = world.assetStore->Get_Mesh("Assets/backpack/backpack.obj");
+	//MeshHandle backpackModeleHandle(backpackValue.second);
 
-	world.add_components(backpack, backPackTransform, sceneTag, materialHandle, backpackModeleHandle);
+	//world.add_components(backpack, backPackTransform, sceneTag, materialHandle, backpackModeleHandle);
 
 
 

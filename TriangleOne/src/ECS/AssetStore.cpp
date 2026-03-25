@@ -59,6 +59,17 @@ SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh
 		}
 		else
 			vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+		//Normal
+		if (sub_Mesh->HasNormals()) {
+			glm::vec3 normalVec;
+			normalVec.x = sub_Mesh->mNormals[i].x;
+			normalVec.y = sub_Mesh->mNormals[i].y;
+			normalVec.z = sub_Mesh->mNormals[i].z;
+			vertex.Normal = normalVec;
+		}
+		else {
+			vertex.Normal = glm::vec3(0.0f, 1.0f, 0.0f);
+		}
 
 		//Tangent
 		if (sub_Mesh->HasTangentsAndBitangents()) {
