@@ -101,9 +101,7 @@ void main()
 	vec3 _diffuse = vec3(0,0,0);
 	vec3 _specular = vec3(0,0,0);
 
-
-	vec3 ambientLight = dirLight.ambient; // pourquoi pas   
-	vec3 final_lightning = ambientLight;
+	vec3 final_lightning = vec3(0,0,0);
 
 	vec3 norm = vec3(0,0,0);
 	if (have_NormalMap){
@@ -170,10 +168,10 @@ vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, ve
 
 		shadow = ShadowDirLight();
 		if (!have_Specular){
-			light_contribution = diffuse  * (1.0 - shadow);
+			light_contribution = ambient + diffuse  * (1.0 - shadow);
 		}
 		else{
-			light_contribution = (diffuse + specular ) * (1.0 - shadow);
+			light_contribution = ambient + (diffuse + specular ) * (1.0 - shadow);
 		}
 
 
@@ -218,10 +216,10 @@ vec3 CalcPointLight(PointLight light, int lightIndex,vec3 viewDir, vec3 norm,vec
 	vec3 light_contribution = vec3(0.0);
 
 	if (!have_Specular){
-		light_contribution = finalColor * attenuation * lightModifier ;
+		light_contribution = light.ambient + finalColor * attenuation * lightModifier ;
 	}
 	else{ 
-		light_contribution = (finalColor + specular ) * attenuation * lightModifier ;
+		light_contribution = light.ambient + (finalColor + specular ) * attenuation * lightModifier ;
 	}
 
 	return light_contribution / (light_contribution + vec3(1.0));

@@ -26,7 +26,7 @@ void main()
 	TexCoords = aTexCoords;
 
 	vec3 T = normalize(vec3(model * vec4(aTangent, 0.0)));
-	vec3 N = normalize(vec3(model * vec4(aNormal, 0.0)));
+	vec3 N = normalize(normal);
 	T = normalize(T - dot(T, N) * N);
 	vec3 B = cross(N, T);
 

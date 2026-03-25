@@ -3,7 +3,7 @@
 Mesh AssetStore::LoadMesh(std::string path) {
 	Mesh mesh = Mesh();
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_GenSmoothNormals);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
@@ -68,7 +68,7 @@ SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh
 			vertex.Normal = normalVec;
 		}
 		else {
-			vertex.Normal = glm::vec3(0.0f, 1.0f, 0.0f);
+			vertex.Normal = glm::vec3(0.0f, 0.0f, 0.0f);
 		}
 
 		//Tangent
