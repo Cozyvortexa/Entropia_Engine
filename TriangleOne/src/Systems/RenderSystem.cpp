@@ -14,13 +14,13 @@ void RenderSystem::DrawTextureOnScreen(WindowResource* windowData, RenderResourc
 
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData->framebuffer);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBlitFramebuffer(0, 0, windowData->WIDHT, windowData->HEIGHT, 0, 0, windowData->WIDHT, windowData->HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	glBlitFramebuffer(0, 0, windowData->WIDTH, windowData->HEIGHT, 0, 0, windowData->WIDTH, windowData->HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
 }
 
-void RenderSystem::InitQuadVao(WindowResource* windowData, RenderResource* renderData) {
+void RenderSystem::InitMainFrameBuffer(WindowResource* windowData, RenderResource* renderData) {
 	//Init fbo
 	glGenFramebuffers(1, &renderData->framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->framebuffer);
@@ -29,7 +29,7 @@ void RenderSystem::InitQuadVao(WindowResource* windowData, RenderResource* rende
 	//Init texture depth
 	glGenTextures(1, &renderData->finalTxtOutput);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtOutput);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDHT, windowData->HEIGHT, GL_TRUE);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtOutput, 0);
@@ -38,18 +38,20 @@ void RenderSystem::InitQuadVao(WindowResource* windowData, RenderResource* rende
 	//Init texture color
 	glGenTextures(1, &renderData->finalTxtColorOutput);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGB, windowData->WIDHT, windowData->HEIGHT, GL_TRUE);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput, 0);
 	//
 
 	//Assert
-	if (!glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "L'Init du quadVao a echouer" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+}
 
+void RenderSystem::InitQuadVao(WindowResource* windowData, RenderResource* renderData) {
 	//Init quadVAO
 	glGenVertexArrays(1, &renderData->quadVAO);
 	glBindVertexArray(renderData->quadVAO);
@@ -84,7 +86,7 @@ void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 	///////////////////
 
 
-	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->zoom), (float)windowData->WIDHT / (float)windowData->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
+	glm::mat4 projection = glm::perspective(glm::radians(mainCamera->zoom), (float)windowData->WIDTH / (float)windowData->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
 
 
 	View view = world.view<MeshHandle, Transform, MaterialHandle>();
@@ -125,7 +127,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	//Create the main cam  // TEMP / WARNING
 	Entity camEntity = world.Register();
-	CameraComponent cameraComponent(windowData->WIDHT, windowData->HEIGHT);
+	CameraComponent cameraComponent(windowData->WIDTH, windowData->HEIGHT);
 	Transform transform;
 	world.add_components(camEntity, cameraComponent, transform);
 
@@ -173,7 +175,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	/////////////////////////////////////
 
 	Entity pointLightEntity = world.Register();
-	Transform transformPointLight(glm::vec3(1.0f, 3.0f, 0.0f));
+	Transform transformPointLight(glm::vec3(1.0f, 5.0f, 0.0f));
 	PointLight pointLight(ambient, diffuse, specular, 8.0f, renderData->depthShaderCubeMap.get(), 40.0f);
 	LightToInitTag pointTag(LightTag::PointLight_Tag);
 
@@ -229,7 +231,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	//dirLight = new Light(glm::vec3(0), worldLightDir, ambient, diffuse, specular);
 
-
+	InitMainFrameBuffer(windowData, renderData);
 	InitQuadVao(windowData, renderData);
 	//InitSkyBox();
 }

@@ -244,7 +244,7 @@ void LightSystem::DrawShadowForDirLight(World* world, RenderResource& renderReso
 	});
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, windowData.WIDHT, windowData.HEIGHT);
+	glViewport(0, 0, windowData.WIDTH, windowData.HEIGHT);
 }
 
 void LightSystem::DrawShadowForPointLight(World* world, RenderResource& renderResource, WindowResource& windowData, All_Light& lights, int index) {
@@ -292,7 +292,7 @@ void LightSystem::DrawShadowForPointLight(World* world, RenderResource& renderRe
 	});
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, windowData.WIDHT, windowData.HEIGHT);
+	glViewport(0, 0, windowData.WIDTH, windowData.HEIGHT);
 }
 
 void LightSystem::DrawShadowForSpotLight(World* world, RenderResource& renderResource, WindowResource& windowData, All_Light& lights, int index) {
@@ -313,7 +313,7 @@ void LightSystem::DrawShadowForSpotLight(World* world, RenderResource& renderRes
 
 	glViewport(0, 0, shadowSize.first, shadowSize.second);
 	glBindFramebuffer(GL_FRAMEBUFFER, lights.spotLights_DepthMapFBO[index]);  // Fbo unique par spot light
-	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT );
 
 
 	depthShader->Use();
@@ -332,7 +332,7 @@ void LightSystem::DrawShadowForSpotLight(World* world, RenderResource& renderRes
 
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, windowData.WIDHT, windowData.HEIGHT);
+	glViewport(0, 0, windowData.WIDTH, windowData.HEIGHT);
 }
 
 
@@ -416,7 +416,7 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 			lights->dirLight_Shadow_Size = std::make_pair(dirLight.SHADOW_WIDTH, dirLight.SHADOW_HEIGHT);
 
 			//Matrices
-			glm::mat4 projectionCamera = glm::perspective(glm::radians(mainCamera->zoom), (float)windowResource->WIDHT / (float)windowResource->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
+			glm::mat4 projectionCamera = glm::perspective(glm::radians(mainCamera->zoom), (float)windowResource->WIDTH / (float)windowResource->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
 			lights->dirLight_Matrice = dirLight.UpdateMatrix(mainCamera->viewMatrice, projectionCamera);
 		}
 		else {

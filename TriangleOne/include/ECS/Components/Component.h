@@ -119,7 +119,7 @@ struct Resource {
 struct WindowResource : public Resource {
 	WindowResource() = default;
 
-	inline static int WIDHT = 800;
+	inline static int WIDTH = 800;
 	inline static int HEIGHT = 600;
 
 	int sample = 4;

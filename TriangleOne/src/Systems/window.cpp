@@ -52,7 +52,7 @@ void WindowSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	//MSAA
 	glfwWindowHint(GLFW_SAMPLES, windowData->sample);
 
-	windowData->window = glfwCreateWindow(windowData->WIDHT, windowData->HEIGHT, "Entropia Engine", NULL, NULL);
+	windowData->window = glfwCreateWindow(windowData->WIDTH, windowData->HEIGHT, "Entropia Engine", NULL, NULL);
 	if (windowData->window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -77,7 +77,7 @@ void WindowSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 #endif
 
 	glfwSetFramebufferSizeCallback(windowData->window, Framebuffer_size_callback); // Pour adapter le viewport si la fenetre est resize pendant le court du programme 
-	glViewport(0, 0, windowData->WIDHT, windowData->HEIGHT);
+	glViewport(0, 0, windowData->WIDTH, windowData->HEIGHT);
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 

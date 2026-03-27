@@ -28,7 +28,7 @@ public:
 
 private:
 	void InitEngine();
-	int WIDHT = 800;
+	int WIDTH = 800;
 	int HEIGHT = 600;
 	static Engine* instance;
 	std::unique_ptr<WindowSystem> window;
