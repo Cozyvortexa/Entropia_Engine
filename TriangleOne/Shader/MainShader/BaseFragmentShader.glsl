@@ -145,7 +145,7 @@ void main()
 
 vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 norm, vec4 finalDiffuse, vec4 finalSpecular)
 {
-	vec3 lightDir = normalize(-light.direction);
+	vec3 lightDir = normalize(light.direction);
 
 
 	// Initialisation par defaut
@@ -363,7 +363,7 @@ float ShadowPointLight(PointLight light, int lightIndex, vec3 norm){
         return 1.0; // Not in shadow if out of range
 
 	float shadow = 0.0;
-	float samples = 20.0;
+	float samples = 8.0;
 	float viewDistance = length(viewPos- FragPos);
 
     
