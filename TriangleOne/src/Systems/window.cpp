@@ -92,7 +92,7 @@ void WindowSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_BACK);
 	//glFrontFace(GL_CCW);
-
+	glfwSwapInterval(0);
 	//MSAA
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);

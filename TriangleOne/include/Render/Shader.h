@@ -26,10 +26,12 @@ public:
 	{
 		glUniform1i(glGetUniformLocation(shaderID, name.c_str()), value);
 
+		#ifndef NDEBUG
 		GLint loc = glGetUniformLocation(shaderID, name.c_str());
 		if (loc == -1) {
 			std::cerr << "Uniform: " << name << " not found in shader!" << std::endl;
 		}
+		#endif
 	}
 	void setFloat(const std::string& name, float value) const
 	{
@@ -41,27 +43,35 @@ public:
 	{
 		glUniform3fv(glGetUniformLocation(shaderID, name.c_str()), 1, glm::value_ptr(value));
 
+		#ifndef NDEBUG
 		GLint loc = glGetUniformLocation(shaderID, name.c_str());
 		if (loc == -1) {
 			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
 		}
+		#endif
 	}
 
 	void setMatrix(const std::string& name, glm::mat4 matrix)
 	{
 		unsigned int projLoc = glGetUniformLocation(shaderID, name.c_str());
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(matrix));
+
+		#ifndef NDEBUG
 		if (projLoc == -1) {
 			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
 		}
+		#endif
 	}
 	void setMatrix(const std::string& name, glm::mat3 matrix)
 	{
 		unsigned int projLoc = glGetUniformLocation(shaderID, name.c_str());
 		glUniformMatrix3fv(projLoc, 1, GL_FALSE, glm::value_ptr(matrix));
+
+		#ifndef NDEBUG
 		if (projLoc == -1) {
 			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
 		}
+		#endif
 	}
 
 	void DebugValueInShader() {
