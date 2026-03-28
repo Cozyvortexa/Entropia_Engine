@@ -22,7 +22,7 @@ public:
 	std::pair<Material&, int> CreateMaterial(std::string name, const char* vertexPath, const char* fragmentPath);
 
 	Material& Get_Material(std::string name);
-	Material& Get_Material(unsigned int index);
+	Material* Get_Material(unsigned int index);
 
 private:
 	//Assets

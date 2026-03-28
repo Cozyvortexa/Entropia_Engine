@@ -3,6 +3,7 @@
 #include "Render/Shader.h"
 
 struct Material {
+	Material() = default;
 	Material(Shader shader) {
 		this->shader = shader;
 	}

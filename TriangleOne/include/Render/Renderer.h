@@ -3,6 +3,8 @@
 #include <glad/glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <algorithm>
+
 #include "Render/Texture.h"
 #include "Render/Shader.h"
 #include "Render/Material.h"

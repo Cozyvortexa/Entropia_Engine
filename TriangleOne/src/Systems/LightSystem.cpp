@@ -502,7 +502,7 @@ void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* r
 	View view = world->view<MeshHandle, Transform, MaterialHandle>();  // Temporary view, gonna be SSBO in the futur 
 	view.each([&](int entity, MeshHandle& meshHandle, Transform& transform, MaterialHandle& materialHandle) {
 		if (meshHandle.castShadow) {
-			Shader currentShader = world->assetStore->Get_Material(materialHandle.index).shader;
+			Shader currentShader = world->assetStore->Get_Material(materialHandle.index)->shader;
 			currentShader.Use();
 			// --- TEXTURE UNIT MANAGEMENT ---
 

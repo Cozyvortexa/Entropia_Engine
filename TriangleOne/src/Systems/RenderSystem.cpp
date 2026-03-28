@@ -92,7 +92,7 @@ void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 	View view = world.view<MeshHandle, Transform, MaterialHandle>();
 	view.each([&](int entity, MeshHandle& meshHandle, Transform& transform, MaterialHandle& materialHandle) {
 		if (meshHandle.haveToBeDraw) {
-			Shader currentShader = world.assetStore->Get_Material(materialHandle.index).shader;
+			Shader currentShader = world.assetStore->Get_Material(materialHandle.index)->shader;
 			Mesh currentMesh = world.assetStore->Get_Mesh(meshHandle.index);
 
 

@@ -113,7 +113,7 @@ SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh
 
 
 		if (is_Inserted) {  // Create a new material if the key don't exist
-			Material material(Get_Material(0).shader);  // Material at index 0 corresponds to the default mat who has all default value
+			Material material(Get_Material(0)->shader);  // Material at index 0 corresponds to the default mat who has all default value
 			material.diffuse_Text_Handle = diffuseMap_handle;
 			material.specular_Text_Handle = specularMap_handle;
 			material.normal_Text_Handle = normalMap_handle;
@@ -232,12 +232,12 @@ Material& AssetStore::Get_Material(std::string name) {
 	return materials[index];
 }
 
-Material& AssetStore::Get_Material(unsigned int index) {  // Dedicate to the Systemes
+Material* AssetStore::Get_Material(unsigned int index) {  // Dedicate to the Systemes
 	if (index >= materials.size()) {  // Index out of range in Get_Material(int index)
-		return materials[0];
+		return &materials[0];
 	}
 
-	return materials[index];
+	return &materials[index];
 }
 Texture* AssetStore::Get_Texture(unsigned int index) {  // Dedicate to the Systemes
 	if (index >= textures.size()) {return nullptr;} // "Index out of range in Get_textures(int index)"
