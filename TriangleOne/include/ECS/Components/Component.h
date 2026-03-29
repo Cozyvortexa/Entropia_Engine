@@ -163,6 +163,9 @@ struct RenderResource : public Resource {
 	unsigned int quadVAO;
 	unsigned int quadVBO;
 	 
+	//Parameters
+	float exposure = 1.0f; // HDR exposure
+
 	float quadVertices[24] = {
 		// Position      // Text
 		-1.0f,  1.0f,     0.0f, 1.0f,

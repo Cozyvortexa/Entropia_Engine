@@ -12,7 +12,8 @@ void RenderSystem::DrawTextureOnScreen(WindowResource* windowData, RenderResourc
 
 	renderData->postProcessShader->Use();
 	glBindVertexArray(renderData->quadVAO);
-
+	//Parameters
+	renderData->postProcessShader->setFloat("exposure", renderData->exposure);
 	glDisable(GL_DEPTH_TEST);
 	glBindTexture(GL_TEXTURE_2D, renderData->screenTexture);
 

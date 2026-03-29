@@ -131,8 +131,7 @@ void main()
 
 
 	vec3 lighting = final_lightning * vec3(finalDiffuse);
-
-	//Correction gamma
+	
 	FragColor = vec4(lighting, 1.0);
 
 	//FragColor = vec4(lighting, 1.0);
