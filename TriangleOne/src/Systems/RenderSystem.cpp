@@ -3,18 +3,21 @@
 
 void RenderSystem::DrawTextureOnScreen(WindowResource* windowData, RenderResource* renderData) {
 
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData->framebuffer);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData->intermediateFBO);
+	glBlitFramebuffer(0, 0, windowData->WIDTH, windowData->HEIGHT, 0, 0, windowData->WIDTH, windowData->HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
 	renderData->postProcessShader->Use();
 	glBindVertexArray(renderData->quadVAO);
 
 	glDisable(GL_DEPTH_TEST);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtOutput);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput);
+	glBindTexture(GL_TEXTURE_2D, renderData->screenTexture);
+
+	//glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-
-
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData->framebuffer);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBlitFramebuffer(0, 0, windowData->WIDTH, windowData->HEIGHT, 0, 0, windowData->WIDTH, windowData->HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
@@ -71,6 +74,26 @@ void RenderSystem::InitQuadVao(WindowResource* windowData, RenderResource* rende
 	glBindVertexArray(0);
 }
 
+void RenderSystem::InitIntermediateFBO(WindowResource* windowData, RenderResource* renderData) {
+	//Init Intermediate FBO, To resolve the MSAA
+	glGenFramebuffers(1, &renderData->intermediateFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->intermediateFBO);
+
+	glGenTextures(1, &renderData->screenTexture);
+	glBindTexture(GL_TEXTURE_2D, renderData->screenTexture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData->screenTexture, 0);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "The intermediate FBO initialisation has failed" << std::endl;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData) {
 	glBindFramebuffer(GL_FRAMEBUFFER, resourceBuffer->renderResource->framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -109,6 +132,7 @@ void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 			world.renderer->DrawMesh(currentMesh);
 		}
 	});
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
@@ -191,49 +215,13 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	world.add_components(backpack, backPackTransform, sceneTag, materialHandle, backpackModeleHandle);
 
 
-
 	glEnable(GL_MULTISAMPLE);
-
 	glEnable(GL_DEPTH_TEST);
 
 
-
-
-	////DirLight   	//	DirLight(glm::vec3 _position, glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, std::shared_ptr<Shader> _depthShader)
-	//Entity* entityLight = currentScene->CreateNewEntity();
-	//entityLight->AddComponent<Transform>();
-	//entityLight->AddComponent<DirLight>(glm::vec3(0.002f, 0.002f, 0.002f), diffuse, specular, worldLightDir, depthShader, intensity);
-
-	//float pointLightrange = 8.0f;
-
-
-	////PointLight
-	//Entity* entityPointLight = currentScene->CreateNewEntity();
-	//entityPointLight->AddComponent<Transform>()->position = glm::vec3(1.0f, 3.0f, 0.0f);
-	//entityPointLight->AddComponent<PointLight>(ambient, diffuse, specular, pointLightrange, depthShaderCubeMap, 5.0f);
-
-	////SpotLight
-	//float cutOff = 15.5f;
-	//float outerCutOff = 25.5f;
-	//Entity* entitySpotLight = currentScene->CreateNewEntity();
-	//entitySpotLight->AddComponent<Transform>()->position = glm::vec3(0.0f, 4.0f, -6.0f);
-	//entitySpotLight->AddComponent<SpotLight>(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, depthShader, 10.0f);  // shader identique a celui de la dirLight
-
-	//Entity* cubeTest = currentScene->CreateNewEntity();
-	//cubeTest->AddComponent<Transform>()->position = glm::vec3(4.0f, 0.0f, 0.0f);
-	//cubeTest->AddComponent<Sub_MeshComponent>("Assets/ImpScene/BasicCube.glb", mainShader);
-
-
-
-	//	SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, float newIntensity)
-	//	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _constant, float _linear, float _quadratique, std::shared_ptr<Shader> _depthShaderCubeMap) 
-
-
-	//dirLight = new Light(glm::vec3(0), worldLightDir, ambient, diffuse, specular);
-
 	InitMainFrameBuffer(windowData, renderData);
+	InitIntermediateFBO(windowData, renderData);
 	InitQuadVao(windowData, renderData);
-	//InitSkyBox();
 }
 
 void RenderSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
@@ -245,14 +233,8 @@ void RenderSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 	RenderScene(world, resourceBuffer, windowData);
 
 
-	//DrawSkyBox(projection);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
-
 	DrawTextureOnScreen(windowData, renderData);
 
-	// A deplacer dans un input manager
-	//mainCamera->ProcessInput(windowRessource->window);
 	
 	glfwSwapBuffers(windowData->window);
 	glfwPollEvents();

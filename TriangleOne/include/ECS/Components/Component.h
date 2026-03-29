@@ -147,6 +147,10 @@ struct RenderResource : public Resource {
 	GLuint finalTxtColorOutput;
 	GLuint finalTxtOutput;
 
+	//Intermediate
+	unsigned int intermediateFBO;
+	unsigned int screenTexture;
+
 	//Shadow
 	unsigned int dummyDepthMap2D = 0;
 	unsigned int dummyDepthCubeMap = 0;
