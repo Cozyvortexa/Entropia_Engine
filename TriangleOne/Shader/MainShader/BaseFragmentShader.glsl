@@ -1,4 +1,8 @@
 #version 430 core
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 BrightColor;
+
+
 struct Material {
 	sampler2D diffuseText;
 	sampler2D specularText;
@@ -85,7 +89,8 @@ in vec3 normal;
 in vec2 TexCoords;
 in vec4 FragPosLightSpace;
 
-out vec4 FragColor;
+
+
 
 in mat3 TBN;
 
@@ -134,8 +139,13 @@ void main()
 	
 	FragColor = vec4(lighting, 1.0);
 
-	//FragColor = vec4(lighting, 1.0);
-	//FragColor = vec4(vec3(ShadowPointLight(pointLights[0], norm)), 1.0);
+	//Bloom
+	float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+	if(brightness > 1.0)
+		BrightColor = vec4(FragColor.rgb, 1.0);
+	else
+		BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
+
 }
 
 

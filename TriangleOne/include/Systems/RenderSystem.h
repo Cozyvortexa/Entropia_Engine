@@ -27,10 +27,12 @@
 class RenderSystem : public System {
 public:
 	void DrawTextureOnScreen(WindowResource* windowData, RenderResource* renderData);
+	void DrawBlurEffect(RenderResource* renderData);
 
 	void InitQuadVao(WindowResource* windowData, RenderResource* renderData);
 	void InitMainFrameBuffer(WindowResource* windowData, RenderResource* renderData);
 	void InitIntermediateFBO(WindowResource* windowData, RenderResource* renderData);
+	void InitBloomFBO(WindowResource* windowData, RenderResource* renderData);
 
 	//void InitSkyBox();
 	//void DrawSkyBox(glm::mat4 projectionMatrix);

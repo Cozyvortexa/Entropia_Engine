@@ -138,13 +138,14 @@ struct RenderResource : public Resource {
 	std::unique_ptr<Shader> depthShader = nullptr;
 	std::unique_ptr<Shader> depthShaderCubeMap = nullptr;
 	std::unique_ptr<Shader> postProcessShader = nullptr;
+	std::unique_ptr<Shader> bloomShader = nullptr;
 
 	glm::mat4 _model = glm::mat4(1.0f);
 
 	int sample = 4;
 
 	unsigned int framebuffer;
-	GLuint finalTxtColorOutput;
+	GLuint finalTxtColorOutput[2];
 	GLuint finalTxtOutput;
 
 	//Intermediate
@@ -162,9 +163,18 @@ struct RenderResource : public Resource {
 	//Final render
 	unsigned int quadVAO;
 	unsigned int quadVBO;
-	 
-	//Parameters
+	//Bloom
+	unsigned int pingpongFBO[2];
+	unsigned int pingpongBuffers[2];
+	bool horizontal = true;
+	unsigned int bloomTextureResolved;
+
+	////////////////Parameters
 	float exposure = 1.0f; // HDR exposure
+
+	//Bloom
+	bool bloomEnable = true;
+	int bloom_iteration = 10;
 
 	float quadVertices[24] = {
 		// Position      // Text

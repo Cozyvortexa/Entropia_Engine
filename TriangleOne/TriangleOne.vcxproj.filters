@@ -138,5 +138,7 @@
     <None Include="Shader\LightShader\ShadowMapping\ShadowCubeVertex.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\ShadowCubeFrag.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\ShadowCubeGeometry.glsl" />
+    <None Include="Shader\BloomShader\FragmentBloom.glsl" />
+    <None Include="Shader\BloomShader\VertexBloom.glsl" />
   </ItemGroup>
 </Project>

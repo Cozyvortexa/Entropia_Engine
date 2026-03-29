@@ -176,6 +176,8 @@
     <ClInclude Include="include\ECS\World.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shader\BloomShader\FragmentBloom.glsl" />
+    <None Include="Shader\BloomShader\VertexBloom.glsl" />
     <None Include="Shader\MainShader\BaseFragmentShader.glsl" />
     <None Include="Shader\MainShader\BaseVertexShader.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\DepthMapFrag.glsl" />
