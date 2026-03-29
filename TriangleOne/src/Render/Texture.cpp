@@ -81,7 +81,7 @@ unsigned int TextureClass::LoadCubeMapFromFile(std::vector<std::string> faces)
 	return textureID;
 }
 
-unsigned int TextureClass::LoadEmbeddedTexture(aiTexture* tex) {
+unsigned int TextureClass::LoadEmbeddedTexture(const aiTexture* tex) {
 	unsigned int textureID;
 	int width, height, nrChannels;
 

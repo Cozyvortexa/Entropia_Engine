@@ -58,7 +58,7 @@ struct CameraComponent : public Component {
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	float nearPlane = 0.1f;
-	float farPlane = 100.0f;
+	float farPlane = 200.0f;
 
 	float zoom = 45.0f;  // valeur de zoom par default 
 	//Rotation

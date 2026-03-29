@@ -12,7 +12,7 @@ class TextureClass {
 public:
 	static unsigned int LoadTextureFromFile(std::string path, std::string directory);
 
-	static unsigned int LoadEmbeddedTexture(aiTexture* tex);
+	static unsigned int LoadEmbeddedTexture(const aiTexture* tex);
 
 	static unsigned int LoadCubeMapFromFile(std::vector<std::string> faces);
 };

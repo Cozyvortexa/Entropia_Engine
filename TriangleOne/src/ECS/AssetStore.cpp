@@ -3,7 +3,8 @@
 Mesh AssetStore::LoadMesh(std::string path) {
 	Mesh mesh = Mesh();
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_GenSmoothNormals);
+	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | 
+		aiProcess_CalcTangentSpace | aiProcess_GlobalScale | aiProcess_PreTransformVertices | aiProcess_GenSmoothNormals);  // WARNING, the flag aiProcess_PreTransformVertices removes the node hierarchy, thereby preventing animations from working 
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
@@ -38,6 +39,7 @@ void AssetStore::ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMe
 SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& currentMesh)
 {
 	std::vector<Vertex> vertices;
+	vertices.reserve(sub_Mesh->mNumVertices);
 	std::vector<unsigned int> indices;
 	for (unsigned int i = 0; i < sub_Mesh->mNumVertices; i++)
 	{
@@ -146,11 +148,9 @@ unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType typ
 
 	if (is_Inserted) { // Create a new texture if the key don't exist
 		Texture texture;
-
-		if (str.C_Str()[0] == '*') {  // texture embarquer detecter
-			int texIndex = atoi(str.C_Str() + 1);
-			aiTexture* EmbeddedTex = scene->mTextures[texIndex];
-			texture.id = TextureClass::LoadEmbeddedTexture(EmbeddedTex);
+		const aiTexture* embeddedTex = scene->GetEmbeddedTexture(str.C_Str());
+		if (embeddedTex) {  // texture embarquer detecter
+			texture.id = TextureClass::LoadEmbeddedTexture(embeddedTex);
 		}
 		else
 			texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), currentMesh.directory);

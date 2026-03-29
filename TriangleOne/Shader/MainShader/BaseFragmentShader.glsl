@@ -135,7 +135,7 @@ void main()
 	//Correction gamma
 	float gamma = 2.2;
 	vec3 mapped = lighting / (lighting + vec3(1.0));
-	mapped = pow(mapped, vec3(1.0 / 2.2));
+	mapped = pow(mapped, vec3(1.0 / gamma));
 	FragColor = vec4(mapped, 1.0);
 
 	//FragColor = vec4(lighting, 1.0);
