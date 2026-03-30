@@ -51,6 +51,10 @@ void RenderSystem::DrawBlurEffect(RenderResource* renderData) {
 	bool first_iteration = true;
 	int amount = renderData->bloom_iteration;
 
+	//float noir[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[0], noir);
+	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[1], noir);
+
 	renderData->bloomShader->Use();
 	glBindVertexArray(renderData->quadVAO);
 	glDisable(GL_DEPTH_TEST);
@@ -71,6 +75,8 @@ void RenderSystem::DrawBlurEffect(RenderResource* renderData) {
 	glBindVertexArray(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+
+#pragma region Init
 
 void RenderSystem::InitMainFrameBuffer(WindowResource* windowData, RenderResource* renderData) {
 	///////////////////Init fbo
@@ -103,7 +109,7 @@ void RenderSystem::InitMainFrameBuffer(WindowResource* windowData, RenderResourc
 
 	//////////////////Assert
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout <<" The main frame buffer initialisation has failed " << std::endl;
+		std::cout << " The main frame buffer initialisation has failed " << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 }
@@ -176,6 +182,41 @@ void RenderSystem::InitBloomFBO(WindowResource* windowData, RenderResource* rend
 	}
 }
 
+void RenderSystem::InitGBuffer(WindowResource* windowData, RenderResource* renderData) {
+	glGenFramebuffers(1, &renderData->gBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->gBuffer);
+
+	glGenTextures(1, &renderData->gPosition);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gPosition);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, renderData->gPosition, 0);
+
+
+	glGenTextures(1, &renderData->gNormal);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gNormal);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D_MULTISAMPLE, renderData->gNormal, 0);
+
+
+	glGenTextures(1, &renderData->gAlbedo);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gAlbedo);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D_MULTISAMPLE, renderData->gAlbedo, 0);
+
+	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, attachments);
+
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "gBuffer initialisation has failed" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+#pragma endregion
+
 void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData) {
 	glBindFramebuffer(GL_FRAMEBUFFER, resourceBuffer->renderResource->framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -231,6 +272,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	renderData->depthShaderCubeMap = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 	renderData->postProcessShader = std::make_unique<Shader>("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
 	renderData->bloomShader = std::make_unique<Shader>("TriangleOne/Shader/BloomShader/VertexBloom.glsl", "TriangleOne/Shader/BloomShader/FragmentBloom.glsl");
+	renderData->lightningPass_Shader = std::make_unique<Shader>("TriangleOne/Shader/Lighting_Pass/Vertex_LightningPass_Shader.glsl", "TriangleOne/Shader/Lighting_Pass/Fragment_LightningPass_Shader.glsl");
 
 	//Create the main cam  // TEMP / WARNING
 	Entity camEntity = world.Register();
@@ -290,12 +332,12 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	/////////////////////////////////////
 
-	Entity backpack = world.Register();
-	Transform backPackTransform(glm::vec3(10.0f, 3.0f, 2.0f));
-	std::pair<Mesh&, int> backpackValue = world.assetStore->Get_Mesh("Assets/backpack/backpack.obj");
-	MeshHandle backpackModeleHandle(backpackValue.second);
+	//Entity backpack = world.Register();
+	//Transform backPackTransform(glm::vec3(10.0f, 3.0f, 2.0f));
+	//std::pair<Mesh&, int> backpackValue = world.assetStore->Get_Mesh("Assets/backpack/backpack.obj");
+	//MeshHandle backpackModeleHandle(backpackValue.second);
 
-	world.add_components(backpack, backPackTransform, sceneTag, materialHandle, backpackModeleHandle);
+	//world.add_components(backpack, backPackTransform, sceneTag, materialHandle, backpackModeleHandle);
 
 
 	glEnable(GL_MULTISAMPLE);

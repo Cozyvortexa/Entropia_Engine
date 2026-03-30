@@ -139,6 +139,7 @@ struct RenderResource : public Resource {
 	std::unique_ptr<Shader> depthShaderCubeMap = nullptr;
 	std::unique_ptr<Shader> postProcessShader = nullptr;
 	std::unique_ptr<Shader> bloomShader = nullptr;
+	std::unique_ptr<Shader> lightningPass_Shader = nullptr;
 
 	glm::mat4 _model = glm::mat4(1.0f);
 
@@ -155,6 +156,12 @@ struct RenderResource : public Resource {
 	//Shadow
 	unsigned int dummyDepthMap2D = 0;
 	unsigned int dummyDepthCubeMap = 0;
+
+	//Deffered
+	unsigned int gBuffer;
+	unsigned int gPosition;
+	unsigned int gNormal;
+	unsigned int gAlbedo;
 
 	//Light SSBO
 	std::vector<size_t> lightSSBO_Data_Size;

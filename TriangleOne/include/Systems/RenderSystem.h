@@ -33,6 +33,7 @@ public:
 	void InitMainFrameBuffer(WindowResource* windowData, RenderResource* renderData);
 	void InitIntermediateFBO(WindowResource* windowData, RenderResource* renderData);
 	void InitBloomFBO(WindowResource* windowData, RenderResource* renderData);
+	void InitGBuffer(WindowResource* windowData, RenderResource* renderData);
 
 	//void InitSkyBox();
 	//void DrawSkyBox(glm::mat4 projectionMatrix);

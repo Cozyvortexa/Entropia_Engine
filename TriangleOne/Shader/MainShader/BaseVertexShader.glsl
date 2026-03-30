@@ -15,7 +15,6 @@ uniform mat4 lightSpaceMatrix;
 out vec3 FragPos;
 out vec3 normal;
 out vec2 TexCoords;
-out vec4 FragPosLightSpace;
 out mat3 TBN;
 
 void main()
@@ -32,6 +31,5 @@ void main()
 
 	TBN = mat3(T, B, N);
 
-	FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 	gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
