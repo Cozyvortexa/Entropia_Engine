@@ -35,6 +35,8 @@ public:
 	void InitBloomFBO(WindowResource* windowData, RenderResource* renderData);
 	void InitGBuffer(WindowResource* windowData, RenderResource* renderData);
 
+	std::pair<unsigned int, unsigned int> CreateDummyShadowTextures();
+
 	//void InitSkyBox();
 	//void DrawSkyBox(glm::mat4 projectionMatrix);
 

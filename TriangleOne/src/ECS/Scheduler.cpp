@@ -19,8 +19,8 @@ Scheduler::~Scheduler() {};
 void Scheduler::CreateSystemes() {
 	systemes.push_back(std::make_unique<TimeSystem>());
 	systemes.push_back(std::make_unique<CameraSystem>());
-	systemes.push_back(std::make_unique<LightSystem>());
 	systemes.push_back(std::make_unique<RenderSystem>());
+	systemes.push_back(std::make_unique<LightSystem>());
 
 	std::cout << "CreateSystemes done" << std::endl;;
 }

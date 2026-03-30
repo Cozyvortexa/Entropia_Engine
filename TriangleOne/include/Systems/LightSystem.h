@@ -15,6 +15,9 @@
 #define MAX_POINT_LIGHT 8
 #define MAX_SPOT_LIGHT 8
 
+#define LIGHT_BINDING_POINT 1
+#define SHADOW_BINDING_POINT 2
+
 #pragma region Padding_Structures
 struct Padding_DirLight {  // To be identical to the memory alignment of structs in shaders, SSBO
 	alignas(16) glm::vec3 direction;
@@ -73,13 +76,13 @@ class LightSystem : public System {
 	 void Update(World& world, const ResourceBuffer* resourceBuffer) override;
 
 	 void InitLightSSBO(World& world, const ResourceBuffer* renderResource);
+	 void LightningPass(World* world, RenderResource* renderResource);
 #pragma region Init shadow buffer 
 	 void InitShadowMap(DirLight* currentLight);
 	 void InitCubeMap(PointLight* currentLight);
 	 void InitSpotShadowMap(SpotLight* currentLight);
 	 void InitShadowBuffer(World& world);
 
-	 std::pair<unsigned int, unsigned int> CreateDummyShadowTextures();
 #pragma endregion
 
 #pragma region Draw Shadow
@@ -93,7 +96,7 @@ private:
 
 	void UpdateLight(World* world, RenderResource* renderResource, All_Light& lights);
 
-	void SendDepthMapToMainShader(World* world, const ResourceBuffer* resourceBuffer, All_Light* lights); // Temp
+	void SendDepthMapToLightningShader(World* world, const RenderResource* renderResource, const ResourceBuffer* resourceBuffer, All_Light* lights); // Temp
 
 	glm::vec3 Calc_SpotLightDirection(glm::mat4 transformModel, glm::vec3 lightDirection);
 };

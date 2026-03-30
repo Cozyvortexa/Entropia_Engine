@@ -3,7 +3,7 @@
 
 void RenderSystem::DrawTextureOnScreen(WindowResource* windowData, RenderResource* renderData) {
 
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData->framebuffer);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData->gBuffer);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData->intermediateFBO);
 
 	//Color image
@@ -77,6 +77,44 @@ void RenderSystem::DrawBlurEffect(RenderResource* renderData) {
 }
 
 #pragma region Init
+
+std::pair<unsigned int, unsigned int> RenderSystem::CreateDummyShadowTextures() {
+	unsigned int dummyDepthMap2D = 0;
+	unsigned int dummyDepthCubeMap = 0;
+
+	glGenTextures(1, &dummyDepthMap2D);
+	glBindTexture(GL_TEXTURE_2D, dummyDepthMap2D);
+
+	// Create a 1x1 depth texture
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, 1, 1, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	// CRITICAL: These parameters satisfy the shadow sampler!
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+
+	// --- 2. Dummy CubeMap Depth Texture (for inactive Point lights) ---
+	glGenFramebuffers(1, &dummyDepthCubeMap);
+	glGenTextures(1, &dummyDepthCubeMap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, dummyDepthCubeMap);
+
+	for (int i = 0; i < 6; ++i) {
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT32F, 1, 1, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+
+	return std::make_pair(dummyDepthMap2D, dummyDepthCubeMap);
+}
 
 void RenderSystem::InitMainFrameBuffer(WindowResource* windowData, RenderResource* renderData) {
 	///////////////////Init fbo
@@ -188,21 +226,21 @@ void RenderSystem::InitGBuffer(WindowResource* windowData, RenderResource* rende
 
 	glGenTextures(1, &renderData->gPosition);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gPosition);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, renderData->gPosition, 0);
 
 
 	glGenTextures(1, &renderData->gNormal);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gNormal);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D_MULTISAMPLE, renderData->gNormal, 0);
 
 
 	glGenTextures(1, &renderData->gAlbedo);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gAlbedo);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D_MULTISAMPLE, renderData->gAlbedo, 0);
 
@@ -218,7 +256,7 @@ void RenderSystem::InitGBuffer(WindowResource* windowData, RenderResource* rende
 #pragma endregion
 
 void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData) {
-	glBindFramebuffer(GL_FRAMEBUFFER, resourceBuffer->renderResource->framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, resourceBuffer->renderResource->gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	/////////////////////Camera
 	Entity entityCam = resourceBuffer->activeCamera->cameraID;
@@ -248,7 +286,7 @@ void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 			currentShader.setMatrix("view", mainCamera->viewMatrice);
 			currentShader.setMatrix("projection", projection);
 			currentShader.setFloat("far_plane", mainCamera->farPlane);
-			currentShader.setVec3("viewPos", transformMainCamera->position);
+			//currentShader.setVec3("viewPos", transformMainCamera->position);
 
 
 			currentShader.setMatrix("model", transform.GetTransformModel());
@@ -267,7 +305,19 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 		abort();
 	}
 
-	// Main shader is created in the init of the lightSystem 
+	Shader::CreateDefaultWhiteTexture();
+	Shader::CreateNeutralNormalText();
+
+	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
+	defaultMat.first.diffuse_Text_Handle = Shader::GetDefaultText();
+	defaultMat.first.normal_Text_Handle = Shader::GetNeutralNormalText();
+	defaultMat.first.specular_Text_Handle = -1;
+	renderData->mainMaterialHandle = defaultMat.second;
+
+	std::pair<unsigned  int, unsigned int> shadowDummy = CreateDummyShadowTextures();
+	renderData->dummyDepthMap2D = shadowDummy.first;
+	renderData->dummyDepthCubeMap = shadowDummy.second;
+
 	renderData->depthShader = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
 	renderData->depthShaderCubeMap = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
 	renderData->postProcessShader = std::make_unique<Shader>("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
@@ -348,6 +398,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	InitIntermediateFBO(windowData, renderData);
 	InitBloomFBO(windowData, renderData);
 	InitQuadVao(windowData, renderData);
+	InitGBuffer(windowData, renderData);
 }
 
 void RenderSystem::Update(World& world, const ResourceBuffer* resourceBuffer)

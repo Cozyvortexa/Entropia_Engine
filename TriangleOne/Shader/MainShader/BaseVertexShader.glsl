@@ -10,8 +10,6 @@ uniform mat4 view;
 uniform mat4 projection;
 
 
-uniform mat4 lightSpaceMatrix;
-
 out vec3 FragPos;
 out vec3 normal;
 out vec2 TexCoords;

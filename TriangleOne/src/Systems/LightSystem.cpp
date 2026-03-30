@@ -1,53 +1,7 @@
   #include "Systems/LightSystem.h"
 
-void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
-	static_assert(sizeof(Padding_DirLight) == 64, "Invalide alignement");
-	static_assert(alignof(Padding_DirLight) == 16);
-
-	//static_assert(sizeof(Padding_PointLight) == 80, "Invalide alignement");
-	//static_assert(alignof(Padding_PointLight) == 16);
-
-	static_assert(sizeof(Padding_SpotLight) == 96, "Invalide alignement");
-	static_assert(alignof(Padding_SpotLight) == 16);
-
-	RenderResource* renderRessource = resourceBuffer->renderResource;
-
-	Shader::CreateDefaultWhiteTexture();
-	Shader::CreateNeutralNormalText();
-	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
-	defaultMat.first.diffuse_Text_Handle = Shader::GetDefaultText();
-	defaultMat.first.normal_Text_Handle = Shader::GetNeutralNormalText();
-	defaultMat.first.specular_Text_Handle = -1;
-	renderRessource->mainMaterialHandle = defaultMat.second;
-
-	InitLightSSBO(world, resourceBuffer);
-
-	std::pair<unsigned  int, unsigned int> shadowDummy = CreateDummyShadowTextures();
-	renderRessource->dummyDepthMap2D = shadowDummy.first;
-	renderRessource->dummyDepthCubeMap = shadowDummy.second;
-}
-
-void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
-	InitShadowBuffer(world);
-
-	RenderResource* renderResource = world.get_ressource<RenderResource>();
-	WindowResource* windowResource = world.get_ressource<WindowResource>();
-	Entity entityCam = resourceBuffer->activeCamera->cameraID;
-	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);
-
-
-
-	All_Light* lights = DataCollector(&world, windowResource, mainCamera);
-
-	ShadowPass(&world, renderResource, windowResource, lights);
-	UpdateLight(&world, renderResource, *lights);
-	SendDepthMapToMainShader(&world, resourceBuffer, lights);
-	
-
-	delete lights;  // WARNING, in case for some misc reason lights is delete before all values are copy in the gpu
-}
-
 #pragma region Init shadow buffer 
+
 void LightSystem::InitShadowMap(DirLight* currentLight) {
 	glGenFramebuffers(1, &currentLight->depthMapFBO);
 	
@@ -178,44 +132,6 @@ void LightSystem::InitShadowBuffer(World& world) {
 	for (int entity : to_remove) {
 		world.remove_component<LightToInitTag>(entity);
 	}
-}
-
-std::pair<unsigned int, unsigned int> LightSystem::CreateDummyShadowTextures() {
-	unsigned int dummyDepthMap2D = 0;
-	unsigned int dummyDepthCubeMap = 0;
-
-	glGenTextures(1, &dummyDepthMap2D);
-	glBindTexture(GL_TEXTURE_2D, dummyDepthMap2D);
-
-	// Create a 1x1 depth texture
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, 1, 1, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-	// CRITICAL: These parameters satisfy the shadow sampler!
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-
-	// --- 2. Dummy CubeMap Depth Texture (for inactive Point lights) ---
-	glGenFramebuffers(1, &dummyDepthCubeMap);
-	glGenTextures(1, &dummyDepthCubeMap);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, dummyDepthCubeMap);
-
-	for (int i = 0; i < 6; ++i) {
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT32F, 1, 1, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	}
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-
-	return std::make_pair(dummyDepthMap2D, dummyDepthCubeMap);
 }
 
 #pragma endregion 
@@ -353,6 +269,27 @@ void LightSystem::ShadowPass(World* world, RenderResource* renderResource, Windo
 #pragma endregion
 
 #pragma region Light
+
+void LightSystem::InitLightSSBO(World& world, const ResourceBuffer* resourceBuffer) {
+	int uniform_Light_Binding_Point = 1;
+	RenderResource* renderResource = resourceBuffer->renderResource;
+
+	glGenBuffers(1, &renderResource->light_SSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, renderResource->light_SSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Padding_DirLight) + MAX_POINT_LIGHT * sizeof(Padding_PointLight) + MAX_SPOT_LIGHT * sizeof(Padding_SpotLight) + sizeof(int) * 2, NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	// BINDING SSBO slot 1, light
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, uniform_Light_Binding_Point, renderResource->light_SSBO, 0, sizeof(Padding_DirLight) + MAX_POINT_LIGHT * sizeof(Padding_PointLight) + MAX_SPOT_LIGHT * sizeof(Padding_SpotLight) + sizeof(int) * 2);
+
+	renderResource->lightSSBO_Data_Size.push_back(sizeof(Padding_DirLight));
+	renderResource->lightSSBO_Data_Size.push_back(MAX_POINT_LIGHT * sizeof(Padding_PointLight));
+	renderResource->lightSSBO_Data_Size.push_back(MAX_SPOT_LIGHT * sizeof(Padding_SpotLight));
+}
+
+glm::vec3 LightSystem::Calc_SpotLightDirection(glm::mat4 transformModel, glm::vec3 lightDirection) {
+	return glm::normalize(glm::vec3(transformModel * glm::vec4(lightDirection, 0.0f)));
+}
+
 void LightSystem::UpdateLight(World* world, RenderResource* renderResource, All_Light& lights) {
 	for (auto& spotLight : lights.spotLights) {  // This value need to be calculate at the last minute
 		spotLight.cutOff = glm::cos(glm::radians(spotLight.cutOff));
@@ -384,11 +321,6 @@ void LightSystem::UpdateLight(World* world, RenderResource* renderResource, All_
 
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-}
-
-
-glm::vec3 LightSystem::Calc_SpotLightDirection(glm::mat4 transformModel, glm::vec3 lightDirection) {
-	return glm::normalize(glm::vec3(transformModel * glm::vec4(lightDirection, 0.0f)));
 }
 
 All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResource, CameraComponent* mainCamera) {
@@ -491,114 +423,131 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 	return lights;
 }
 
+void LightSystem::LightningPass(World* world, RenderResource* renderResource) {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	renderResource->lightningPass_Shader->Use();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gPosition);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gNormal);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gAlbedo);
+}
 
 #pragma endregion
 
-void LightSystem::SendDepthMapToMainShader(World* world, const ResourceBuffer* resourceBuffer, All_Light* lights) {  // Temp
+void LightSystem::SendDepthMapToLightningShader(World* world, const RenderResource* renderResource, const ResourceBuffer* resourceBuffer, All_Light* lights) {
 	if (lights->pointLights_DepthMap.size() >= MAX_POINT_LIGHT) std::cout << "Max pointLight number reach" << std::endl; 
 	if (lights->spotLights_DepthMap.size() >= MAX_SPOT_LIGHT) std::cout << "Max spotLight number reach" << std::endl;  
 
- 
-	View view = world->view<MeshHandle, Transform, MaterialHandle>();  // Temporary view, gonna be SSBO in the futur 
-	view.each([&](int entity, MeshHandle& meshHandle, Transform& transform, MaterialHandle& materialHandle) {
-		if (meshHandle.castShadow) {
-			Shader currentShader = world->assetStore->Get_Material(materialHandle.index)->shader;
-			currentShader.Use();
-			// --- TEXTURE UNIT MANAGEMENT ---
 
-			const int SLOT_SHADOW_DIR = 16;
-			const int SLOT_SHADOW_POINT_START = 17;
-			const int SLOT_SHADOW_SPOT_START = 25;
+	Shader* currentShader = renderResource->lightningPass_Shader.get();
+	currentShader->Use();
+	// --- TEXTURE UNIT MANAGEMENT ---
 
-			// --- 2. GESTION LUMIERE DIRECTIONNELLE (Shadow Map 2D) ---
-			currentShader.setInt("shadowMap", SLOT_SHADOW_DIR);
+	const int SLOT_SHADOW_DIR = 16;
+	const int SLOT_SHADOW_POINT_START = 17;
+	const int SLOT_SHADOW_SPOT_START = 25;
 
-			glActiveTexture(GL_TEXTURE0 + SLOT_SHADOW_DIR);
-			if (lights->dirLight_DepthMap != 0) {  // WARNING, do a better check if the sun existe
-				glBindTexture(GL_TEXTURE_2D, lights->dirLight_DepthMap); 
-				currentShader.setMatrix("lightSpaceMatrix", lights->dirLight_Matrice);
-			}
-			else {
-				glBindTexture(GL_TEXTURE_2D, resourceBuffer->renderResource->dummyDepthMap2D);
-			}
+	// --- 2. GESTION LUMIERE DIRECTIONNELLE (Shadow Map 2D) ---
+	currentShader->setInt("shadowMap", SLOT_SHADOW_DIR);
 
-			// --- 3. GESTION POINT LIGHTS (Shadow Cube Maps) ---
-			int maxPointLights = 8;
-			int activeLights = std::min((int)lights->pointLights_DepthMap.size(), maxPointLights);
+	glActiveTexture(GL_TEXTURE0 + SLOT_SHADOW_DIR);
+	if (lights->dirLight_DepthMap != 0) {  // WARNING, do a better check if the sun existe
+		glBindTexture(GL_TEXTURE_2D, lights->dirLight_DepthMap);
+		currentShader->setMatrix("lightSpaceMatrix", lights->dirLight_Matrice);
+	}
+	else {
+		glBindTexture(GL_TEXTURE_2D, resourceBuffer->renderResource->dummyDepthMap2D);
+	}
 
-			
-			//PointLight
-			for (int i = 0; i < maxPointLights; i++) {
-
-				// Construction du nom "shadowCubeMaps[0]", "shadowCubeMaps[1]"...
-				std::string uniformName = "shadowCubeMaps[" + std::to_string(i) + "]";
-
-				int currentSlot = SLOT_SHADOW_POINT_START + i;
-
-				// 1. On dit au shader : "Le sampler i doit lire dans le slot X"
-				currentShader.setInt(uniformName, currentSlot);
-
-				// 2. On active le slot X
-				glActiveTexture(GL_TEXTURE0 + currentSlot);
-
-				if (i < activeLights) {
-					glBindTexture(GL_TEXTURE_CUBE_MAP, lights->pointLights_DepthMap[i]);
-				}
-				else {
-					// Nettoyage des slots inutilisés (évite les bugs de "Sampler Type Mismatch")
-					glBindTexture(GL_TEXTURE_CUBE_MAP, resourceBuffer->renderResource->dummyDepthCubeMap);
-				}
-			}
-
-			//// Gestion Spot Light
-			int maxSpotLights = 8;
-			int activeSpotLights = std::min((int)lights->spotLights_DepthMap.size(), maxSpotLights);
-			for (int i = 0; i < maxSpotLights; i++) {
-				std::string uniformName = "shadowMapSpot[" + std::to_string(i) + "]";
-				std::string uniformNameMatrice = "spotLightMatrices[" + std::to_string(i) + "]";
-
-				int currentSlot = SLOT_SHADOW_SPOT_START + i;
-
-				currentShader.setInt(uniformName, currentSlot);
+	// --- 3. GESTION POINT LIGHTS (Shadow Cube Maps) ---
+	int maxPointLights = 8;
+	int activeLights = std::min((int)lights->pointLights_DepthMap.size(), maxPointLights);
 
 
-				glActiveTexture(GL_TEXTURE0 + currentSlot);
+	//PointLight
+	for (int i = 0; i < maxPointLights; i++) {
 
+		// Construction du nom "shadowCubeMaps[0]", "shadowCubeMaps[1]"...
+		std::string uniformName = "shadowCubeMaps[" + std::to_string(i) + "]";
 
-				if (i < activeSpotLights) {
-					currentShader.setMatrix(uniformNameMatrice, lights->spotLight_Matrice[i]);
-					glBindTexture(GL_TEXTURE_2D, lights->spotLights_DepthMap[i]);
-				}
-				else {
-					glBindTexture(GL_TEXTURE_2D, resourceBuffer->renderResource->dummyDepthMap2D);
-				}
-			}
+		int currentSlot = SLOT_SHADOW_POINT_START + i;
 
-			glActiveTexture(GL_TEXTURE0);
+		// 1. On dit au shader : "Le sampler i doit lire dans le slot X"
+		currentShader->setInt(uniformName, currentSlot);
 
-			// --- END TEXTURE MANAGEMENT ---
+		// 2. On active le slot X
+		glActiveTexture(GL_TEXTURE0 + currentSlot);
+
+		if (i < activeLights) {
+			glBindTexture(GL_TEXTURE_CUBE_MAP, lights->pointLights_DepthMap[i]);
 		}
-	});
+		else {
+			// Nettoyage des slots inutilisés (évite les bugs de "Sampler Type Mismatch")
+			glBindTexture(GL_TEXTURE_CUBE_MAP, resourceBuffer->renderResource->dummyDepthCubeMap);
+		}
+	}
+
+	//// Gestion Spot Light
+	int maxSpotLights = 8;
+	int activeSpotLights = std::min((int)lights->spotLights_DepthMap.size(), maxSpotLights);
+	for (int i = 0; i < maxSpotLights; i++) {
+		std::string uniformName = "shadowMapSpot[" + std::to_string(i) + "]";
+		std::string uniformNameMatrice = "spotLightMatrices[" + std::to_string(i) + "]";
+
+		int currentSlot = SLOT_SHADOW_SPOT_START + i;
+
+		currentShader->setInt(uniformName, currentSlot);
+
+
+		glActiveTexture(GL_TEXTURE0 + currentSlot);
+
+
+		if (i < activeSpotLights) {
+			currentShader->setMatrix(uniformNameMatrice, lights->spotLight_Matrice[i]);
+			glBindTexture(GL_TEXTURE_2D, lights->spotLights_DepthMap[i]);
+		}
+		else {
+			glBindTexture(GL_TEXTURE_2D, resourceBuffer->renderResource->dummyDepthMap2D);
+		}
+	}
+
+	glActiveTexture(GL_TEXTURE0);
+
+	// --- END TEXTURE MANAGEMENT ---
 }
 
-void LightSystem::InitLightSSBO(World& world, const ResourceBuffer* resourceBuffer) {
-	int uniform_Light_Binding_Point = 1;
-	RenderResource* renderResource = resourceBuffer->renderResource;
 
-	glGenBuffers(1, &renderResource->light_SSBO);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, renderResource->light_SSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Padding_DirLight) + MAX_POINT_LIGHT * sizeof(Padding_PointLight) + MAX_SPOT_LIGHT * sizeof(Padding_SpotLight) + sizeof(int) * 2, NULL, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-	// BINDING SSBO slot 1, light
-	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, uniform_Light_Binding_Point, renderResource->light_SSBO, 0, sizeof(Padding_DirLight) + MAX_POINT_LIGHT * sizeof(Padding_PointLight) + MAX_SPOT_LIGHT * sizeof(Padding_SpotLight) + sizeof(int)*2);
+void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
+	static_assert(sizeof(Padding_DirLight) == 64, "Invalide alignement");
+	static_assert(alignof(Padding_DirLight) == 16);
 
-	renderResource->lightSSBO_Data_Size.push_back(sizeof(Padding_DirLight));
-	renderResource->lightSSBO_Data_Size.push_back(MAX_POINT_LIGHT * sizeof(Padding_PointLight));
-	renderResource->lightSSBO_Data_Size.push_back(MAX_SPOT_LIGHT * sizeof(Padding_SpotLight));
+	//static_assert(sizeof(Padding_PointLight) == 80, "Invalide alignement");
+	//static_assert(alignof(Padding_PointLight) == 16);
+
+	static_assert(sizeof(Padding_SpotLight) == 96, "Invalide alignement");
+	static_assert(alignof(Padding_SpotLight) == 16);
+
+	InitLightSSBO(world, resourceBuffer);
+}
+
+void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
+	InitShadowBuffer(world);
+
+	RenderResource* renderResource = world.get_ressource<RenderResource>();
+	WindowResource* windowResource = world.get_ressource<WindowResource>();
+	Entity entityCam = resourceBuffer->activeCamera->cameraID;
+	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);
 
 
+	All_Light* lights = DataCollector(&world, windowResource, mainCamera);
 
-	size_t offset_End_DirLight = renderResource->lightSSBO_Data_Size[0];
-	size_t offset_End_PointLight = offset_End_DirLight + renderResource->lightSSBO_Data_Size[1];
-	size_t offset_End_SpotLight = offset_End_PointLight + renderResource->lightSSBO_Data_Size[2];
+	ShadowPass(&world, renderResource, windowResource, lights);
+	UpdateLight(&world, renderResource, *lights);
+	SendDepthMapToLightningShader(&world, renderResource, resourceBuffer, lights);
+	LightningPass(&world, renderResource);
+
+	delete lights;  // WARNING, in case for some misc reason lights is delete before all values are copy in the gpu
 }

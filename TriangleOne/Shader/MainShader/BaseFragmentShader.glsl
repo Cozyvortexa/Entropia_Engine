@@ -53,19 +53,13 @@ void main()
     gPosition = FragPos;
 
 
-    gAlbedo.rgb = texture(texture_diffuse1, TexCoords).rgb;
+    gAlbedo.rgb = finalDiffuse.rgb;
 	if (have_Specular){
-	    gAlbedo.a = texture(texture_specular1, TexCoords).r;
+	    gAlbedo.a = finalSpecular.r;
 	}
 	else {
 		gAlbedo.a = 0.0f;
 	}
-
-
-
-
-
-
 }
 
 void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular){
