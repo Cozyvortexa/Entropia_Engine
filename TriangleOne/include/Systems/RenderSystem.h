@@ -26,8 +26,7 @@
 
 class RenderSystem : public System {
 public:
-	void DrawTextureOnScreen(WindowResource* windowData, RenderResource* renderData);
-	void DrawBlurEffect(RenderResource* renderData);
+	void gBufferToResolvedBuffer(WindowResource* windowData, RenderResource* renderData);
 
 	void InitQuadVao(WindowResource* windowData, RenderResource* renderData);
 	void InitMainFrameBuffer(WindowResource* windowData, RenderResource* renderData);

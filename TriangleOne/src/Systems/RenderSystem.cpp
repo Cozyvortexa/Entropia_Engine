@@ -1,79 +1,25 @@
 #include <Systems/RenderSystem.h>
 
-
-void RenderSystem::DrawTextureOnScreen(WindowResource* windowData, RenderResource* renderData) {
+// To resolved the MSAA, write in the resolved 2D texture
+void RenderSystem::gBufferToResolvedBuffer(WindowResource* windowData, RenderResource* renderData) {
 
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData->gBuffer);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData->intermediateFBO);
 
-	//Color image
+	//Position Text
 	glReadBuffer(GL_COLOR_ATTACHMENT0);
 	glDrawBuffer(GL_COLOR_ATTACHMENT0);
 	glBlitFramebuffer(0, 0, windowData->WIDTH, windowData->HEIGHT, 0, 0, windowData->WIDTH, windowData->HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-	//Bloom texture
+	//Normal Text
 	glReadBuffer(GL_COLOR_ATTACHMENT1);
 	glDrawBuffer(GL_COLOR_ATTACHMENT1);
 	glBlitFramebuffer(0, 0, windowData->WIDTH, windowData->HEIGHT, 0, 0, windowData->WIDTH, windowData->HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-	if (renderData->bloomEnable) {
-		DrawBlurEffect(renderData);
-	}
+	//Albedo Text
+	glReadBuffer(GL_COLOR_ATTACHMENT2);
+	glDrawBuffer(GL_COLOR_ATTACHMENT2);
+	glBlitFramebuffer(0, 0, windowData->WIDTH, windowData->HEIGHT, 0, 0, windowData->WIDTH, windowData->HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-
-	//Post process
-	renderData->postProcessShader->Use();
-	glBindVertexArray(renderData->quadVAO);
-	//Parameters
-	renderData->postProcessShader->setFloat("exposure", renderData->exposure);
-	glDisable(GL_DEPTH_TEST);
-
-	//Scene image
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, renderData->screenTexture);
-	renderData->postProcessShader->setInt("scene", 0);
-
-	//Bloom image
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, renderData->pingpongBuffers[!renderData->horizontal]); // Le dernier buffer utilisé
-	renderData->postProcessShader->setInt("bloomBlur", 1);
-	renderData->postProcessShader->setBool("bloomEnable", renderData->bloomEnable);
-
-	//glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-
-	glBindVertexArray(0);
-	glEnable(GL_DEPTH_TEST);
-}
-
-void RenderSystem::DrawBlurEffect(RenderResource* renderData) {
-	bool first_iteration = true;
-	int amount = renderData->bloom_iteration;
-
-	//float noir[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[0], noir);
-	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[1], noir);
-
-	renderData->bloomShader->Use();
-	glBindVertexArray(renderData->quadVAO);
-	glDisable(GL_DEPTH_TEST);
-	for (unsigned int i = 0; i < amount; i++)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, renderData->pingpongFBO[renderData->horizontal]);
-		renderData->bloomShader->setBool("horizontal", renderData->horizontal);
-		glBindTexture(GL_TEXTURE_2D, first_iteration ? renderData->bloomTextureResolved : renderData->pingpongBuffers[!renderData->horizontal]);
-
-		//Draw
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		renderData->horizontal = !renderData->horizontal;
-		if (first_iteration)
-			first_iteration = false;
-	}
-	glEnable(GL_DEPTH_TEST);
-	glBindVertexArray(0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 }
 
 #pragma region Init
@@ -124,22 +70,34 @@ void RenderSystem::InitMainFrameBuffer(WindowResource* windowData, RenderResourc
 
 	//////////////////Init texture depth
 	glGenTextures(1, &renderData->finalTxtOutput);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtOutput);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+	glBindTexture(GL_TEXTURE_2D, renderData->finalTxtOutput);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtOutput, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, renderData->finalTxtOutput, 0);
 
 
 	//////////////////Init texture color [0] and Bloom texture [1] 
 	glGenTextures(2, renderData->finalTxtColorOutput);
 	for (unsigned int i = 0; i < 2; i++)
 	{
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput[i]);
-		glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+		glBindTexture(GL_TEXTURE_2D, renderData->finalTxtColorOutput[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput[i], 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, renderData->finalTxtColorOutput[i], 0);
 	}
 	unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
 	glDrawBuffers(2, attachments);
@@ -177,23 +135,34 @@ void RenderSystem::InitIntermediateFBO(WindowResource* windowData, RenderResourc
 	glGenFramebuffers(1, &renderData->intermediateFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->intermediateFBO);
 
-	glGenTextures(1, &renderData->screenTexture);
-	glBindTexture(GL_TEXTURE_2D, renderData->screenTexture);
-
+	//Position
+	glGenTextures(1, &renderData->gPositionResolved);
+	glBindTexture(GL_TEXTURE_2D, renderData->gPositionResolved);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData->screenTexture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData->gPositionResolved, 0);
 
-	glGenTextures(1, &renderData->bloomTextureResolved);
-	glBindTexture(GL_TEXTURE_2D, renderData->bloomTextureResolved);
+	//Normal
+	glGenTextures(1, &renderData->gNormalResolved);
+	glBindTexture(GL_TEXTURE_2D, renderData->gNormalResolved);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, renderData->bloomTextureResolved, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, renderData->gNormalResolved, 0);
 
-	unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-	glDrawBuffers(2, attachments);
+	//Albedo
+	glGenTextures(1, &renderData->gAlbedoResolved);
+	glBindTexture(GL_TEXTURE_2D, renderData->gAlbedoResolved);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, renderData->gAlbedoResolved, 0);
+
+
+
+	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 , GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, attachments);
 
 
 
@@ -254,7 +223,7 @@ void RenderSystem::InitGBuffer(WindowResource* windowData, RenderResource* rende
 }
 
 #pragma endregion
-
+// Geometry Pass
 void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData) {
 	glBindFramebuffer(GL_FRAMEBUFFER, resourceBuffer->renderResource->gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -407,14 +376,8 @@ void RenderSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 	RenderResource* renderData = resourceBuffer->renderResource;
 
 
-	RenderScene(world, resourceBuffer, windowData);
-
-
-	DrawTextureOnScreen(windowData, renderData);
-
-	
-	glfwSwapBuffers(windowData->window);
-	glfwPollEvents();
+	RenderScene(world, resourceBuffer, windowData);  
+	gBufferToResolvedBuffer(windowData, renderData);
 }
 
 void RenderSystem::Shutdown(World& world) {

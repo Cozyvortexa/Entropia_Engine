@@ -76,7 +76,15 @@ class LightSystem : public System {
 	 void Update(World& world, const ResourceBuffer* resourceBuffer) override;
 
 	 void InitLightSSBO(World& world, const ResourceBuffer* renderResource);
+
 	 void LightningPass(World* world, RenderResource* renderResource);
+
+#pragma region Draw
+	 void DrawBlurEffect(RenderResource* renderData);
+	 void Draw_FinalPass(RenderResource* renderData);
+	 void DrawQuad(RenderResource* renderData);
+#pragma endregion
+
 #pragma region Init shadow buffer 
 	 void InitShadowMap(DirLight* currentLight);
 	 void InitCubeMap(PointLight* currentLight);

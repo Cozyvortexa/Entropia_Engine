@@ -145,23 +145,27 @@ struct RenderResource : public Resource {
 
 	int sample = 4;
 
+	//Lightning
 	unsigned int framebuffer;
 	GLuint finalTxtColorOutput[2];
 	GLuint finalTxtOutput;
 
-	//Intermediate
+	////Intermediate
 	unsigned int intermediateFBO;
-	unsigned int screenTexture;
 
 	//Shadow
 	unsigned int dummyDepthMap2D = 0;
 	unsigned int dummyDepthCubeMap = 0;
 
-	//Deffered
+	////Deffered
 	unsigned int gBuffer;
 	unsigned int gPosition;
 	unsigned int gNormal;
 	unsigned int gAlbedo;
+	//Defered resolved Text
+	unsigned int gPositionResolved;
+	unsigned int gNormalResolved;
+	unsigned int gAlbedoResolved;
 
 	//Light SSBO
 	std::vector<size_t> lightSSBO_Data_Size;
@@ -174,7 +178,6 @@ struct RenderResource : public Resource {
 	unsigned int pingpongFBO[2];
 	unsigned int pingpongBuffers[2];
 	bool horizontal = true;
-	unsigned int bloomTextureResolved;
 
 	////////////////Parameters
 	float exposure = 1.0f; // HDR exposure

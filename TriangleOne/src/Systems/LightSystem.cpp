@@ -422,19 +422,97 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 
 	return lights;
 }
-
+//Lightning Pass
 void LightSystem::LightningPass(World* world, RenderResource* renderResource) {
+	glBindFramebuffer(GL_FRAMEBUFFER, renderResource->framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	renderResource->lightningPass_Shader->Use();
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, renderResource->gPosition);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gPositionResolved);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, renderResource->gNormal);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gNormalResolved);
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, renderResource->gAlbedo);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gAlbedoResolved);
+
+	DrawQuad(renderResource);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+#pragma endregion
+
+#pragma region Draw
+void LightSystem::DrawBlurEffect(RenderResource* renderData) {
+	bool first_iteration = true;
+	int amount = renderData->bloom_iteration;
+
+	//float noir[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[0], noir);
+	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[1], noir);
+
+	renderData->bloomShader->Use();
+	glBindVertexArray(renderData->quadVAO);
+	glDisable(GL_DEPTH_TEST);
+	for (unsigned int i = 0; i < amount; i++)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, renderData->pingpongFBO[renderData->horizontal]);
+		renderData->bloomShader->setBool("horizontal", renderData->horizontal);
+		glBindTexture(GL_TEXTURE_2D, first_iteration ? renderData->finalTxtColorOutput[1] : renderData->pingpongBuffers[!renderData->horizontal]);
+
+		//Draw
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		renderData->horizontal = !renderData->horizontal;
+		if (first_iteration)
+			first_iteration = false;
+	}
+	glEnable(GL_DEPTH_TEST);
+	glBindVertexArray(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+//Post process
+void LightSystem::Draw_FinalPass(RenderResource* renderData) {
+	if (renderData->bloomEnable) {
+		DrawBlurEffect(renderData);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+
+	//Post process
+	renderData->postProcessShader->Use();
+	glBindVertexArray(renderData->quadVAO);
+	//Parameters
+	renderData->postProcessShader->setFloat("exposure", renderData->exposure);
+	glDisable(GL_DEPTH_TEST);
+
+	//Scene image
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, renderData->finalTxtColorOutput[0]);
+	renderData->postProcessShader->setInt("scene", 0);
+
+	//Bloom image
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, renderData->pingpongBuffers[!renderData->horizontal]); // Le dernier buffer utilisé
+	renderData->postProcessShader->setInt("bloomBlur", 1);
+	renderData->postProcessShader->setBool("bloomEnable", renderData->bloomEnable);
+
+	//glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glBindVertexArray(0);
+	glEnable(GL_DEPTH_TEST);
+}
+
+void LightSystem::DrawQuad(RenderResource* renderData) {
+	glDisable(GL_DEPTH_TEST);
+	glBindVertexArray(renderData->quadVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+	glEnable(GL_DEPTH_TEST);
+}
 #pragma endregion
 
 void LightSystem::SendDepthMapToLightningShader(World* world, const RenderResource* renderResource, const ResourceBuffer* resourceBuffer, All_Light* lights) {
@@ -519,7 +597,6 @@ void LightSystem::SendDepthMapToLightningShader(World* world, const RenderResour
 	// --- END TEXTURE MANAGEMENT ---
 }
 
-
 void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	static_assert(sizeof(Padding_DirLight) == 64, "Invalide alignement");
 	static_assert(alignof(Padding_DirLight) == 16);
@@ -548,6 +625,10 @@ void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	UpdateLight(&world, renderResource, *lights);
 	SendDepthMapToLightningShader(&world, renderResource, resourceBuffer, lights);
 	LightningPass(&world, renderResource);
+	Draw_FinalPass(renderResource);
 
+
+	glfwSwapBuffers(windowResource->window);
+	glfwPollEvents();
 	delete lights;  // WARNING, in case for some misc reason lights is delete before all values are copy in the gpu
 }

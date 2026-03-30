@@ -84,9 +84,9 @@ in vec2 TexCoords;
 
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
-uniform sampler2D gAlbedoSpec;
+uniform sampler2D gAlbedo;
 
-//in vec4 FragPosLightSpace;
+in vec4 FragPosLightSpace;
 
 
 
@@ -94,8 +94,8 @@ void main()
 {
 	vec3 FragPos = texture(gPosition, TexCoords).rgb;
 	vec3 Normal = texture(gNormal, TexCoords).rgb;
-	vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
-	float Specular = texture(gAlbedoSpec, TexCoords).a;
+	vec3 Albedo = texture(gAlbedo, TexCoords).rgb;
+	float Specular = texture(gAlbedo, TexCoords).a;
 
 	vec3 viewDir = normalize(viewPos - FragPos);
 	vec3 _ambient = vec3(0,0,0);
