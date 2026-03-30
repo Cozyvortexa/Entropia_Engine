@@ -77,7 +77,7 @@ class LightSystem : public System {
 
 	 void InitLightSSBO(World& world, const ResourceBuffer* renderResource);
 
-	 void LightningPass(World* world, RenderResource* renderResource);
+	 void LightningPass(World* world, Transform* transformMainCamera, RenderResource* renderResource);
 
 #pragma region Draw
 	 void DrawBlurEffect(RenderResource* renderData);

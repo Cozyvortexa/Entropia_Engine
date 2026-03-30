@@ -157,15 +157,19 @@ struct RenderResource : public Resource {
 	unsigned int dummyDepthMap2D = 0;
 	unsigned int dummyDepthCubeMap = 0;
 
-	////Deffered
+	////Deffered - GBuffer
 	unsigned int gBuffer;
 	unsigned int gPosition;
 	unsigned int gNormal;
 	unsigned int gAlbedo;
+
+	unsigned int gDepth;
 	//Defered resolved Text
 	unsigned int gPositionResolved;
 	unsigned int gNormalResolved;
 	unsigned int gAlbedoResolved;
+
+	unsigned int gDepthResolved;
 
 	//Light SSBO
 	std::vector<size_t> lightSSBO_Data_Size;

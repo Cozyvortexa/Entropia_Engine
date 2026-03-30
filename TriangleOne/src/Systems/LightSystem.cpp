@@ -423,17 +423,22 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 	return lights;
 }
 //Lightning Pass
-void LightSystem::LightningPass(World* world, RenderResource* renderResource) {
+void LightSystem::LightningPass(World* world, Transform* transformMainCamera, RenderResource* renderResource) {
 	glBindFramebuffer(GL_FRAMEBUFFER, renderResource->framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
 	renderResource->lightningPass_Shader->Use();
+	renderResource->lightningPass_Shader->setVec3("viewPos", transformMainCamera->position);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderResource->gPositionResolved);
+	renderResource->lightningPass_Shader->setInt("gPosition", 0);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, renderResource->gNormalResolved);
+	renderResource->lightningPass_Shader->setInt("gNormal", 1);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, renderResource->gAlbedoResolved);
+	renderResource->lightningPass_Shader->setInt("gAlbedo", 2);
 
 	DrawQuad(renderResource);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -443,6 +448,7 @@ void LightSystem::LightningPass(World* world, RenderResource* renderResource) {
 
 #pragma region Draw
 void LightSystem::DrawBlurEffect(RenderResource* renderData) {
+	renderData->horizontal = true;
 	bool first_iteration = true;
 	int amount = renderData->bloom_iteration;
 
@@ -615,16 +621,23 @@ void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 
 	RenderResource* renderResource = world.get_ressource<RenderResource>();
 	WindowResource* windowResource = world.get_ressource<WindowResource>();
+
+	/////////////////Camera
 	Entity entityCam = resourceBuffer->activeCamera->cameraID;
 	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);
-
+	Transform* transformMainCamera = world.get_component<Transform>(entityCam);
+	if (mainCamera == nullptr || transformMainCamera == nullptr) {  // Pas de main camera, pas de rendu
+		std::cout << "Main camera have a null value" << std::endl;
+		return;
+	}
+	/////////////////
 
 	All_Light* lights = DataCollector(&world, windowResource, mainCamera);
 
 	ShadowPass(&world, renderResource, windowResource, lights);
 	UpdateLight(&world, renderResource, *lights);
 	SendDepthMapToLightningShader(&world, renderResource, resourceBuffer, lights);
-	LightningPass(&world, renderResource);
+	LightningPass(&world, transformMainCamera, renderResource);
 	Draw_FinalPass(renderResource);
 
 

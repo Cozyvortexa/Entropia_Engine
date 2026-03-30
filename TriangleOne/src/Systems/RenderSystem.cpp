@@ -19,7 +19,10 @@ void RenderSystem::gBufferToResolvedBuffer(WindowResource* windowData, RenderRes
 	glDrawBuffer(GL_COLOR_ATTACHMENT2);
 	glBlitFramebuffer(0, 0, windowData->WIDTH, windowData->HEIGHT, 0, 0, windowData->WIDTH, windowData->HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
+	glBlitFramebuffer(0, 0, windowData->WIDTH, windowData->HEIGHT, 0, 0, windowData->WIDTH, windowData->HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 #pragma region Init
@@ -147,24 +150,36 @@ void RenderSystem::InitIntermediateFBO(WindowResource* windowData, RenderResourc
 	glGenTextures(1, &renderData->gNormalResolved);
 	glBindTexture(GL_TEXTURE_2D, renderData->gNormalResolved);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, renderData->gNormalResolved, 0);
 
 	//Albedo
 	glGenTextures(1, &renderData->gAlbedoResolved);
 	glBindTexture(GL_TEXTURE_2D, renderData->gAlbedoResolved);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, renderData->gAlbedoResolved, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, renderData->gAlbedoResolved, 0);
 
 
 
 	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 , GL_COLOR_ATTACHMENT2 };
 	glDrawBuffers(3, attachments);
 
+	//////////////////Init texture depth
+	glGenTextures(1, &renderData->gDepthResolved);
+	glBindTexture(GL_TEXTURE_2D, renderData->gDepthResolved);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, renderData->gDepthResolved, 0);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "The intermediate FBO initialisation has failed" << std::endl;
@@ -217,6 +232,11 @@ void RenderSystem::InitGBuffer(WindowResource* windowData, RenderResource* rende
 	glDrawBuffers(3, attachments);
 
 
+	glGenRenderbuffers(1, &renderData->gDepth);
+	glBindRenderbuffer(GL_RENDERBUFFER, renderData->gDepth);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderData->gDepth);
+
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "gBuffer initialisation has failed" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -230,12 +250,6 @@ void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 	/////////////////////Camera
 	Entity entityCam = resourceBuffer->activeCamera->cameraID;
 	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);
-
-	Transform* transformMainCamera = world.get_component<Transform>(entityCam);
-	if (mainCamera == nullptr || transformMainCamera == nullptr) {  // Pas de main camera, pas de rendu
-		std::cout << "Main camera have a null value" << std::endl;
-		return;
-	}
 	///////////////////
 
 
@@ -255,7 +269,6 @@ void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffe
 			currentShader.setMatrix("view", mainCamera->viewMatrice);
 			currentShader.setMatrix("projection", projection);
 			currentShader.setFloat("far_plane", mainCamera->farPlane);
-			//currentShader.setVec3("viewPos", transformMainCamera->position);
 
 
 			currentShader.setMatrix("model", transform.GetTransformModel());
