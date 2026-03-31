@@ -72,11 +72,11 @@ uniform vec3 viewPos;
 //vec4 CalcFinalDiffuse();
 //vec4 CalcFinalSpecular();
 
-vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular);
+vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, vec4 FragPosLightSpace);
 vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular);
 vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular);
 
-float ShadowDirLight();
+float ShadowDirLight(vec4 FragPosLightSpace);
 float ShadowPointLight(PointLight light, int lightIndex, vec3 FragPos, vec3 Normal);
 float ShadowSpotLight(SpotLight light, int lightIndex, vec3 FragPos);
 
@@ -86,9 +86,8 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedo;
 
-in vec4 FragPosLightSpace;
 
-
+uniform mat4 lightSpaceMatrix;
 
 void main()
 {
@@ -104,10 +103,10 @@ void main()
 
 	vec3 final_lightning = vec3(0,0,0);
 
+	vec4 FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 
 
-
-	final_lightning += CalcDirLight(dirLight, viewDir, FragPos, Normal, Albedo, Specular); // Une seule lumiere dir dans la scene 
+	final_lightning += CalcDirLight(dirLight, viewDir, FragPos, Normal, Albedo, Specular, FragPosLightSpace); // Une seule lumiere dir dans la scene 
 
 	for (int i = 0; i < nbrPointLight; i++)
 	{
@@ -136,7 +135,7 @@ void main()
 }
 
 
-vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular)
+vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, vec4 FragPosLightSpace)
 {
 	vec3 lightDir = normalize(light.direction);
 
@@ -159,7 +158,7 @@ vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 
 
 		vec3 light_contribution = vec3(0);
 
-		shadow = ShadowDirLight();
+		shadow = ShadowDirLight(FragPosLightSpace);
 		if (!have_Specular){
 			light_contribution = ambient + diffuse  * (1.0 - shadow);
 		}
@@ -270,7 +269,7 @@ float GetDirShadowMapValue(int index, vec3 dir) {
     return 0.0;
 }
 
-float ShadowDirLight(){
+float ShadowDirLight(vec4 FragPosLightSpace){
 
 	vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
 	projCoords = projCoords * 0.5 + 0.5;
