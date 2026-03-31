@@ -187,7 +187,7 @@ struct RenderResource : public Resource {
 	float exposure = 1.0f; // HDR exposure
 
 	//Bloom
-	bool bloomEnable = false;
+	bool bloomEnable = true;
 	int bloom_iteration = 10;
 
 	float quadVertices[24] = {

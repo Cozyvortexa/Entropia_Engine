@@ -457,6 +457,9 @@ void LightSystem::DrawBlurEffect(RenderResource* renderData) {
 	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[1], noir);
 
 	renderData->bloomShader->Use();
+	glActiveTexture(GL_TEXTURE0);
+	renderData->bloomShader->setInt("image", 0);
+
 	glBindVertexArray(renderData->quadVAO);
 	glDisable(GL_DEPTH_TEST);
 	for (unsigned int i = 0; i < amount; i++)
@@ -484,7 +487,7 @@ void LightSystem::Draw_FinalPass(RenderResource* renderData) {
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
 	//Post process
