@@ -439,6 +439,9 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, Re
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, renderResource->gAlbedoResolved);
 	renderResource->lightningPass_Shader->setInt("gAlbedo", 2);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gDepthResolved);
+	renderResource->lightningPass_Shader->setInt("gDepth", 3);
 
 	DrawQuad(renderResource);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

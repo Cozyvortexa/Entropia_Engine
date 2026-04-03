@@ -85,6 +85,7 @@ in vec2 TexCoords;
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedo;
+uniform sampler2D gDepth;
 
 
 uniform mat4 lightSpaceMatrix;
@@ -95,6 +96,12 @@ void main()
 	vec3 Normal = texture(gNormal, TexCoords).rgb;
 	vec3 Albedo = texture(gAlbedo, TexCoords).rgb;
 	float Specular = texture(gAlbedo, TexCoords).a;
+
+	float depth = texture(gDepth, TexCoords).r;
+	if(depth == 1.0) {
+		FragColor = vec4(0.2, 0.3, 0.3, 1.0);
+		return;
+	}
 
 	vec3 viewDir = normalize(viewPos - FragPos);
 	vec3 _ambient = vec3(0,0,0);
