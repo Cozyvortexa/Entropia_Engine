@@ -140,10 +140,14 @@ struct RenderResource : public Resource {
 	std::unique_ptr<Shader> postProcessShader = nullptr;
 	std::unique_ptr<Shader> bloomShader = nullptr;
 	std::unique_ptr<Shader> lightningPass_Shader = nullptr;
+	std::unique_ptr<Shader> ssaoPass_Shader = nullptr;
+	std::unique_ptr<Shader> ssaoPass_Blur_Shader = nullptr;
 
 	glm::mat4 _model = glm::mat4(1.0f);
 
 	int sample = 4;
+
+	glm::mat4 projection = glm::mat4(0);
 
 	//Lightning
 	unsigned int framebuffer;
@@ -164,12 +168,23 @@ struct RenderResource : public Resource {
 	unsigned int gAlbedo;
 
 	unsigned int gDepth;
-	//Defered resolved Text
+	//Deffered resolved Text (MSAA)
 	unsigned int gPositionResolved;
 	unsigned int gNormalResolved;
 	unsigned int gAlbedoResolved;
-
 	unsigned int gDepthResolved;
+
+	//SSAO
+	unsigned int ssaoBuffer;
+	unsigned int ssaoBlur_Buffer;
+
+	unsigned int ssaoText;
+	unsigned int ssaoBlurText;
+	unsigned int ssao_NoiseText;
+
+	bool ssao_Enabled = true;
+	int kernelSample = 8;
+	std::vector<glm::vec3> ssaoKernel;
 
 	//Light SSBO
 	std::vector<size_t> lightSSBO_Data_Size;

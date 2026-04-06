@@ -197,6 +197,9 @@
     <None Include="Shader\LightShader\ShadowMapping\ShadowVertex.glsl" />
     <None Include="Shader\MiscShader\SkyBoxFrag.glsl" />
     <None Include="Shader\MiscShader\SkyBoxVertex.glsl" />
+    <None Include="Shader\SSAO_Pass\Fragment_Blur_SSAO_Shader.glsl" />
+    <None Include="Shader\SSAO_Pass\Fragment_SSAO_Shader.glsl" />
+    <None Include="Shader\SSAO_Pass\Vertex_SSAO_Shader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -189,7 +189,7 @@ void LightSystem::DrawShadowForPointLight(World* world, RenderResource& renderRe
 
 	depthShader->Use();
 	depthShader->setFloat("far_plane", range);
-	depthShader->setVec3("lightPos", position);
+	depthShader->setVec("lightPos", position);
 
 
 	for (int i = 0; i < shadowTransforms.size(); i++) {
@@ -323,7 +323,7 @@ void LightSystem::UpdateLight(World* world, RenderResource* renderResource, All_
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResource, CameraComponent* mainCamera) {
+All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResource, CameraComponent* mainCamera, RenderResource* renderRessource) {
 	All_Light* lights = new All_Light();
 	View viewDirLight = world->view<DirLight>();
 
@@ -348,8 +348,7 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 			lights->dirLight_Shadow_Size = std::make_pair(dirLight.SHADOW_WIDTH, dirLight.SHADOW_HEIGHT);
 
 			//Matrices
-			glm::mat4 projectionCamera = glm::perspective(glm::radians(mainCamera->zoom), (float)windowResource->WIDTH / (float)windowResource->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
-			lights->dirLight_Matrice = dirLight.UpdateMatrix(mainCamera->viewMatrice, projectionCamera);
+			lights->dirLight_Matrice = dirLight.UpdateMatrix(mainCamera->viewMatrice, renderRessource->projection);
 		}
 		else {
 			std::cout << "Multiple dir light detected, only the first one will be take into consideration" << std::endl;
@@ -429,7 +428,7 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, Re
 
 
 	renderResource->lightningPass_Shader->Use();
-	renderResource->lightningPass_Shader->setVec3("viewPos", transformMainCamera->position);
+	renderResource->lightningPass_Shader->setVec("viewPos", transformMainCamera->position);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderResource->gPositionResolved);
 	renderResource->lightningPass_Shader->setInt("gPosition", 0);
@@ -442,8 +441,11 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, Re
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, renderResource->gDepthResolved);
 	renderResource->lightningPass_Shader->setInt("gDepth", 3);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, renderResource->ssaoBlurText);
+	renderResource->lightningPass_Shader->setInt("ssaoTexture", 4);
 
-	DrawQuad(renderResource);
+	world->renderer->DrawQuad(renderResource);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -518,13 +520,7 @@ void LightSystem::Draw_FinalPass(RenderResource* renderData) {
 	glEnable(GL_DEPTH_TEST);
 }
 
-void LightSystem::DrawQuad(RenderResource* renderData) {
-	glDisable(GL_DEPTH_TEST);
-	glBindVertexArray(renderData->quadVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-	glEnable(GL_DEPTH_TEST);
-}
+
 #pragma endregion
 
 void LightSystem::SendDepthMapToLightningShader(World* world, const RenderResource* renderResource, const ResourceBuffer* resourceBuffer, All_Light* lights) {
@@ -638,7 +634,7 @@ void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	}
 	/////////////////
 
-	All_Light* lights = DataCollector(&world, windowResource, mainCamera);
+	All_Light* lights = DataCollector(&world, windowResource, mainCamera, renderResource);
 
 	ShadowPass(&world, renderResource, windowResource, lights);
 	UpdateLight(&world, renderResource, *lights);

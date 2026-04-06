@@ -82,7 +82,6 @@ class LightSystem : public System {
 #pragma region Draw
 	 void DrawBlurEffect(RenderResource* renderData);
 	 void Draw_FinalPass(RenderResource* renderData);
-	 void DrawQuad(RenderResource* renderData);
 #pragma endregion
 
 #pragma region Init shadow buffer 
@@ -100,7 +99,7 @@ class LightSystem : public System {
 	 void ShadowPass(World* world, RenderResource* renderResource, WindowResource* windowResource, All_Light* lights);
 #pragma endregion
 private:
-	All_Light* DataCollector(World* world, WindowResource* windowResource, CameraComponent* mainCamera);
+	All_Light* DataCollector(World* world, WindowResource* windowResource, CameraComponent* mainCamera, RenderResource* renderRessource);
 
 	void UpdateLight(World* world, RenderResource* renderResource, All_Light& lights);
 

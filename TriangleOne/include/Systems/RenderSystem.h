@@ -24,15 +24,20 @@
 #include "ECS/World.h"
 #include "ECS/Components/Light.h"
 
+#include <random>
+
 class RenderSystem : public System {
 public:
 	void gBufferToResolvedBuffer(WindowResource* windowData, RenderResource* renderData);
+	void SSAO_Pass(World& world, WindowResource* windowData, RenderResource* renderData);
 
 	void InitQuadVao(WindowResource* windowData, RenderResource* renderData);
 	void InitMainFrameBuffer(WindowResource* windowData, RenderResource* renderData);
 	void InitIntermediateFBO(WindowResource* windowData, RenderResource* renderData);
 	void InitBloomFBO(WindowResource* windowData, RenderResource* renderData);
 	void InitGBuffer(WindowResource* windowData, RenderResource* renderData);
+	void InitSSAO(WindowResource* windowData, RenderResource* renderData);
+	void InitSSAO_Blur(WindowResource* windowData, RenderResource* renderData);
 
 	std::pair<unsigned int, unsigned int> CreateDummyShadowTextures();
 
@@ -43,6 +48,6 @@ public:
 	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;
 	void Shutdown(World& world) override;
 
-	void RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData);
+	void RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData, CameraComponent* mainCamera);
 
 };

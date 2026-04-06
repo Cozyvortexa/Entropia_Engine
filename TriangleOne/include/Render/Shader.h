@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -21,6 +22,13 @@ public:
 	inline void setBool(const std::string& name, bool value) const
 	{
 		glUniform1i(glGetUniformLocation(shaderID, name.c_str()), (int)value);
+
+		#ifndef NDEBUG
+		GLint loc = glGetUniformLocation(shaderID, name.c_str());
+		if (loc == -1) {
+			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
+		}
+		#endif
 	}
 	inline void setInt(const std::string& name, int value) const
 	{
@@ -36,12 +44,40 @@ public:
 	inline void setFloat(const std::string& name, float value) const
 	{
 		glUniform1f(glGetUniformLocation(shaderID, name.c_str()), value);
+
+		#ifndef NDEBUG
+		GLint loc = glGetUniformLocation(shaderID, name.c_str());
+		if (loc == -1) {
+			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
+		}
+		#endif
 	}
 
-	
-	inline void setVec3(const std::string& name, glm::vec3 value)
+	inline void setVec(const std::string& name, glm::vec2 value)
+	{
+		glUniform2fv(glGetUniformLocation(shaderID, name.c_str()), 1, glm::value_ptr(value));
+
+		#ifndef NDEBUG
+		GLint loc = glGetUniformLocation(shaderID, name.c_str());
+		if (loc == -1) {
+			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
+		}
+		#endif
+	}
+	inline void setVec(const std::string& name, glm::vec3 value)
 	{
 		glUniform3fv(glGetUniformLocation(shaderID, name.c_str()), 1, glm::value_ptr(value));
+
+		#ifndef NDEBUG
+		GLint loc = glGetUniformLocation(shaderID, name.c_str());
+		if (loc == -1) {
+			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
+		}
+		#endif
+	}
+	inline void setVec(const std::string& name, std::vector<glm::vec3> values)
+	{
+		glUniform3fv(glGetUniformLocation(shaderID, name.c_str()), values.size(), glm::value_ptr(values[0]));
 
 		#ifndef NDEBUG
 		GLint loc = glGetUniformLocation(shaderID, name.c_str());
