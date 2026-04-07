@@ -138,11 +138,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\include\ImGui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\include\ImGui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\include\ImGui\imgui.cpp" />
+    <ClCompile Include="..\include\ImGui\imgui_demo.cpp" />
+    <ClCompile Include="..\include\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="..\include\ImGui\imgui_stdlib.cpp" />
+    <ClCompile Include="..\include\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="..\include\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="src\Render\Renderer.cpp" />
     <ClCompile Include="src\Systems\CameraSystem.cpp" />
     <ClCompile Include="src\ECS\AssetStore.cpp" />
     <ClCompile Include="src\ECS\Scheduler.cpp" />
     <ClCompile Include="src\engine.cpp" />
+    <ClCompile Include="src\Systems\InterfaceSystem.cpp" />
     <ClCompile Include="src\Systems\LightSystem.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\ECS\Components\Light.cpp" />
@@ -164,6 +173,7 @@
     <ClInclude Include="include\ECS\SpareSet.h" />
     <ClInclude Include="include\engine.h" />
     <ClInclude Include="include\ECS\Components\Light.h" />
+    <ClInclude Include="include\Systems\InterfaceSystem.h" />
     <ClInclude Include="include\Systems\LightSystem.h" />
     <ClInclude Include="include\Render\SubMesh.h" />
     <ClInclude Include="include\Render\Mesh.h" />

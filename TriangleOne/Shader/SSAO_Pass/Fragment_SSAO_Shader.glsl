@@ -9,7 +9,7 @@ uniform mat4 invProjection;
 
 uniform vec3 samples[64];
 uniform int kernelNbr;
-const float radius = 0.5;
+const float radius = 0.1;
 const float bias = 0.005;
 
 

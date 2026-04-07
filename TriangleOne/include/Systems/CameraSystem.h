@@ -16,7 +16,7 @@ public:
 
 	void Update(World& world, const ResourceBuffer* resourceBuffer) override;
 
-	void ProcessInput(GLFWwindow* window, CameraComponent* mainCamera, Transform* transformMainCamera, float deltaTime);
+	void ProcessInput(GLFWwindow* window, CameraComponent* mainCamera, Transform* transformMainCamera, float deltaTime, InputResource* inputData);
 
 
 };

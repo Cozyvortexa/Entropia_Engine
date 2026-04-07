@@ -4,7 +4,11 @@
 void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	World* world = static_cast<World*>(glfwGetWindowUserPointer(window));  // Recupere l'instance du world
 	Entity entityCam = world->get_ressource<ActiveCamera>()->cameraID;
+	//Entity entityCam = world->get_ressource<ActiveCamera>()->cameraID;
 	CameraComponent* mainCamera = world->get_component<CameraComponent>(entityCam);
+	InputResource* inputResource = world->get_ressource<InputResource>();
+
+	if (!inputResource->mouseInputEnable) return;  // Cancel input
 
 	if (mainCamera != nullptr) {
 		if (mainCamera->firstMouse)
@@ -42,7 +46,7 @@ void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 		mainCamera->cameraFront = glm::normalize(direction);
 	}
 	else {
-		std::cout << "Main camera null dans Camera.cpp (MouseCallback)" << std::endl;
+		std::cout << "No main camera in Camera.cpp (MouseCallback)" << std::endl;
 	}
 }
 
@@ -83,11 +87,12 @@ void CameraSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	Entity entityCam = world.get_ressource<ActiveCamera>()->cameraID;
 	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);
 	Transform* transformMainCamera = world.get_component<Transform>(entityCam);
-	ProcessInput(resourceBuffer->windowResource->window, mainCamera, transformMainCamera, resourceBuffer->timeResource->deltaTime);
+	InputResource* inputData = resourceBuffer->inputResource;
+	ProcessInput(resourceBuffer->windowResource->window, mainCamera, transformMainCamera, resourceBuffer->timeResource->deltaTime, inputData);
 	//
 }
 
-void CameraSystem::ProcessInput(GLFWwindow* window, CameraComponent* mainCamera, Transform* transformMainCamera, float deltaTime)	
+void CameraSystem::ProcessInput(GLFWwindow* window, CameraComponent* mainCamera, Transform* transformMainCamera, float deltaTime, InputResource* inputData)
 {
 	const float cameraSpeed = 9.0f * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -104,6 +109,23 @@ void CameraSystem::ProcessInput(GLFWwindow* window, CameraComponent* mainCamera,
 		transformMainCamera->position += glm::vec3(0.0f, -1.0f, 0.0f) * cameraSpeed;
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 		transformMainCamera->position += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+
+	//Mouse
+	int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+
+	if (state == GLFW_PRESS){ 
+		inputData->mouseInputEnable = true;
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	}
+	else { 
+		inputData->mouseInputEnable = false;
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
+	if (state == GLFW_RELEASE) {
+		mainCamera->firstMouse = true;
+	}
+
 }
 
 

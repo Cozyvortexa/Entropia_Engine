@@ -101,6 +101,7 @@ enum LightTag {
 	PointLight_Tag,
 	SpotLight_Tag
 };
+
 struct LightToInitTag : public Component {
 	LightToInitTag() {};
 	LightToInitTag(LightTag tag) { this->tag = tag; }
@@ -119,8 +120,8 @@ struct Resource {
 struct WindowResource : public Resource {
 	WindowResource() = default;
 
-	inline static int WIDTH = 800;
-	inline static int HEIGHT = 600;
+	inline static int WIDTH = 1000;
+	inline static int HEIGHT = 800;
 
 	int sample = 4;
 
@@ -215,6 +216,15 @@ struct RenderResource : public Resource {
 		 1.0f,  1.0f,     1.0f, 1.0f,
 		 1.0f, -1.0f,     1.0f, 0.0f
 	};
+
+};
+
+struct InterfaceRessource : public Resource {
+	bool* testInterface;  // temp value
+};
+
+struct InputResource : public Resource {
+	bool mouseInputEnable;
 };
 
 struct ActiveCamera : public Resource {
@@ -226,4 +236,5 @@ struct ResourceBuffer {
 	TimeResource* timeResource;
 	RenderResource* renderResource;
 	ActiveCamera* activeCamera;
+	InputResource* inputResource;
 };

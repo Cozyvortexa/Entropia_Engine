@@ -82,7 +82,8 @@ void WindowSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
 
-	glfwSetInputMode(windowData->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//glfwSetInputMode(windowData->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(windowData->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
 	//Blending     //ya pas de blending mm avec cette ligne au cas ou 
 	//glEnable(GL_BLEND);

@@ -9,6 +9,8 @@ Scheduler::Scheduler(World* world, WindowSystem* window) {
 	world->add_ressource<RenderResource>();
 	world->add_ressource<TimeResource>();
 	world->add_ressource<ActiveCamera>();
+	world->add_ressource<InterfaceRessource>();
+	world->add_ressource<InputResource>();
 	FillResourceBuffer();
 	window->Init(*world, resourceBuffer.get()); // Systeme a part
 }
@@ -21,6 +23,7 @@ void Scheduler::CreateSystemes() {
 	systemes.push_back(std::make_unique<CameraSystem>());
 	systemes.push_back(std::make_unique<RenderSystem>());
 	systemes.push_back(std::make_unique<LightSystem>());
+	systemes.push_back(std::make_unique<InterfaceSystem>());
 
 	std::cout << "CreateSystemes done" << std::endl;;
 }
@@ -63,4 +66,5 @@ void Scheduler::FillResourceBuffer() {
 	resourceBuffer->activeCamera = world->get_ressource<ActiveCamera>();
 	resourceBuffer->timeResource = world->get_ressource<TimeResource>();
 	resourceBuffer->renderResource = world->get_ressource<RenderResource>();
+	resourceBuffer->inputResource = world->get_ressource<InputResource>();
 }

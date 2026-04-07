@@ -643,7 +643,7 @@ void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	Draw_FinalPass(renderResource);
 
 
-	glfwSwapBuffers(windowResource->window);
+	//glfwSwapBuffers(windowResource->window);
 	glfwPollEvents();
 	delete lights;  // WARNING, in case for some misc reason lights is delete before all values are copy in the gpu
 }
