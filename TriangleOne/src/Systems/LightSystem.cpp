@@ -444,6 +444,7 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, Re
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, renderResource->ssaoBlurText);
 	renderResource->lightningPass_Shader->setInt("ssaoTexture", 4);
+	renderResource->lightningPass_Shader->setBool("ssao_Toogle", renderResource->ssao_Enabled);
 
 	world->renderer->DrawQuad(renderResource);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

@@ -88,6 +88,8 @@ uniform sampler2D gAlbedo;
 uniform sampler2D gDepth;
 uniform sampler2D ssaoTexture;
 
+uniform bool ssao_Toogle;
+
 
 uniform mat4 lightSpaceMatrix;
 
@@ -98,7 +100,10 @@ void main()
 	vec3 Albedo = texture(gAlbedo, TexCoords).rgb;
 	Albedo = pow(Albedo, vec3(2.2));
 	float Specular = texture(gAlbedo, TexCoords).a;
-	float ambientOcclusion = texture(ssaoTexture, TexCoords).r;
+	float ambientOcclusion = 1.0f;
+	if (ssao_Toogle){
+		ambientOcclusion = texture(ssaoTexture, TexCoords).r;
+	}
 
 	float depth = texture(gDepth, TexCoords).r;
 	if(depth == 1.0) {

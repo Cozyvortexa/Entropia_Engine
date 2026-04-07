@@ -11,6 +11,7 @@ Scheduler::Scheduler(World* world, WindowSystem* window) {
 	world->add_ressource<ActiveCamera>();
 	world->add_ressource<InterfaceRessource>();
 	world->add_ressource<InputResource>();
+	world->add_ressource<InterfaceRessource>();
 	FillResourceBuffer();
 	window->Init(*world, resourceBuffer.get()); // Systeme a part
 }
@@ -67,4 +68,5 @@ void Scheduler::FillResourceBuffer() {
 	resourceBuffer->timeResource = world->get_ressource<TimeResource>();
 	resourceBuffer->renderResource = world->get_ressource<RenderResource>();
 	resourceBuffer->inputResource = world->get_ressource<InputResource>();
+	resourceBuffer->interfaceRessource = world->get_ressource<InterfaceRessource>();
 }

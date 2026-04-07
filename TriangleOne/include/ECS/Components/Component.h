@@ -132,6 +132,7 @@ struct TimeResource : public Resource {
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
 
+	float currentFps;
 };
 
 struct RenderResource : public Resource {
@@ -220,7 +221,7 @@ struct RenderResource : public Resource {
 };
 
 struct InterfaceRessource : public Resource {
-	bool* testInterface;  // temp value
+	bool mainInterfaceOpen;
 };
 
 struct InputResource : public Resource {
@@ -237,4 +238,5 @@ struct ResourceBuffer {
 	RenderResource* renderResource;
 	ActiveCamera* activeCamera;
 	InputResource* inputResource;
+	InterfaceRessource* interfaceRessource;
 };
