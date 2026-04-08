@@ -10,6 +10,8 @@
 
 #include "ECS/SpareSet.h"
 
+#include "ImGui/imgui.h"
+
 struct Component {
 	virtual ~Component() = default;
 };
@@ -200,6 +202,11 @@ struct RenderResource : public Resource {
 	unsigned int pingpongBuffers[2];
 	bool horizontal = true;
 
+
+	//Final render (To ImGui)
+	unsigned int toImGui_FBO;
+	unsigned int toImGui_Texture;
+	
 	////////////////Parameters
 	float exposure = 1.0f; // HDR exposure
 
@@ -233,6 +240,7 @@ enum RenderTarget {
 struct InterfaceRessource : public Resource {
 	bool mainInterfaceOpen = true;
 	RenderTarget renderTarget = RenderTarget::Default;
+	ImVec2 renderWindows_Size;
 };
 
 struct InputResource : public Resource {

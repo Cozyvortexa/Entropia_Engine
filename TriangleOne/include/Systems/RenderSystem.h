@@ -38,6 +38,7 @@ public:
 	void InitGBuffer(WindowResource* windowData, RenderResource* renderData);
 	void InitSSAO(WindowResource* windowData, RenderResource* renderData);
 	void InitSSAO_Blur(WindowResource* windowData, RenderResource* renderData);
+	void InitToImGui_FBO(WindowResource* windowData, RenderResource* renderData);
 
 	void Init_AllBuffer(WindowResource* windowData, RenderResource* renderData);
 

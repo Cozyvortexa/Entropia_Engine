@@ -493,9 +493,10 @@ void LightSystem::Draw_FinalPass(RenderResource* renderData) {
 		DrawBlurEffect(renderData);
 	}
 
+	//glBindFramebuffer(GL_FRAMEBUFFER, renderData->toImGui_FBO);
+	//glClear(GL_COLOR_BUFFER_BIT);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
 	//Post process
 	renderData->postProcessShader->Use();
@@ -520,6 +521,7 @@ void LightSystem::Draw_FinalPass(RenderResource* renderData) {
 
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 

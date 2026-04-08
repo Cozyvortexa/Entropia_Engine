@@ -352,6 +352,30 @@ void RenderSystem::InitSSAO_Blur(WindowResource* windowData, RenderResource* ren
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void RenderSystem::InitToImGui_FBO(WindowResource* windowData, RenderResource* renderData) {
+	glGenFramebuffers(1, &renderData->toImGui_FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->toImGui_FBO);
+
+	glGenTextures(1, &renderData->toImGui_Texture);
+	glBindTexture(GL_TEXTURE_2D, renderData->toImGui_Texture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData->toImGui_Texture, 0);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Erreur : FBO incomplet !" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void RenderSystem::Init_AllBuffer(WindowResource* windowData, RenderResource* renderData) {
 	InitMainFrameBuffer(windowData, renderData);
 	InitIntermediateFBO(windowData, renderData);
@@ -360,6 +384,7 @@ void RenderSystem::Init_AllBuffer(WindowResource* windowData, RenderResource* re
 	InitGBuffer(windowData, renderData);
 	InitSSAO(windowData, renderData);
 	InitSSAO_Blur(windowData, renderData);
+	//InitToImGui_FBO(windowData, renderData);
 }
 
 #pragma endregion
