@@ -152,7 +152,10 @@
     <ClCompile Include="src\ECS\AssetStore.cpp" />
     <ClCompile Include="src\ECS\Scheduler.cpp" />
     <ClCompile Include="src\engine.cpp" />
-    <ClCompile Include="src\Systems\InputSystem.cpp" />
+    <ClCompile Include="src\Systems\InputSystem.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\Systems\InterfaceSystem.cpp" />
     <ClCompile Include="src\Systems\LightSystem.cpp" />
     <ClCompile Include="src\glad.c" />

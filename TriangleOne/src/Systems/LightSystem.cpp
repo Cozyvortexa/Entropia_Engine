@@ -423,6 +423,7 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 }
 //Lightning Pass
 void LightSystem::LightningPass(World* world, Transform* transformMainCamera, RenderResource* renderResource) {
+	InterfaceRessource* interfaceRessource = world->get_ressource<InterfaceRessource>();
 	glBindFramebuffer(GL_FRAMEBUFFER, renderResource->framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -444,7 +445,7 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, Re
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, renderResource->ssaoBlurText);
 	renderResource->lightningPass_Shader->setInt("ssaoTexture", 4);
-	renderResource->lightningPass_Shader->setBool("ssao_Toogle", renderResource->ssao_Enabled);
+	renderResource->lightningPass_Shader->setInt("renderTarget", interfaceRessource->renderTarget);
 
 	world->renderer->DrawQuad(renderResource);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

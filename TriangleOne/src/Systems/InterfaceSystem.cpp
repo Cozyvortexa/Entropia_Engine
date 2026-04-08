@@ -25,15 +25,28 @@ void InterfaceSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	//resourceBuffer->renderResource->testInterface = new bool(true);
 }
 
+void RenderTarget_Menu(InterfaceRessource* interface) {
+	if (ImGui::CollapsingHeader("RenderTarget"))
+	{
+		if (ImGui::RadioButton("Default render", interface->renderTarget == RenderTarget::Default)) { interface->renderTarget = RenderTarget::Default; }
+		else if (ImGui::RadioButton("Albedo", interface->renderTarget == RenderTarget::Albedo)) { interface->renderTarget = RenderTarget::Albedo; }
+		else if (ImGui::RadioButton("Specular", interface->renderTarget == RenderTarget::Specular)) { interface->renderTarget = RenderTarget::Specular; }
+		else if (ImGui::RadioButton("Position", interface->renderTarget == RenderTarget::Position)) { interface->renderTarget = RenderTarget::Position; }
+		else if (ImGui::RadioButton("Normal", interface->renderTarget == RenderTarget::Normal)) { interface->renderTarget = RenderTarget::Normal; }
+		else if (ImGui::RadioButton("Depth", interface->renderTarget == RenderTarget::Depth)) { interface->renderTarget = RenderTarget::Depth; }
+		else if (ImGui::RadioButton("AmbientOcclusion", interface->renderTarget == RenderTarget::AmbientOcclusion)) { interface->renderTarget = RenderTarget::AmbientOcclusion; }
+	}
+}
 
 void InterfaceSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	RenderResource* renderData = resourceBuffer->renderResource;
+	InterfaceRessource* interfaceData = resourceBuffer->interfaceRessource;
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	//ImGui::DockSpaceOverViewport();
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 	// Create a window called "My First Tool", with a menu bar.
 	ImGui::Begin("Main Page", &resourceBuffer->interfaceRessource->mainInterfaceOpen, ImGuiWindowFlags_MenuBar);
 	if (ImGui::BeginMenuBar())
@@ -50,8 +63,12 @@ void InterfaceSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 	ImGuiIO& io = ImGui::GetIO();
 	ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "FPS: %.1f", io.Framerate);
 
-	ImGui::Checkbox("bloomEnable", &renderData->bloomEnable);
-	ImGui::Checkbox("SSAO_Toogle", &renderData->ssao_Enabled);
+	RenderTarget_Menu(interfaceData);
+
+	if (ImGui::CollapsingHeader("OtherParam"))
+	{
+		ImGui::Checkbox("bloomEnable", &renderData->bloomEnable);
+	}
 
 
 	ImGui::End();

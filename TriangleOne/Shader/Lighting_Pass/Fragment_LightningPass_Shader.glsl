@@ -3,15 +3,6 @@ layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 BrightColor;
 
 
-struct Material {
-	sampler2D diffuseText;
-	sampler2D specularText;
-	sampler2D normalText;
-
-	float shininess;  // Not use, 32.0f
-};
-uniform Material material;
-
 uniform bool have_NormalMap;
 uniform	bool have_Specular;
 
@@ -88,8 +79,7 @@ uniform sampler2D gAlbedo;
 uniform sampler2D gDepth;
 uniform sampler2D ssaoTexture;
 
-uniform bool ssao_Toogle;
-
+uniform int renderTarget;
 
 uniform mat4 lightSpaceMatrix;
 
@@ -100,14 +90,36 @@ void main()
 	vec3 Albedo = texture(gAlbedo, TexCoords).rgb;
 	Albedo = pow(Albedo, vec3(2.2));
 	float Specular = texture(gAlbedo, TexCoords).a;
-	float ambientOcclusion = 1.0f;
-	if (ssao_Toogle){
-		ambientOcclusion = texture(ssaoTexture, TexCoords).r;
-	}
+	float ambientOcclusion = texture(ssaoTexture, TexCoords).r;
 
 	float depth = texture(gDepth, TexCoords).r;
 	if(depth == 1.0) {
 		FragColor = vec4(0.2, 0.3, 0.3, 1.0);
+		return;
+	}
+
+	if (renderTarget == 1){
+		FragColor = vec4(Albedo,1.0);
+		return;
+	}
+	else if (renderTarget == 2){
+		FragColor = vec4(vec3(Specular), 1.0f);
+		return;
+	}
+	else if (renderTarget == 3){
+		FragColor = vec4(FragPos, 1.0f);
+		return;
+	}
+	else if (renderTarget == 4){
+		FragColor = vec4(Normal, 1.0f);
+		return;
+	}
+	else if (renderTarget == 5){
+		FragColor = vec4(vec3(depth), 1.0f);
+		return;
+	}
+	else if (renderTarget == 6){
+		FragColor = vec4(vec3(ambientOcclusion), 1.0f);
 		return;
 	}
 

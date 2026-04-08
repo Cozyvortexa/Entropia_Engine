@@ -11,6 +11,7 @@
 
 class InputSystem : public System {
 public:
+	virtual ~InputSystem() = default;
 	void Init(World& world, const ResourceBuffer* resourceBuffer) override;
 	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;
 	void Shutdown(World& world) override;

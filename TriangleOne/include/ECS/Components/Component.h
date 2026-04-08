@@ -220,8 +220,19 @@ struct RenderResource : public Resource {
 
 };
 
+enum RenderTarget {
+	Default,
+	Albedo,
+	Specular,
+	Position,
+	Normal,
+	Depth,
+	AmbientOcclusion
+};
+
 struct InterfaceRessource : public Resource {
-	bool mainInterfaceOpen;
+	bool mainInterfaceOpen = true;
+	RenderTarget renderTarget = RenderTarget::Default;
 };
 
 struct InputResource : public Resource {
