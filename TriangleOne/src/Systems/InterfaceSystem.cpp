@@ -65,7 +65,4 @@ void InterfaceSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 void InterfaceSystem::Shutdown(World& world) {
 	std::cout << "InterfaceSystem shutting down" << std::endl;
 
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
 }

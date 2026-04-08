@@ -146,11 +146,13 @@
     <ClCompile Include="..\include\ImGui\imgui_stdlib.cpp" />
     <ClCompile Include="..\include\ImGui\imgui_tables.cpp" />
     <ClCompile Include="..\include\ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="include\Systems\InputSystem.h" />
     <ClCompile Include="src\Render\Renderer.cpp" />
     <ClCompile Include="src\Systems\CameraSystem.cpp" />
     <ClCompile Include="src\ECS\AssetStore.cpp" />
     <ClCompile Include="src\ECS\Scheduler.cpp" />
     <ClCompile Include="src\engine.cpp" />
+    <ClCompile Include="src\Systems\InputSystem.cpp" />
     <ClCompile Include="src\Systems\InterfaceSystem.cpp" />
     <ClCompile Include="src\Systems\LightSystem.cpp" />
     <ClCompile Include="src\glad.c" />

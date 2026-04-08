@@ -1,5 +1,10 @@
 #include "Systems/windowSystem.h"
 
+#include "ImGui/imgui.h"
+#include "ImGui/imgui_internal.h"
+#include "ImGui/backends/imgui_impl_glfw.h"
+#include "ImGui/backends/imgui_impl_opengl3.h"
+
 WindowSystem::WindowSystem() {}
 
 void GLAPIENTRY DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
@@ -119,6 +124,10 @@ void WindowSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 
 void WindowSystem::Shutdown(World& world) {
 	WindowResource* Resource = world.get_ressource<WindowResource>();
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 
 	std::cout << "Window shutting down" << std::endl;
 	if (Resource->window != nullptr) {

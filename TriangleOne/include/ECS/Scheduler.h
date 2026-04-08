@@ -4,6 +4,7 @@
 #include "Systems/RenderSystem.h"
 #include "Systems/CameraSystem.h"
 #include "Systems/LightSystem.h"
+#include "Systems/InputSystem.h"
 #include <utility>
 
 #include "Systems/TimeSystem.hpp"
