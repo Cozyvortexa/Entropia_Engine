@@ -39,8 +39,11 @@ public:
 	void InitSSAO(WindowResource* windowData, RenderResource* renderData);
 	void InitSSAO_Blur(WindowResource* windowData, RenderResource* renderData);
 
+	void Init_AllBuffer(WindowResource* windowData, RenderResource* renderData);
+
 	std::pair<unsigned int, unsigned int> CreateDummyShadowTextures();
 
+	static void ResizeText(WindowResource* windowData, RenderResource* renderResource);
 	//void InitSkyBox();
 	//void DrawSkyBox(glm::mat4 projectionMatrix);
 

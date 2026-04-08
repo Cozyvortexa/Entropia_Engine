@@ -8,6 +8,7 @@
 #include "iostream"
 
 #include "ECS/World.h"
+#include "Systems/RenderSystem.h"
 
 class WindowSystem : public System {
 public:

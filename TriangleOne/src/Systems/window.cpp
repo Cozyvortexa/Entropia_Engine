@@ -40,6 +40,13 @@ void WindowSystem::Framebuffer_size_callback(GLFWwindow* window, int width, int 
 {
 	glViewport(0, 0, width, height);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	World* world = static_cast<World*>(glfwGetWindowUserPointer(window));
+	RenderResource* renderResource = world->get_ressource<RenderResource>();
+	WindowResource* windowData = world->get_ressource<WindowResource>();
+	windowData->HEIGHT = height;
+	windowData->WIDTH = width;
+
+	RenderSystem::ResizeText(windowData, renderResource);
 }
 
 void WindowSystem::ProcessInput(GLFWwindow* window)

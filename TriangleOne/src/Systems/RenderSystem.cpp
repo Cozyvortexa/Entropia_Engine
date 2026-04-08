@@ -352,7 +352,68 @@ void RenderSystem::InitSSAO_Blur(WindowResource* windowData, RenderResource* ren
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void RenderSystem::Init_AllBuffer(WindowResource* windowData, RenderResource* renderData) {
+	InitMainFrameBuffer(windowData, renderData);
+	InitIntermediateFBO(windowData, renderData);
+	InitBloomFBO(windowData, renderData);
+	InitQuadVao(windowData, renderData);
+	InitGBuffer(windowData, renderData);
+	InitSSAO(windowData, renderData);
+	InitSSAO_Blur(windowData, renderData);
+}
+
 #pragma endregion
+
+//Call when the viewport is re-scall
+void RenderSystem::ResizeText(WindowResource* windowData, RenderResource* renderData) {
+	glBindTexture(GL_TEXTURE_2D, renderData->finalTxtOutput);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	glBindTexture(GL_TEXTURE_2D, renderData->finalTxtColorOutput[0]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->finalTxtColorOutput[1]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	//Intermediate FBO - Gbuffer
+	glBindTexture(GL_TEXTURE_2D, renderData->gPositionResolved);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->gNormalResolved);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->gAlbedoResolved);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->gDepthResolved);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	//Bloom
+	glBindTexture(GL_TEXTURE_2D, renderData->pingpongBuffers[0]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->pingpongBuffers[1]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	//Gbuffer
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gPosition);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gNormal);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gAlbedo);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
+	glBindRenderbuffer(GL_RENDERBUFFER, renderData->gDepth);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT);
+
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+
+	//SSAO
+	glBindTexture(GL_TEXTURE_2D, renderData->ssaoText);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, windowData->WIDTH, windowData->HEIGHT, 0, GL_RED, GL_FLOAT, NULL);
+	//SSAO-Blur
+	glBindTexture(GL_TEXTURE_2D, renderData->ssaoBlurText);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, windowData->WIDTH, windowData->HEIGHT, 0, GL_RED, GL_FLOAT, NULL);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 // Geometry Pass
 void RenderSystem::RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData, CameraComponent* mainCamera) {
 	glBindFramebuffer(GL_FRAMEBUFFER, resourceBuffer->renderResource->gBuffer);
@@ -480,13 +541,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	glEnable(GL_DEPTH_TEST);
 
 
-	InitMainFrameBuffer(windowData, renderData);
-	InitIntermediateFBO(windowData, renderData);
-	InitBloomFBO(windowData, renderData);
-	InitQuadVao(windowData, renderData);
-	InitGBuffer(windowData, renderData);
-	InitSSAO(windowData, renderData);
-	InitSSAO_Blur(windowData, renderData);
+	Init_AllBuffer(windowData, renderData);
 }
 
 void RenderSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
