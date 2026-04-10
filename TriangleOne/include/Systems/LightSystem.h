@@ -77,6 +77,9 @@ class LightSystem : public System {
 
 	 void InitLightSSBO(World& world, const ResourceBuffer* renderResource);
 
+	 void InitCaptureCubeMap(World& world, const ResourceBuffer* resourceBuffer);
+	 void CaptureLight(World& world, const ResourceBuffer* resourceBuffer);
+
 	 void LightningPass(World* world, Transform* transformMainCamera, RenderResource* renderResource);
 
 #pragma region Draw

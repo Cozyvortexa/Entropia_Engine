@@ -202,6 +202,10 @@ struct RenderResource : public Resource {
 	unsigned int pingpongBuffers[2];
 	bool horizontal = true;
 
+	//Capture cubeMap
+	unsigned int captureFBO;
+	unsigned int captureRBO;
+	unsigned int capture_Cubemap;
 
 	//Final render (To ImGui)
 	unsigned int toImGui_FBO;

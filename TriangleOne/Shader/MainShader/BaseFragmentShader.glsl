@@ -35,8 +35,8 @@ void main()
 	vec4 finalDiffuse = texture(material.diffuseText, TexCoords);
 	vec4 finalSpecular = texture(material.specularText, TexCoords);
 
-	CheckOpacity(finalDiffuse, finalSpecular);
-
+	if (finalDiffuse.a < 0.5)
+		discard;
 
 	vec3 norm = vec3(0,0,0);
 	if (have_NormalMap){

@@ -107,6 +107,7 @@ void LightSystem::InitShadowBuffer(World& world) {
 				to_remove.push_back(entity);
 				break;
 			}
+			[[fallthrough]];
 		}
 		case LightTag::SpotLight_Tag: {
 			SpotLight* currentLight = world.get_component<SpotLight>(entity);
@@ -115,6 +116,7 @@ void LightSystem::InitShadowBuffer(World& world) {
 				to_remove.push_back(entity);
 				break;
 			}
+			[[fallthrough]];
 		}
 		case LightTag::Directional_Tag: {
 			DirLight* currentLight = world.get_component<DirLight>(entity);
@@ -123,6 +125,7 @@ void LightSystem::InitShadowBuffer(World& world) {
 				to_remove.push_back(entity);
 				break;
 			}
+			[[fallthrough]];
 		}
 		default:
 			assert(true, "Unexpected Error in InitShadowBuffer");
@@ -285,6 +288,72 @@ void LightSystem::InitLightSSBO(World& world, const ResourceBuffer* resourceBuff
 	renderResource->lightSSBO_Data_Size.push_back(MAX_POINT_LIGHT * sizeof(Padding_PointLight));
 	renderResource->lightSSBO_Data_Size.push_back(MAX_SPOT_LIGHT * sizeof(Padding_SpotLight));
 }
+
+void LightSystem::InitCaptureCubeMap(World& world, const ResourceBuffer* resourceBuffer) {
+	RenderResource* renderData = resourceBuffer->renderResource;
+
+	glGenFramebuffers(1, &renderData->captureFBO);
+	glGenRenderbuffers(1, &renderData->captureRBO);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderData->captureRBO);
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->capture_Cubemap);
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		// note that we store each face with 16 bit floating point values
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "CubeMap Shadow Framebuffer not complete!" << std::endl;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+}
+
+//void LightSystem::CaptureLight(World& world, const ResourceBuffer* resourceBuffer) {
+//	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+//	glm::mat4 captureViews[] =
+//	{
+//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+//	};
+//
+//
+//	// convert HDR equirectangular environment map to cubemap equivalent
+//	equirectangularToCubemapShader.use();
+//	equirectangularToCubemapShader.setInt("equirectangularMap", 0);
+//	equirectangularToCubemapShader.setMat4("projection", captureProjection);
+//	glActiveTexture(GL_TEXTURE0);
+//	glBindTexture(GL_TEXTURE_2D, hdrTexture);
+//
+//	glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
+//	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+//	for (unsigned int i = 0; i < 6; ++i)
+//	{
+//		equirectangularToCubemapShader.setMat4("view", captureViews[i]);
+//		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+//			GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
+//		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//		renderCube(); // renders a 1x1 cube
+//	}
+//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//}
 
 glm::vec3 LightSystem::Calc_SpotLightDirection(glm::mat4 transformModel, glm::vec3 lightDirection) {
 	return glm::normalize(glm::vec3(transformModel * glm::vec4(lightDirection, 0.0f)));
@@ -457,7 +526,7 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, Re
 void LightSystem::DrawBlurEffect(RenderResource* renderData) {
 	renderData->horizontal = true;
 	bool first_iteration = true;
-	int amount = renderData->bloom_iteration;
+	unsigned int amount = renderData->bloom_iteration;
 
 	//float noir[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[0], noir);
