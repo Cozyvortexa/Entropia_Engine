@@ -170,6 +170,7 @@ struct RenderResource : public Resource {
 	unsigned int gPosition;
 	unsigned int gNormal;
 	unsigned int gAlbedo;
+	unsigned int gARM;
 
 	unsigned int gDepth;
 	//Deffered resolved Text (MSAA)
@@ -177,6 +178,7 @@ struct RenderResource : public Resource {
 	unsigned int gNormalResolved;
 	unsigned int gAlbedoResolved;
 	unsigned int gDepthResolved;
+	unsigned int gARM_Resolved;
 
 	//SSAO
 	unsigned int ssaoBuffer;

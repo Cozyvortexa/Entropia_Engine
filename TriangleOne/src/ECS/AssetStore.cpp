@@ -97,16 +97,25 @@ SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh
 	if (sub_Mesh->mMaterialIndex >= 0)
 	{
 		aiMaterial* material = scene->mMaterials[sub_Mesh->mMaterialIndex];
-		unsigned int diffuseMap_handle = LoadMaterialTextures(material, aiTextureType_DIFFUSE, scene, currentMesh);
+		unsigned int diffuseMap_handle = LoadMaterialTextures(material, aiTextureType_BASE_COLOR, scene, currentMesh);
 		unsigned int specularMap_handle = LoadMaterialTextures(material, aiTextureType_SPECULAR, scene, currentMesh);
 		unsigned int normalMap_handle = LoadMaterialTextures(material, aiTextureType_NORMALS, scene, currentMesh);
+		unsigned int ambientOcclusion_handle = LoadMaterialTextures(material, aiTextureType_AMBIENT_OCCLUSION, scene, currentMesh);
+		unsigned int metalness_handle = LoadMaterialTextures(material, aiTextureType_METALNESS, scene, currentMesh);
 		if (normalMap_handle == -1) {
 			normalMap_handle = LoadMaterialTextures(material, aiTextureType_HEIGHT, scene, currentMesh);
+			if (normalMap_handle == -1) currentMesh.hasNormalMap = false;
 		}
-		if (normalMap_handle == -1) {currentMesh.hasNormalMap = false; }
+		if (metalness_handle == -1) {
+			metalness_handle = LoadMaterialTextures(material, aiTextureType_GLTF_METALLIC_ROUGHNESS, scene, currentMesh);
+		}
+		if (diffuseMap_handle == -1) {
+			diffuseMap_handle = LoadMaterialTextures(material, aiTextureType_DIFFUSE, scene, currentMesh);
+		}
+
 
 		//Create the id key of the mat
-		MaterialKey key(diffuseMap_handle, specularMap_handle, normalMap_handle);
+		MaterialKey key(diffuseMap_handle, specularMap_handle, normalMap_handle, ambientOcclusion_handle, metalness_handle);
 		size_t hash_ID = std::hash<MaterialKey>{}(key);
 
 		auto result = keyTo_MaterialHandle.try_emplace(hash_ID);
@@ -119,6 +128,8 @@ SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh
 			material.diffuse_Text_Handle = diffuseMap_handle;
 			material.specular_Text_Handle = specularMap_handle;
 			material.normal_Text_Handle = normalMap_handle;
+			material.ambientOcclusion_Text_Handle = ambientOcclusion_handle;
+			material.metalness_handle_Text_Handle = metalness_handle;
 
 			//material.name  // maybe add a custom name
 
@@ -161,11 +172,26 @@ unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType typ
 		case aiTextureType_DIFFUSE:
 			texture.textureType = Texture::Diffuse;
 			break;
+		case aiTextureType_BASE_COLOR:
+			texture.textureType = Texture::Albedo;
+			break;
 		case aiTextureType_SPECULAR:
 			texture.textureType = Texture::Specular;
 			break;
 		case aiTextureType_NORMALS:
 			texture.textureType = Texture::Normal;
+			break;
+		case aiTextureType_HEIGHT:
+			texture.textureType = Texture::Normal;
+			break;
+		case aiTextureType_METALNESS:
+			texture.textureType = Texture::Metalness;
+			break;
+		case aiTextureType_GLTF_METALLIC_ROUGHNESS:
+			texture.textureType = Texture::MetalicRoughness;
+			break;
+		case aiTextureType_AMBIENT_OCCLUSION:
+			texture.textureType = Texture::Ambient_Occlusion;
 			break;
 		}
 

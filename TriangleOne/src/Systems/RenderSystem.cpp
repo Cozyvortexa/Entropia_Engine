@@ -204,10 +204,18 @@ void RenderSystem::InitIntermediateFBO(WindowResource* windowData, RenderResourc
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, renderData->gAlbedoResolved, 0);
 
+	//ARM - Ambient Occlusion Roughness Metallic
+	glGenTextures(1, &renderData->gARM_Resolved);
+	glBindTexture(GL_TEXTURE_2D, renderData->gARM_Resolved);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, renderData->gARM_Resolved, 0);
 
 
-	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 , GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, attachments);
+
+	unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 , GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachments);
 
 	//////////////////Init texture depth
 	glGenTextures(1, &renderData->gDepthResolved);
@@ -250,28 +258,36 @@ void RenderSystem::InitGBuffer(WindowResource* windowData, RenderResource* rende
 	glGenFramebuffers(1, &renderData->gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->gBuffer);
 
+	//Position
 	glGenTextures(1, &renderData->gPosition);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gPosition);
 	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, renderData->gPosition, 0);
 
-
+	//Normal
 	glGenTextures(1, &renderData->gNormal);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gNormal);
 	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D_MULTISAMPLE, renderData->gNormal, 0);
 
-
+	//Albedo
 	glGenTextures(1, &renderData->gAlbedo);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gAlbedo);
 	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D_MULTISAMPLE, renderData->gAlbedo, 0);
 
-	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, attachments);
+	//ARM - Ambient Occlusion Roughness Metallic
+	glGenTextures(1, &renderData->gARM);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gARM);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGB16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D_MULTISAMPLE, renderData->gARM, 0);
+
+	unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachments);
 
 
 	glGenRenderbuffers(1, &renderData->gDepth);
@@ -407,6 +423,8 @@ void RenderSystem::ResizeText(WindowResource* windowData, RenderResource* render
 	glBindTexture(GL_TEXTURE_2D, renderData->gAlbedoResolved);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, renderData->gDepthResolved);
+	glBindTexture(GL_TEXTURE_2D, renderData->gARM_Resolved);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	//Bloom
@@ -423,6 +441,8 @@ void RenderSystem::ResizeText(WindowResource* windowData, RenderResource* render
 	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gAlbedo);
 	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->gARM);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, renderData->sample, GL_RGB16F, windowData->WIDTH, windowData->HEIGHT, GL_TRUE);
 	glBindRenderbuffer(GL_RENDERBUFFER, renderData->gDepth);
 	glRenderbufferStorageMultisample(GL_RENDERBUFFER, renderData->sample, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT);
 
