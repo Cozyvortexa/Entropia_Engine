@@ -537,7 +537,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 	glm::vec3 specular = glm::vec3(0.0f, 0.0f, 0.0f);
 
-	float intensity = 1.0f;
+	float intensity = 4.0f;
 
 	glm::vec3 worldLightDir = glm::normalize(glm::vec3(-2.0f, 4.0f, -1.0f));
 
@@ -556,7 +556,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	Entity spotLightEntity = world.Register();
 	Transform spotTransform(glm::vec3(0.0f, 4.0f, -6.0f));
-	SpotLight spotLight(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->depthShader.get(), 20.0f);
+	SpotLight spotLight(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->depthShader.get(), 1000.0f);
 	LightToInitTag spotTag(LightTag::SpotLight_Tag);
 
 	world.add_components(spotLightEntity, spotTransform, spotLight, spotTag);
@@ -566,7 +566,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	Entity pointLightEntity = world.Register();
 	Transform transformPointLight(glm::vec3(1.0f, 5.0f, 0.0f));
-	PointLight pointLight(ambient, diffuse, specular, 8.0f, renderData->depthShaderCubeMap.get(), 10.0f);
+	PointLight pointLight(ambient, diffuse, specular, 8.0f, renderData->depthShaderCubeMap.get(), 150.0f);
 	LightToInitTag pointTag(LightTag::PointLight_Tag);
 
 	world.add_components(pointLightEntity, transformPointLight, pointLight, pointTag);

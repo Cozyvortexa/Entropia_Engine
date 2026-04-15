@@ -70,9 +70,9 @@ uniform vec3 viewPos;
 //vec4 CalcFinalSpecular();
 
 ////////////////Function
-vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, vec4 FragPosLightSpace, float ambientOcclusion);
+vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, vec4 FragPosLightSpace, float ambientOcclusion, Material material);
 vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, Material material);
-vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, float ambientOcclusion);
+vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, float ambientOcclusion, Material material);
 
 float ShadowDirLight(vec4 FragPosLightSpace);
 float ShadowPointLight(PointLight light, int lightIndex, vec3 FragPos, vec3 Normal);
@@ -83,6 +83,7 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
+vec3 CalcPbrLight(vec3 lightDir, vec3 V, vec3 H, vec3 Normal, vec3 radiance, Material material);
 
 ////////////////
 in vec2 TexCoords;
@@ -154,7 +155,7 @@ void main()
 	vec4 FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 
 
-	final_lightning += CalcDirLight(dirLight, viewDir, FragPos, Normal, Albedo, Specular, FragPosLightSpace, ambientOcclusion); // Une seule lumiere dir dans la scene 
+	final_lightning += CalcDirLight(dirLight, viewDir, FragPos, Normal, Albedo, Specular, FragPosLightSpace, ambientOcclusion, material); // Une seule lumiere dir dans la scene 
 
 	for (int i = 0; i < nbrPointLight; i++)
 	{
@@ -164,7 +165,7 @@ void main()
 	}
 	for (int i = 0; i < nbrSpotLight; i++){
 		if (length(spotLights[i].ambient + spotLights[i].diffuse + spotLights[i].Specular) > 0.001 ){
-			final_lightning += CalcSpotLight(spotLights[i], i, viewDir, FragPos, Normal, Albedo, Specular, ambientOcclusion);
+			final_lightning += CalcSpotLight(spotLights[i], i, viewDir, FragPos, Normal, Albedo, Specular, ambientOcclusion, material);
 		}
 	}
 
@@ -182,41 +183,26 @@ void main()
 }
 
 ///////////////////////////  Light
-vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, vec4 FragPosLightSpace, float ambientOcclusion)
+vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, vec4 FragPosLightSpace, float ambientOcclusion, Material material)
 {
 	vec3 lightDir = normalize(light.direction);
-
-
 	// Initialisation par defaut
 	vec3 ambient = light.ambient * vec3(Albedo) * ambientOcclusion;
-    vec3 diffuse = vec3(0.0);
-    float shadow = 0.0;
 
 	vec3 currentSpecular = vec3(0);
 	float diff = max(dot(Normal, lightDir), 0.0);
 	if (diff > 0.0) {
-		// diffuse shading
-		vec3 reflectDir = reflect(- lightDir, Normal);
-		float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0f); 
+		vec3 diffuse = light.diffuse * diff * vec3(Albedo);
+		vec3 H = normalize(viewDir + lightDir);
 
+		vec3 radiance = light.diffuse * diff;
+		vec3 Lo = CalcPbrLight(lightDir, viewDir, H, Normal, radiance, material);
 
-		diffuse = light.diffuse * diff * vec3(Albedo);
-		currentSpecular = light.Specular * spec * vec3(Specular);
-
-		vec3 light_contribution = vec3(0);
-
-		shadow = ShadowDirLight(FragPosLightSpace);
-		if (!have_Specular){
-			light_contribution = ambient + diffuse  * (1.0 - shadow);
-		}
-		else{
-			light_contribution = ambient + (diffuse + currentSpecular ) * (1.0 - shadow);
-		}
-
-
-		return light_contribution;
+	    float shadow = ShadowDirLight(FragPosLightSpace);
+		float lightModifier = 1.0 - shadow;
+		return Lo * lightModifier;
 	}
-	return ambient + (diffuse + currentSpecular) * (1.0 - shadow);
+	return vec3(0.0);
 }
 
 vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, Material material)
@@ -227,8 +213,7 @@ vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 FragPos
     }
 
 	vec3 lightDir = normalize(light.position - FragPos);
-	vec3 V = normalize(viewPos - FragPos);
-	vec3 H = normalize(V + lightDir);
+	vec3 H = normalize(viewDir + lightDir);
 
 	vec3 ambient = light.ambient * vec3(material.albedo) * material.ambientOcclusion;
 
@@ -239,57 +224,15 @@ vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 FragPos
 
 	vec3 radiance = light.diffuse * attenuation;
 
-
-	vec3 F0 = vec3(0.04);
-	F0 = mix(F0, material.albedo, material.metallic);
-	vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-
-	float NDF = DistributionGGX(Normal, H, material.roughness);
-	float G = GeometrySmith(Normal, V, lightDir, material.roughness);
-
-	vec3 numerator = NDF * G * F;
-	float denominator = 4.0 * max(dot(Normal, V), 0.0) * max(dot(Normal, lightDir), 0.0);
-	vec3 specular = numerator / max(denominator, 0.001);
-
-	vec3 kS = F;
-	vec3 kD = vec3(1.0) - kS;
-	kD *= 1.0 - material.metallic;
-
 	float shadow = ShadowPointLight(light, lightIndex, FragPos, Normal);
 	float lightModifier = (1.0 - shadow); 
 
-	float NdotL = max(dot(Normal, lightDir), 0.0);
-	vec3 Lo = (kD * material.albedo / PI + specular) * radiance * NdotL;
+	vec3 Lo = CalcPbrLight(lightDir, viewDir, H, Normal, radiance, material);
 
 	return Lo * lightModifier;
-
-//	vec3 light_contribution = vec3(0.0);
-//
-//	float diff = dot(Normal, lightDir) * 0.5 + 0.5;
-//	diff = diff * diff;
-//	vec3 diffuse = light.diffuse * diff;
-//
-//
-//	 // Specular
-//	vec3 halfwayVec = normalize(lightDir + V);
-//	float spec = pow(max(dot(viewDir, halfwayVec), 0.0), 32.0f); // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
-//	vec3 currentSpecular = light.Specular * spec * material.roughness * attenuation;
-//
-//	vec3 finalColor = diffuse * material.albedo.rgb;
-//
-//
-//
-//	if (!have_Specular){
-//		light_contribution = ambient + finalColor * attenuation * lightModifier ;
-//	}
-//	else{ 
-//		light_contribution = ambient + (finalColor + currentSpecular) * attenuation * lightModifier ;
-//	}
-//
-//	return light_contribution;
 }
 
-vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, float ambientOcclusion) 
+vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, float ambientOcclusion, Material material) 
 {
 	vec3 lightDir = normalize(light.position - FragPos);  // Direction entre la source de lumiere et la normal du vertex
 
@@ -298,41 +241,28 @@ vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, 
     float epsilon = light.cutOff - light.outerCutOff;
     float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
 	//
-	
 	float diff = max(dot(Normal, lightDir), 0.0);  // Calcul de l'angle entre la normal et le vec distance 
-
-
-	vec3 reflectDir = reflect(-lightDir, Normal); // on inverse lightDir car c'est pas la bonne direction
-
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0f);  // angle entre le vecteur du reflet et le vecteur qui relie le vertex a la cam
-
 
 	vec3 ambient = light.ambient * vec3(Albedo) * ambientOcclusion;
 	vec3 diffuse = light.diffuse * diff * Albedo.rgb;
-	vec3 currentSpecular = light.Specular * spec * Specular;
 
 	// attenuation
 	float distance = length(light.position - FragPos);
 	float attenuation = clamp(1.0 - (distance / light.range), 0.0, 1.0);
-
-	ambient *= attenuation * intensity;
+	//ambient *= attenuation * intensity;
 	diffuse *= attenuation * intensity;
-	currentSpecular *= attenuation * intensity;
 
+	vec3 H = normalize(viewDir + lightDir);
+
+	vec3 radiance = diffuse * attenuation;
+
+	vec3 Lo = CalcPbrLight(lightDir, viewDir, H, Normal, radiance, material);
+
+	//Shadow
 	float shadow = ShadowSpotLight(light, lightIndex, FragPos);
-	//vec3 light_contribution = ambient + (diffuse + Specular);
-//	vec3 light_contribution = (diffuse + Specular) * (1.0 - shadow);
-
-	vec3 light_contribution = vec3(0.0);
-
-	if (!have_Specular){
-		light_contribution = ambient + (diffuse) * (1.0 - shadow);
-	}
-	else{ 
-		light_contribution = ambient + (diffuse + currentSpecular) * (1.0 - shadow);
-	}
-
-	return light_contribution;
+	float lightModifier = 1.0 - shadow;
+	
+	return Lo * lightModifier;
 }
 
 ///////////////////////////  Shadow
@@ -494,4 +424,27 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 	float ggx1 = GeometrySchlickGGX(NdotL, roughness);
 	return ggx1 * ggx2;
 }
+vec3 CalcPbrLight(vec3 lightDir, vec3 V, vec3 H, vec3 Normal, vec3 radiance, Material material){
+	vec3 F0 = vec3(0.04);
+	F0 = mix(F0, material.albedo, material.metallic);
+	vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+	float NDF = DistributionGGX(Normal, H, material.roughness);
+	float G = GeometrySmith(Normal, V, lightDir, material.roughness);
+
+	vec3 numerator = NDF * G * F;
+	float denominator = 4.0 * max(dot(Normal, V), 0.0) * max(dot(Normal, lightDir), 0.0);
+	vec3 specular = numerator / max(denominator, 0.001);
+
+	vec3 kS = F;
+	vec3 kD = vec3(1.0) - kS;
+	kD *= 1.0 - material.metallic;
+
+
+	float NdotL = max(dot(Normal, lightDir), 0.0);
+	vec3 Lo = (kD * material.albedo / PI + specular) * radiance * NdotL;
+
+	return Lo ;
+}
+
 /////////////////////////// 
