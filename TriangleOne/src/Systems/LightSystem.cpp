@@ -300,7 +300,8 @@ void LightSystem::InitCaptureCubeMap(World& world, const ResourceBuffer* resourc
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderData->captureRBO);
 
-	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->capture_Cubemap);
+	glGenTextures(1, &renderData->envCubemap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		// note that we store each face with 16 bit floating point values
@@ -321,39 +322,46 @@ void LightSystem::InitCaptureCubeMap(World& world, const ResourceBuffer* resourc
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
-//void LightSystem::CaptureLight(World& world, const ResourceBuffer* resourceBuffer) {
-//	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-//	glm::mat4 captureViews[] =
-//	{
-//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
-//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-//	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
-//	};
-//
-//
-//	// convert HDR equirectangular environment map to cubemap equivalent
-//	equirectangularToCubemapShader.use();
-//	equirectangularToCubemapShader.setInt("equirectangularMap", 0);
-//	equirectangularToCubemapShader.setMat4("projection", captureProjection);
-//	glActiveTexture(GL_TEXTURE0);
-//	glBindTexture(GL_TEXTURE_2D, hdrTexture);
-//
-//	glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
-//	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
-//	for (unsigned int i = 0; i < 6; ++i)
-//	{
-//		equirectangularToCubemapShader.setMat4("view", captureViews[i]);
-//		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-//			GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
-//		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//		renderCube(); // renders a 1x1 cube
-//	}
-//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-//}
+void LightSystem::Equiranctangular_To_CubeMap(World& world, const ResourceBuffer* resourceBuffer, std::string equirectangularMap_Path) {
+	RenderResource* renderData = resourceBuffer->renderResource;
+	WindowResource* windowData = resourceBuffer->windowResource;
+
+	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+	glm::mat4 captureViews[] =
+	{
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+	};
+
+	unsigned int equiRec_Map = TextureClass::LoadEquirectangularTex(equirectangularMap_Path);
+	renderData->equirectangular_To_CubemapShader->Use();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, equiRec_Map);
+	renderData->equirectangular_To_CubemapShader->setInt("equirectangularMap", 0);
+	renderData->equirectangular_To_CubemapShader->setMatrix("projection", captureProjection);
+
+	glViewport(0, 0, 512, 512);
+
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		renderData->equirectangular_To_CubemapShader->setMatrix("view", captureViews[i]);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, renderData->envCubemap, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		world.renderer->DrawCube();
+	}
+	glEnable(GL_DEPTH_TEST);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	glViewport(0, 0, windowData->WIDTH, windowData->HEIGHT);
+	glDeleteTextures(1, &equiRec_Map);
+}
 
 glm::vec3 LightSystem::Calc_SpotLightDirection(glm::mat4 transformModel, glm::vec3 lightDirection) {
 	return glm::normalize(glm::vec3(transformModel * glm::vec4(lightDirection, 0.0f)));
@@ -491,10 +499,11 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 	return lights;
 }
 //Lightning Pass
-void LightSystem::LightningPass(World* world, Transform* transformMainCamera, RenderResource* renderResource) {
-	InterfaceRessource* interfaceRessource = world->get_ressource<InterfaceRessource>();
+void LightSystem::LightningPass(World* world, Transform* transformMainCamera, const ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice) {
+	InterfaceRessource* interfaceRessource = resourceBuffer->interfaceRessource;
+	RenderResource* renderResource = resourceBuffer->renderResource;
 	glBindFramebuffer(GL_FRAMEBUFFER, renderResource->framebuffer);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 
 
 	renderResource->lightningPass_Shader->Use();
@@ -517,12 +526,46 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, Re
 	renderResource->lightningPass_Shader->setInt("renderTarget", interfaceRessource->renderTarget);
 
 	world->renderer->DrawQuad(renderResource);
+
+	//Skybox
+	Draw_SkyBox(world, resourceBuffer, viewMatrice);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 #pragma endregion
 
 #pragma region Draw
+void LightSystem::Draw_SkyBox(World* world, const ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice) {
+	RenderResource* renderData = resourceBuffer->renderResource;
+	WindowResource* windowResource = resourceBuffer->windowResource;
+
+	//Copie
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData->gBuffer);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData->framebuffer);
+
+	// On copie la profondeur avec les dimensions de ta fenêtre (ex: width, height)
+	glBlitFramebuffer(0, 0, windowResource->WIDTH, windowResource->HEIGHT, 0, 0, windowResource->WIDTH, windowResource->HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+
+
+	Shader* skyBoxshader = renderData->skyBox_Shader.get();
+	skyBoxshader->Use();
+
+
+	glDepthFunc(GL_LEQUAL);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
+	skyBoxshader->setInt("environmentMap", 0);
+	skyBoxshader->setMatrix("rootView", glm::mat4(glm::mat3(viewMatrice)));
+	skyBoxshader->setMatrix("projection", renderData->projection);
+	world->renderer->DrawCube();
+
+
+	glDepthFunc(GL_LESS);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
 void LightSystem::DrawBlurEffect(RenderResource* renderData) {
 	renderData->horizontal = true;
 	bool first_iteration = true;
@@ -689,6 +732,9 @@ void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	static_assert(alignof(Padding_SpotLight) == 16);
 
 	InitLightSSBO(world, resourceBuffer);
+
+	InitCaptureCubeMap(world, resourceBuffer);
+	Equiranctangular_To_CubeMap(world, resourceBuffer, "Assets/SkyBox/InTheSky/kloofendal_48d_partly_cloudy_puresky_2k.hdr");  //qwantani_night_puresky_2k
 }
 
 void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
@@ -712,7 +758,7 @@ void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	ShadowPass(&world, renderResource, windowResource, lights);
 	UpdateLight(&world, renderResource, *lights);
 	SendDepthMapToLightningShader(&world, renderResource, resourceBuffer, lights);
-	LightningPass(&world, transformMainCamera, renderResource);
+	LightningPass(&world, transformMainCamera, resourceBuffer, mainCamera->viewMatrice);
 	Draw_FinalPass(renderResource);
 
 

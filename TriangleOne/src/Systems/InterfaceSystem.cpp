@@ -83,6 +83,7 @@ void InterfaceSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 	if (ImGui::CollapsingHeader("OtherParam"))
 	{
 		ImGui::Checkbox("bloomEnable", &renderData->bloomEnable);
+		ImGui::InputFloat("Exposure", &renderData->exposure);
 	}
     //ShowExampleAppDockSpace(&resourceBuffer->interfaceRessource->mainInterfaceOpen);
 

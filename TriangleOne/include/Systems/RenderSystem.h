@@ -45,8 +45,6 @@ public:
 	std::pair<unsigned int, unsigned int> CreateDummyShadowTextures();
 
 	static void ResizeText(WindowResource* windowData, RenderResource* renderResource);
-	//void InitSkyBox();
-	//void DrawSkyBox(glm::mat4 projectionMatrix);
 
 	void Init(World& world, const ResourceBuffer* resourceBuffer) override;
 	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;

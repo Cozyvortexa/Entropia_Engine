@@ -78,13 +78,14 @@ class LightSystem : public System {
 	 void InitLightSSBO(World& world, const ResourceBuffer* renderResource);
 
 	 void InitCaptureCubeMap(World& world, const ResourceBuffer* resourceBuffer);
-	 void CaptureLight(World& world, const ResourceBuffer* resourceBuffer);
+	 void Equiranctangular_To_CubeMap(World& world, const ResourceBuffer* resourceBuffer, std::string equirectangularMap_Path);
 
-	 void LightningPass(World* world, Transform* transformMainCamera, RenderResource* renderResource);
+	 void LightningPass(World* world, Transform* transformMainCamera, const ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice);
 
 #pragma region Draw
 	 void DrawBlurEffect(RenderResource* renderData);
 	 void Draw_FinalPass(RenderResource* renderData);
+	 void Draw_SkyBox(World* world, const ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice);
 #pragma endregion
 
 #pragma region Init shadow buffer 

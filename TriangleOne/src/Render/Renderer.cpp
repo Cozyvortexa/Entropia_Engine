@@ -117,3 +117,25 @@ void Renderer::DrawQuad(RenderResource* renderData) {
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
 }
+
+void Renderer::DrawCube() {
+
+	glBindVertexArray(cubeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+}
+
+void Renderer::LoadDefaultCube() {
+	glGenVertexArrays(1, &cubeVAO);
+	glBindVertexArray(cubeVAO);
+
+	glGenBuffers(1, &cubeVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+
+	//Position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindVertexArray(0);
+}

@@ -193,6 +193,8 @@
   <ItemGroup>
     <None Include="Shader\BloomShader\FragmentBloom.glsl" />
     <None Include="Shader\BloomShader\VertexBloom.glsl" />
+    <None Include="Shader\IBLshader\Fragment_Equirectangular_to_Cubemap.glsl" />
+    <None Include="Shader\IBLshader\Vertex_Equirectangular_to_Cubemap.glsl" />
     <None Include="Shader\Lighting_Pass\Fragment_LightningPass_Shader.glsl" />
     <None Include="Shader\Lighting_Pass\Vertex_LightningPass_Shader.glsl" />
     <None Include="Shader\MainShader\BaseFragmentShader.glsl" />

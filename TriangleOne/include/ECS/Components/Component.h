@@ -146,6 +146,8 @@ struct RenderResource : public Resource {
 	std::unique_ptr<Shader> lightningPass_Shader = nullptr;
 	std::unique_ptr<Shader> ssaoPass_Shader = nullptr;
 	std::unique_ptr<Shader> ssaoPass_Blur_Shader = nullptr;
+	std::unique_ptr<Shader> equirectangular_To_CubemapShader = nullptr;
+	std::unique_ptr<Shader> skyBox_Shader = nullptr;
 
 	glm::mat4 _model = glm::mat4(1.0f);
 
@@ -207,7 +209,7 @@ struct RenderResource : public Resource {
 	//Capture cubeMap
 	unsigned int captureFBO;
 	unsigned int captureRBO;
-	unsigned int capture_Cubemap;
+	unsigned int envCubemap;
 
 	//Final render (To ImGui)
 	unsigned int toImGui_FBO;
@@ -217,7 +219,7 @@ struct RenderResource : public Resource {
 	float exposure = 1.0f; // HDR exposure
 
 	//Bloom
-	bool bloomEnable = true;
+	bool bloomEnable = false;
 	int bloom_iteration = 10;
 
 	float quadVertices[24] = {

@@ -15,4 +15,6 @@ public:
 	static unsigned int LoadEmbeddedTexture(const aiTexture* tex);
 
 	static unsigned int LoadCubeMapFromFile(std::vector<std::string> faces);
+
+	static unsigned int LoadEquirectangularTex(std::string path);
 };

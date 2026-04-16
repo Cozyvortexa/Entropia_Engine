@@ -514,6 +514,8 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	renderData->lightningPass_Shader = std::make_unique<Shader>("TriangleOne/Shader/Lighting_Pass/Vertex_LightningPass_Shader.glsl", "TriangleOne/Shader/Lighting_Pass/Fragment_LightningPass_Shader.glsl");
 	renderData->ssaoPass_Shader = std::make_unique<Shader>("TriangleOne/Shader/SSAO_Pass/Vertex_SSAO_Shader.glsl", "TriangleOne/Shader/SSAO_Pass/Fragment_SSAO_Shader.glsl");
 	renderData->ssaoPass_Blur_Shader = std::make_unique<Shader>("TriangleOne/Shader/SSAO_Pass/Vertex_SSAO_Shader.glsl", "TriangleOne/Shader/SSAO_Pass/Fragment_Blur_SSAO_Shader.glsl");
+	renderData->equirectangular_To_CubemapShader = std::make_unique<Shader>("TriangleOne/Shader/IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "TriangleOne/Shader/IBLshader/Fragment_Equirectangular_to_Cubemap.glsl");
+	renderData->skyBox_Shader = std::make_unique<Shader>("TriangleOne/Shader/MiscShader/SkyBoxVertex.glsl", "TriangleOne/Shader/MiscShader/SkyBoxFrag.glsl");
 
 	//Create the main cam  // TEMP / WARNING
 	Entity camEntity = world.Register();
