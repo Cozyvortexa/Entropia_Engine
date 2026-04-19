@@ -25,27 +25,20 @@ public:
 
 struct Light : Component{
 public:
-	Light() {};
-	Light(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float newIntensity);
-	//Light(glm::vec3 position, glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float constant, float linear, float quadratique, float cutOff, float outerCutOff);
+	//Light() {};
+	~Light() = default;
+	Light(glm::vec3 color, float intensity);
 
-	//void UseLight(Shader* shader);
-	//void UseShadow(Shader* shader);
-
+	glm::vec3 color;
 	float intensity = 1.0f;
-	glm::vec3 ambient = glm::vec3(0);
-	glm::vec3 diffuse = glm::vec3(0);
-	glm::vec3 specular = glm::vec3(0);
-
 	unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
-
-Shader* depthShader = nullptr;
-protected:
-	void InitBaseLight(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float newIntensity);
+	Shader* depthShader = nullptr;
 };
 
 struct DirLight : public Light {
-	DirLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 direction, Shader* _depthShader, float newIntensity);
+	using Light::Light;
+	~DirLight() = default;
+	DirLight(glm::vec3 color, float intensity, glm::vec3 direction, Shader* _depthShader);
 	glm::vec3 direction = glm::vec3(0.0f,-0.80f,0.0f);
 	unsigned int depthMap = 0;
 	unsigned int depthMapFBO = 0;
@@ -73,7 +66,9 @@ private:
 
 struct PointLight : public Light{
 public:
-	PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _range, Shader* depthShaderCubeMap, float newIntesity);
+	using Light::Light;
+	~PointLight() = default;
+	PointLight(glm::vec3 color, float intensity, float _range, Shader* depthShaderCubeMap);
 	float range = 5.0f;
 
 	unsigned int depthCubeMapFBO = 0;
@@ -86,7 +81,9 @@ public:
 
 struct SpotLight : public Light {
 public: 
-	SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Shader* depthShaderSpotMap, float newIntensity);
+	using Light::Light;
+	~SpotLight() = default;
+	SpotLight(glm::vec3 color, float intensity, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Shader* depthShaderSpotMap);
 	float range = 1.0f;
 
 	glm::vec3 direction = glm::vec3(0);

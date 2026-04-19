@@ -2,11 +2,13 @@
 layout (location = 0) out vec3 gPosition;
 layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec4 gAlbedo;
+layout (location = 3) out vec3 g_ARM;
 
 struct Material {
 	sampler2D diffuseText;
 	sampler2D specularText;
 	sampler2D normalText;
+	sampler2D AO_Text;
 
 	float shininess;  // Not use, 32.0f
 };
@@ -49,8 +51,9 @@ void main()
 	}
 	gNormal = normalize(norm);
 
-	// Store the value
     gPosition = FragPos;
+
+	g_ARM.r = texture(material.AO_Text, TexCoords).r;
 
 
     gAlbedo.rgb = finalDiffuse.rgb;

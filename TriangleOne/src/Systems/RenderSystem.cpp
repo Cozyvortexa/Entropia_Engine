@@ -497,7 +497,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	Shader::CreateDefaultWhiteTexture();
 	Shader::CreateNeutralNormalText();
 
-	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "TriangleOne/Shader/MainShader/BaseVertexShader.glsl", "TriangleOne/Shader/MainShader/BaseFragmentShader.glsl");
+	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "TriangleOne/Shader/Geometry_Pass/BaseVertexShader.glsl", "TriangleOne/Shader/Geometry_Pass/BaseFragmentShader.glsl");
 	defaultMat.first.diffuse_Text_Handle = Shader::GetDefaultText();
 	defaultMat.first.normal_Text_Handle = Shader::GetNeutralNormalText();
 	defaultMat.first.specular_Text_Handle = -1;
@@ -516,6 +516,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	renderData->ssaoPass_Blur_Shader = std::make_unique<Shader>("TriangleOne/Shader/SSAO_Pass/Vertex_SSAO_Shader.glsl", "TriangleOne/Shader/SSAO_Pass/Fragment_Blur_SSAO_Shader.glsl");
 	renderData->equirectangular_To_CubemapShader = std::make_unique<Shader>("TriangleOne/Shader/IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "TriangleOne/Shader/IBLshader/Fragment_Equirectangular_to_Cubemap.glsl");
 	renderData->skyBox_Shader = std::make_unique<Shader>("TriangleOne/Shader/MiscShader/SkyBoxVertex.glsl", "TriangleOne/Shader/MiscShader/SkyBoxFrag.glsl");
+	renderData->irradiance_Shader = std::make_unique<Shader>("TriangleOne/Shader/IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "TriangleOne/Shader/IBLshader/Irradiance/Fragment_Irradiance_Convulation.glsl");
 
 	//Create the main cam  // TEMP / WARNING
 	Entity camEntity = world.Register();
@@ -535,9 +536,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	world.add_components(model, sceneTag, materialHandle, meshHandle, modelTransform);
 
 
-	glm::vec3 ambient = glm::vec3(0.002f, 0.002f, 0.002f);
-	glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-	glm::vec3 specular = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
 
 	float intensity = 4.0f;
 
@@ -547,7 +546,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	float outerCutOff = 15.5f;
 
 	Entity dirLight_E = world.Register();
-	DirLight dirLight(ambient, diffuse, specular, worldLightDir, renderData->depthShader.get(), intensity);
+	DirLight dirLight(color, intensity, worldLightDir, renderData->depthShader.get());
 
 	LightToInitTag tag(LightTag::Directional_Tag);
 	Transform lightTransform(glm::vec3(0.0f, 4.0f, -6.0f));
@@ -558,7 +557,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	Entity spotLightEntity = world.Register();
 	Transform spotTransform(glm::vec3(0.0f, 4.0f, -6.0f));
-	SpotLight spotLight(ambient, diffuse, specular, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->depthShader.get(), 1000.0f);
+	SpotLight spotLight(color, 1000.0f, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->depthShader.get());
 	LightToInitTag spotTag(LightTag::SpotLight_Tag);
 
 	world.add_components(spotLightEntity, spotTransform, spotLight, spotTag);
@@ -568,7 +567,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	Entity pointLightEntity = world.Register();
 	Transform transformPointLight(glm::vec3(1.0f, 5.0f, 0.0f));
-	PointLight pointLight(ambient, diffuse, specular, 8.0f, renderData->depthShaderCubeMap.get(), 150.0f);
+	PointLight pointLight(color, 150.0f, 8.0f, renderData->depthShaderCubeMap.get());
 	LightToInitTag pointTag(LightTag::PointLight_Tag);
 
 	world.add_components(pointLightEntity, transformPointLight, pointLight, pointTag);

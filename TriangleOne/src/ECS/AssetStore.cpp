@@ -113,7 +113,6 @@ SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh
 			diffuseMap_handle = LoadMaterialTextures(material, aiTextureType_DIFFUSE, scene, currentMesh);
 		}
 
-
 		//Create the id key of the mat
 		MaterialKey key(diffuseMap_handle, specularMap_handle, normalMap_handle, ambientOcclusion_handle, metalness_handle);
 		size_t hash_ID = std::hash<MaterialKey>{}(key);

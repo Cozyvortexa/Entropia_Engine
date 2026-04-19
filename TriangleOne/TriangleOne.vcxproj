@@ -194,11 +194,12 @@
     <None Include="Shader\BloomShader\FragmentBloom.glsl" />
     <None Include="Shader\BloomShader\VertexBloom.glsl" />
     <None Include="Shader\IBLshader\Fragment_Equirectangular_to_Cubemap.glsl" />
+    <None Include="Shader\IBLshader\Irradiance\Fragment_Irradiance_Convulation.glsl" />
     <None Include="Shader\IBLshader\Vertex_Equirectangular_to_Cubemap.glsl" />
     <None Include="Shader\Lighting_Pass\Fragment_LightningPass_Shader.glsl" />
     <None Include="Shader\Lighting_Pass\Vertex_LightningPass_Shader.glsl" />
-    <None Include="Shader\MainShader\BaseFragmentShader.glsl" />
-    <None Include="Shader\MainShader\BaseVertexShader.glsl" />
+    <None Include="Shader\Geometry_Pass\BaseFragmentShader.glsl" />
+    <None Include="Shader\Geometry_Pass\BaseVertexShader.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\DepthMapFrag.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\DepthMapVertex.glsl" />
     <None Include="Shader\LightShader\Light\LightFragShader.glsl" />

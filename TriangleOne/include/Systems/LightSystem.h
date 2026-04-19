@@ -21,23 +21,17 @@
 #pragma region Padding_Structures
 struct Padding_DirLight {  // To be identical to the memory alignment of structs in shaders, SSBO
 	alignas(16) glm::vec3 direction;
-	alignas(16) glm::vec3 ambient;
-	alignas(16) glm::vec3 diffuse;
-	alignas(16) glm::vec3 specular;
+	alignas(16) glm::vec3 color;
 };
 struct Padding_PointLight {
 	alignas(16) glm::vec3 position;
-	alignas(16) glm::vec3 ambient;
-	alignas(16) glm::vec3 diffuse;
-	alignas(16) glm::vec3 specular;
+	alignas(16) glm::vec3 color;
 	float range = 0.0f;
 };
 struct Padding_SpotLight {
 	alignas(16) glm::vec3 position;
 	alignas(16) glm::vec3 direction;
-	alignas(16) glm::vec3 ambient;
-	alignas(16) glm::vec3 diffuse;
-	alignas(16) glm::vec3 specular;
+	alignas(16) glm::vec3 color;
 	float cutOff;
 	float outerCutOff;
 	float range;
@@ -78,10 +72,13 @@ class LightSystem : public System {
 	 void InitLightSSBO(World& world, const ResourceBuffer* renderResource);
 
 	 void InitCaptureCubeMap(World& world, const ResourceBuffer* resourceBuffer);
+	 void ConvulateEnvCube(World& world, const ResourceBuffer* resourceBuffer, glm::mat4 captureProjection, glm::mat4 captureViews[]);
 	 void Equiranctangular_To_CubeMap(World& world, const ResourceBuffer* resourceBuffer, std::string equirectangularMap_Path);
+
 
 	 void LightningPass(World* world, Transform* transformMainCamera, const ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice);
 
+	 void Init_IrradianceMap(World& world, const ResourceBuffer* resourceBuffer);
 #pragma region Draw
 	 void DrawBlurEffect(RenderResource* renderData);
 	 void Draw_FinalPass(RenderResource* renderData);
@@ -95,13 +92,13 @@ class LightSystem : public System {
 	 void InitShadowBuffer(World& world);
 
 #pragma endregion
-
 #pragma region Draw Shadow
 	 void DrawShadowForDirLight(World* world, RenderResource& renderResource, WindowResource& windowData, All_Light& currentLight);
 	 void DrawShadowForPointLight(World* world, RenderResource& renderResource, WindowResource& windowData, All_Light& lights, int index);
 	 void DrawShadowForSpotLight(World* world, RenderResource& renderResource, WindowResource& windowData, All_Light& lights, int index);
 	 void ShadowPass(World* world, RenderResource* renderResource, WindowResource* windowResource, All_Light* lights);
 #pragma endregion
+
 private:
 	All_Light* DataCollector(World* world, WindowResource* windowResource, CameraComponent* mainCamera, RenderResource* renderRessource);
 

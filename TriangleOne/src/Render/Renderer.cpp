@@ -47,6 +47,7 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 		unsigned int diffuse_Text = 0;
 		unsigned int specular_Text = 0;
 		unsigned int normal_Text = 0;
+		unsigned int ambientOcclusion_Text = 0;
 
 		// Get texture
 		// 
@@ -72,6 +73,12 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 		}
 		else { normal_Text = normal->id; }
 
+		//Ambient occlusion
+		Texture* ambientOcclusion = assetStore->Get_Texture(currentMat->ambientOcclusion_Text_Handle);
+		if (ambientOcclusion == nullptr) {
+			ambientOcclusion_Text = Shader::GetDefaultText();
+		}
+		else { ambientOcclusion_Text = ambientOcclusion->id; }
 
 		// Bind
 		int i = 0;
@@ -90,6 +97,11 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 		glBindTexture(GL_TEXTURE_2D, normal_Text);
 		last_Shader_Use->setInt("material.normalText", i);
 		last_Shader_Use->setBool("have_NormalMap", currentMesh.hasTBN && currentMesh.hasUV && currentMesh.hasNormalMap);
+		i++;
+
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, ambientOcclusion_Text);
+		last_Shader_Use->setInt("material.AO_Text", i);
 		i++;
 
 		glActiveTexture(GL_TEXTURE0);

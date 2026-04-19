@@ -289,6 +289,30 @@ void LightSystem::InitLightSSBO(World& world, const ResourceBuffer* resourceBuff
 	renderResource->lightSSBO_Data_Size.push_back(MAX_SPOT_LIGHT * sizeof(Padding_SpotLight));
 }
 
+void LightSystem::Init_IrradianceMap(World& world, const ResourceBuffer* resourceBuffer) {
+	RenderResource* renderData = resourceBuffer->renderResource;
+
+	glGenTextures(1, &renderData->irradianceMap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->irradianceMap);
+
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 32, 32, 0, GL_RGB, GL_FLOAT, nullptr);
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "CubeMap Shadow Framebuffer not complete!" << std::endl;
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
 void LightSystem::InitCaptureCubeMap(World& world, const ResourceBuffer* resourceBuffer) {
 	RenderResource* renderData = resourceBuffer->renderResource;
 
@@ -318,6 +342,34 @@ void LightSystem::InitCaptureCubeMap(World& world, const ResourceBuffer* resourc
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "CubeMap Shadow Framebuffer not complete!" << std::endl;
 
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+}
+
+void LightSystem::ConvulateEnvCube(World& world, const ResourceBuffer* resourceBuffer, glm::mat4 captureProjection, glm::mat4 captureViews[]) {
+	RenderResource* renderData = resourceBuffer->renderResource;
+	WindowResource* windowData = resourceBuffer->windowResource;
+	Shader* shader = renderData->irradiance_Shader.get();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
+
+	shader->Use();
+	shader->setInt("environmentMap", 0);
+	shader->setMatrix("projection", captureProjection);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
+	glViewport(0, 0, 32, 32);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		shader->setMatrix("view", captureViews[i]);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, renderData->irradianceMap, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		world.renderer->DrawCube();
+	}
+	glViewport(0, 0, windowData->WIDTH, windowData->HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
@@ -361,6 +413,8 @@ void LightSystem::Equiranctangular_To_CubeMap(World& world, const ResourceBuffer
 
 	glViewport(0, 0, windowData->WIDTH, windowData->HEIGHT);
 	glDeleteTextures(1, &equiRec_Map);
+
+	ConvulateEnvCube(world, resourceBuffer, captureProjection, captureViews);
 }
 
 glm::vec3 LightSystem::Calc_SpotLightDirection(glm::mat4 transformModel, glm::vec3 lightDirection) {
@@ -413,10 +467,8 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 		if (starCompteur <= 1) {
 
 			//Dir_Light
-			p_DirLight.ambient = dirLight.ambient;
-			p_DirLight.diffuse = dirLight.diffuse;
+			p_DirLight.color = dirLight.color * dirLight.intensity;
 			p_DirLight.direction = dirLight.direction;
-			p_DirLight.specular = dirLight.specular;
 			lights->dirLight = p_DirLight;
 
 			//Shadow
@@ -440,9 +492,7 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 			Padding_PointLight p_pointLight;
 			//Point_Light
 			p_pointLight.position = transform.position;
-			p_pointLight.ambient = pointLight.ambient;
-			p_pointLight.diffuse = pointLight.diffuse;
-			p_pointLight.specular = pointLight.specular;
+			p_pointLight.color = pointLight.color * pointLight.intensity;
 			p_pointLight.range = pointLight.range;
 			lights->pointLights.push_back(p_pointLight);
 
@@ -464,9 +514,7 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 			//Spot_Light
 			p_spotLight.position = transform.position;
 			p_spotLight.direction = Calc_SpotLightDirection(transform.GetTransformModel(), spotLight.direction);
-			p_spotLight.ambient = spotLight.ambient;
-			p_spotLight.diffuse = spotLight.diffuse;
-			p_spotLight.specular = spotLight.specular;
+			p_spotLight.color = spotLight.color * spotLight.intensity;
 			p_spotLight.range = spotLight.range;
 			p_spotLight.cutOff = spotLight.cutOff;
 			p_spotLight.outerCutOff = spotLight.outerCutOff;
@@ -524,6 +572,10 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, co
 	glBindTexture(GL_TEXTURE_2D, renderResource->ssaoBlurText);
 	renderResource->lightningPass_Shader->setInt("ssaoTexture", 4);
 	renderResource->lightningPass_Shader->setInt("renderTarget", interfaceRessource->renderTarget);
+
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderResource->irradianceMap);
+	renderResource->lightningPass_Shader->setInt("irradianceMap", 5);
 
 	world->renderer->DrawQuad(renderResource);
 
@@ -722,18 +774,19 @@ void LightSystem::SendDepthMapToLightningShader(World* world, const RenderResour
 }
 
 void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
-	static_assert(sizeof(Padding_DirLight) == 64, "Invalide alignement");
+	static_assert(sizeof(Padding_DirLight) == 32, "Invalide alignement");
 	static_assert(alignof(Padding_DirLight) == 16);
 
 	//static_assert(sizeof(Padding_PointLight) == 80, "Invalide alignement");
 	//static_assert(alignof(Padding_PointLight) == 16);
 
-	static_assert(sizeof(Padding_SpotLight) == 96, "Invalide alignement");
+	static_assert(sizeof(Padding_SpotLight) == 64, "Invalide alignement");
 	static_assert(alignof(Padding_SpotLight) == 16);
 
 	InitLightSSBO(world, resourceBuffer);
 
 	InitCaptureCubeMap(world, resourceBuffer);
+	Init_IrradianceMap(world, resourceBuffer);
 	Equiranctangular_To_CubeMap(world, resourceBuffer, "Assets/SkyBox/InTheSky/kloofendal_48d_partly_cloudy_puresky_2k.hdr");  //qwantani_night_puresky_2k
 }
 

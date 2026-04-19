@@ -1,29 +1,17 @@
 #include <ECS/Components/Light.h>
 
 #pragma region Init
-void Light::InitBaseLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float newIntensity) {
-	ambient = _ambient;
-	diffuse = _diffuse;
-	specular = _specular;
 
-	intensity = newIntensity;
-
-	ambient = glm::clamp(ambient, 0.0f, 1.0f);
-	diffuse = glm::clamp(diffuse, 0.0f, 1.0f);
-	diffuse *= intensity;
-}
-
-Light::Light(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float newIntensity) {
-	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
+Light::Light(glm::vec3 color, float intensity) {
+	this->color = color;
+	this->intensity = intensity;
 }
 
 #pragma endregion Init
 
 #pragma region SpotLight
-SpotLight::SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Shader* depthShaderSpotMap, float newIntensity) {
-	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
+SpotLight::SpotLight(glm::vec3 color, float intensity, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Shader* depthShaderSpotMap) : Light(color, intensity) {
 
-	intensity = newIntensity;
 	cutOff = _cutOff;
 	outerCutOff = _outercutOff;
 	direction = _direction;
@@ -34,13 +22,10 @@ SpotLight::SpotLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular
 
 #pragma region DirLight
 
-DirLight::DirLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, glm::vec3 _direction, Shader* depthShader, float newIntensity) {
-	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
+DirLight::DirLight(glm::vec3 color, float intensity, glm::vec3 _direction, Shader* depthShader ) : Light(color, intensity) {
 	direction = _direction;
 
 	this->depthShader = depthShader;
-
-
 
 	ndcCubePoint.push_back(glm::vec3(-1, -1, -1));
 	ndcCubePoint.push_back(glm::vec3(1, -1, -1));
@@ -131,12 +116,9 @@ glm::mat4 DirLight::UpdateMatrix(const glm::mat4 viewMatrice, const glm::mat4 pr
 
 #pragma region PointLight
 
-PointLight::PointLight(glm::vec3 _ambient, glm::vec3 _diffuse, glm::vec3 _specular, float _range, Shader* depthShaderCubeMap, float newIntensity) {
-	InitBaseLight(_ambient, _diffuse, _specular, newIntensity);
-
+PointLight::PointLight(glm::vec3 color, float intensity, float _range, Shader* depthShaderCubeMap) : Light(color, intensity) {
 	range = _range;
 	near_plane = 0.01f;
-
 
 	this->depthShader = depthShaderCubeMap;
 }
