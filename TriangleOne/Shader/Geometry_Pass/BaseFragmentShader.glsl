@@ -6,16 +6,18 @@ layout (location = 3) out vec3 g_ARM;
 
 struct Material {
 	sampler2D diffuseText;
-	sampler2D specularText;
 	sampler2D normalText;
-	sampler2D AO_Text;
+	sampler2D ARM_Text;
 
-	float shininess;  // Not use, 32.0f
+	bool hasARM_Text;
+
+	float ao_Factor;
+	float roughness_Factor;
+	float metallic_Factor;
 };
 uniform Material material;
 
 uniform bool have_NormalMap;
-uniform	bool have_Specular;
 
 uniform vec3 viewPos;
 
@@ -53,16 +55,16 @@ void main()
 
     gPosition = FragPos;
 
-	g_ARM.r = texture(material.AO_Text, TexCoords).r;
-
-
-    gAlbedo.rgb = finalDiffuse.rgb;
-	if (have_Specular){
-	    gAlbedo.a = finalSpecular.r;
+	if (hasARM_Text){
+		g_ARM.r = texture(material.AO_Text, TexCoords).r;
 	}
 	else {
-		gAlbedo.a = 0.0f;
+		g_ARM.r = ao_Factor;
+		g_ARM.g = roughness_Factor;
+		g_ARM.b = metallic_Factor;
 	}
+
+    gAlbedo = vec4(finalDiffuse, 1.0f);
 }
 
 void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular){

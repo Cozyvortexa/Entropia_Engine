@@ -24,6 +24,13 @@ struct Material {
 	unsigned int normal_Text_Handle = -1;
 	unsigned int ambientOcclusion_Text_Handle = -1;
 	unsigned int metalness_handle_Text_Handle = -1;
+
+	bool hasARM_Text = false;
+
+	float ao_Factor = 1.0;
+	float roughness_Factor = 0.5;
+	float metallic_Factor = 0.0;
+
 };
 
 struct MaterialKey {

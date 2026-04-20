@@ -58,14 +58,6 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 		}
 		else { diffuse_Text = diffuse->id; }
 
-		//Specular
-		Texture* specular = assetStore->Get_Texture(currentMat->specular_Text_Handle);
-		if (specular == nullptr) {
-			haveSpecular = false;
-			specular_Text = Shader::GetDefaultText(); // Just to put something in the slot
-		}
-		else { specular_Text = specular->id; }
-
 		//Normal
 		Texture* normal = assetStore->Get_Texture(currentMat->normal_Text_Handle);
 		if (normal == nullptr) {
@@ -82,15 +74,10 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 
 		// Bind
 		int i = 0;
+		//Diffuse/Albedo
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, diffuse_Text);
 		last_Shader_Use->setInt("material.diffuseText", i);
-		i++;
-
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, specular_Text);
-		last_Shader_Use->setInt("material.specularText", i);
-		last_Shader_Use->setBool("have_Specular", haveSpecular);
 		i++;
 
 		glActiveTexture(GL_TEXTURE0 + i);

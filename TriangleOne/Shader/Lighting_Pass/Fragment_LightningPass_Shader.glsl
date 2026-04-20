@@ -4,13 +4,11 @@ layout (location = 1) out vec4 BrightColor;
 
 struct Material {
 	vec3 albedo;
+	float ambientOcclusion;
 	float metallic;
 	float roughness;
-	float ambientOcclusion;
 };
 
-uniform bool have_NormalMap;
-uniform	bool have_Specular;
 
 struct SpotLight {
 	vec3 position;
@@ -65,9 +63,9 @@ uniform vec3 viewPos;
 ////////////////Function
 
 ////////Light
-vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, vec4 FragPosLightSpace, float ambientOcclusion, Material material, vec3 indirectLight);
+vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, vec4 FragPosLightSpace, Material material, vec3 indirectLight);
 vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, Material material, vec3 indirectLight);
-vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, float ambientOcclusion, Material material, vec3 indirectLight);
+vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, Material material, vec3 indirectLight);
 
 float ShadowDirLight(vec4 FragPosLightSpace);
 float ShadowPointLight(PointLight light, int lightIndex, vec3 FragPos, vec3 Normal);
@@ -88,6 +86,7 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedo;
 uniform sampler2D gDepth;
+uniform sampler2D gARM;
 uniform sampler2D ssaoTexture;
 
 uniform samplerCube irradianceMap;
@@ -104,8 +103,13 @@ void main()
 	vec3 Normal = texture(gNormal, TexCoords).rgb;
 	vec3 Albedo = texture(gAlbedo, TexCoords).rgb;
 	Albedo = pow(Albedo, vec3(2.2));
-	float Specular = texture(gAlbedo, TexCoords).a;
-	float ambientOcclusion = texture(ssaoTexture, TexCoords).r;
+	float ssao_ambientOcclusion = texture(ssaoTexture, TexCoords).r;
+	
+	vec3 ARM_Text = texture(gARM, TexCoords).rgb;
+	float ambientOcclusion = ARM_Text.r;
+	float roughness = ARM_Text.g;
+	float metallic = ARM_Text.b;
+	
 
 	float depth = texture(gDepth, TexCoords).r;
 	if(depth == 1.0) {
@@ -113,38 +117,46 @@ void main()
 		return;
 	}
 
+
 	if (renderTarget == 1){
 		FragColor = vec4(Albedo,1.0);
 		return;
 	}
 	else if (renderTarget == 2){
-		FragColor = vec4(vec3(Specular), 1.0f);
-		return;
-	}
-	else if (renderTarget == 3){
 		FragColor = vec4(FragPos, 1.0f);
 		return;
 	}
-	else if (renderTarget == 4){
+	else if (renderTarget == 3){
 		FragColor = vec4(Normal, 1.0f);
 		return;
 	}
-	else if (renderTarget == 5){
+	else if (renderTarget == 4){
 		FragColor = vec4(vec3(depth), 1.0f);
 		return;
 	}
-	else if (renderTarget == 6){
-		FragColor = vec4(vec3(ambientOcclusion), 1.0f);
+	else if (renderTarget == 5){
+		FragColor = vec4(vec3(ssao_ambientOcclusion), 1.0f);
 		return;
 	}
+	else if (renderTarget == 6){
+		FragColor = vec4(vec3(roughness), 1.0f);
+		return;
+	}
+	else if (renderTarget == 7){
+		FragColor = vec4(vec3(metallic), 1.0f);
+		return;
+	}
+
+
+
 	vec3 irradiance = texture(irradianceMap, Normal).rgb;
 	vec3 indirectLight = irradiance * Albedo;
 
 	Material material;
 	material.albedo = Albedo;
-	material.metallic = Specular;
-	//material.roughness;
-	material.ambientOcclusion = ambientOcclusion;
+	material.metallic = metallic;
+	material.roughness = roughness;
+	material.ambientOcclusion = ssao_ambientOcclusion;
 
 	vec3 viewDir = normalize(viewPos - FragPos);
 
@@ -153,7 +165,7 @@ void main()
 	vec4 FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 
 
-	final_lightning += CalcDirLight(dirLight, viewDir, FragPos, Normal, Albedo, Specular, FragPosLightSpace, ambientOcclusion, material, indirectLight); // Une seule lumiere dir dans la scene 
+	final_lightning += CalcDirLight(dirLight, viewDir, FragPos, Normal, Albedo, Specular, FragPosLightSpace, material, indirectLight); // Une seule lumiere dir dans la scene 
 
 	for (int i = 0; i < nbrPointLight; i++)
 	{
@@ -163,7 +175,7 @@ void main()
 	}
 	for (int i = 0; i < nbrSpotLight; i++){
 		if (length(spotLights[i].color) > 0.001 ){
-			final_lightning += CalcSpotLight(spotLights[i], i, viewDir, FragPos, Normal, Albedo, Specular, ambientOcclusion, material, indirectLight);
+			final_lightning += CalcSpotLight(spotLights[i], i, viewDir, FragPos, Normal, Albedo, Specular,  material, indirectLight);
 		}
 	}
 
@@ -181,7 +193,7 @@ void main()
 }
 
 ///////////////////////////  Light
-vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, vec4 FragPosLightSpace, float ambientOcclusion, Material material, vec3 indirectLight)
+vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, vec4 FragPosLightSpace,  Material material, vec3 indirectLight)
 {
 	vec3 lightDir = normalize(light.direction);
 
@@ -226,7 +238,7 @@ vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 FragPos
 	return Lo * lightModifier;
 }
 
-vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, float ambientOcclusion, Material material, vec3 indirectLight) 
+vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 Albedo, float Specular, Material material, vec3 indirectLight) 
 {
 	vec3 lightDir = normalize(light.position - FragPos);  // Direction entre la source de lumiere et la normal du vertex
 

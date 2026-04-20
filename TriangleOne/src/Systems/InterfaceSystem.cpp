@@ -33,11 +33,12 @@ void RenderTarget_Menu(InterfaceRessource* interface) {
 	{
 		if (ImGui::RadioButton("Default render", interface->renderTarget == RenderTarget::Default)) { interface->renderTarget = RenderTarget::Default; }
 		else if (ImGui::RadioButton("Albedo", interface->renderTarget == RenderTarget::Albedo)) { interface->renderTarget = RenderTarget::Albedo; }
-		else if (ImGui::RadioButton("Specular", interface->renderTarget == RenderTarget::Specular)) { interface->renderTarget = RenderTarget::Specular; }
 		else if (ImGui::RadioButton("Position", interface->renderTarget == RenderTarget::Position)) { interface->renderTarget = RenderTarget::Position; }
 		else if (ImGui::RadioButton("Normal", interface->renderTarget == RenderTarget::Normal)) { interface->renderTarget = RenderTarget::Normal; }
 		else if (ImGui::RadioButton("Depth", interface->renderTarget == RenderTarget::Depth)) { interface->renderTarget = RenderTarget::Depth; }
 		else if (ImGui::RadioButton("AmbientOcclusion", interface->renderTarget == RenderTarget::AmbientOcclusion)) { interface->renderTarget = RenderTarget::AmbientOcclusion; }
+		else if (ImGui::RadioButton("Metallic", interface->renderTarget == RenderTarget::Metallic)) { interface->renderTarget = RenderTarget::Metallic; }
+		else if (ImGui::RadioButton("Roughness", interface->renderTarget == RenderTarget::Roughness)) { interface->renderTarget = RenderTarget::Roughness; }
 	}
 }
 

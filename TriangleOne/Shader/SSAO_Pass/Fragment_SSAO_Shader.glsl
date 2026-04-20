@@ -5,6 +5,7 @@ uniform sampler2D texNoise;
 uniform sampler2D gDepthMap;
 
 uniform mat4 projection;
+uniform mat4 view;
 uniform mat4 invProjection;
 
 uniform vec3 samples[64];
@@ -24,6 +25,7 @@ vec3 ReconstructViewSpace(vec2 TexCoords, float depth);
 void main()
 {
 	vec3 normal = texture(gNormal, TexCoords).rgb;
+	normal = mat3(view) * normal;
 	vec3 randomVec = texture(texNoise, TexCoords * noiseScale).xyz;
 	float depth = texture(gDepthMap, TexCoords).r;
 

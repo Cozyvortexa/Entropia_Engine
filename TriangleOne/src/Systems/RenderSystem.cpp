@@ -25,11 +25,12 @@ void RenderSystem::gBufferToResolvedBuffer(WindowResource* windowData, RenderRes
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
-void RenderSystem::SSAO_Pass(World& world, WindowResource* windowData, RenderResource* renderData) {
+void RenderSystem::SSAO_Pass(World& world, WindowResource* windowData, RenderResource* renderData, CameraComponent* mainCamera) {
 	///////////////SSAO
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->ssaoBuffer);
 	renderData->ssaoPass_Shader->Use();
 	renderData->ssaoPass_Shader->setMatrix("projection", renderData->projection);
+	renderData->ssaoPass_Shader->setMatrix("view", mainCamera->viewMatrice);
 	renderData->ssaoPass_Shader->setMatrix("invProjection", glm::inverse(renderData->projection));
 	renderData->ssaoPass_Shader->setVec("samples", renderData->ssaoKernel);  
 	renderData->ssaoPass_Shader->setInt("kernelNbr", renderData->kernelSample);
@@ -605,7 +606,7 @@ void RenderSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 
 	RenderScene(world, resourceBuffer, windowData, mainCamera);  
 	gBufferToResolvedBuffer(windowData, renderData);
-	SSAO_Pass(world, windowData, renderData);
+	SSAO_Pass(world, windowData, renderData, mainCamera);
 }
 
 void RenderSystem::Shutdown(World& world) {

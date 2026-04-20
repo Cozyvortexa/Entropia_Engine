@@ -240,11 +240,12 @@ struct RenderResource : public Resource {
 enum RenderTarget {
 	Default,
 	Albedo,
-	Specular,
 	Position,
 	Normal,
 	Depth,
-	AmbientOcclusion
+	AmbientOcclusion,
+	Roughness,
+	Metallic
 };
 
 struct InterfaceRessource : public Resource {
