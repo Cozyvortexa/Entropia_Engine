@@ -556,26 +556,33 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, co
 
 	renderResource->lightningPass_Shader->Use();
 	renderResource->lightningPass_Shader->setVec("viewPos", transformMainCamera->position);
-	glActiveTexture(GL_TEXTURE0);
+
+	int i = 0;
+	glActiveTexture(GL_TEXTURE0 + i);
 	glBindTexture(GL_TEXTURE_2D, renderResource->gPositionResolved);
-	renderResource->lightningPass_Shader->setInt("gPosition", 0);
-	glActiveTexture(GL_TEXTURE1);
+	renderResource->lightningPass_Shader->setInt("gPosition", i++);
+	glActiveTexture(GL_TEXTURE0 + i);
 	glBindTexture(GL_TEXTURE_2D, renderResource->gNormalResolved);
-	renderResource->lightningPass_Shader->setInt("gNormal", 1);
-	glActiveTexture(GL_TEXTURE2);
+	renderResource->lightningPass_Shader->setInt("gNormal", i++);
+	glActiveTexture(GL_TEXTURE0 + i);
 	glBindTexture(GL_TEXTURE_2D, renderResource->gAlbedoResolved);
-	renderResource->lightningPass_Shader->setInt("gAlbedo", 2);
-	glActiveTexture(GL_TEXTURE3);
+	renderResource->lightningPass_Shader->setInt("gAlbedo", i++);
+	glActiveTexture(GL_TEXTURE0 + i);
 	glBindTexture(GL_TEXTURE_2D, renderResource->gDepthResolved);
-	renderResource->lightningPass_Shader->setInt("gDepth", 3);
-	glActiveTexture(GL_TEXTURE4);
+	renderResource->lightningPass_Shader->setInt("gDepth", i++);
+	glActiveTexture(GL_TEXTURE0 + i);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gARM_Resolved);
+	renderResource->lightningPass_Shader->setInt("gARM", i++);
+	glActiveTexture(GL_TEXTURE0 + i);
 	glBindTexture(GL_TEXTURE_2D, renderResource->ssaoBlurText);
-	renderResource->lightningPass_Shader->setInt("ssaoTexture", 4);
+	renderResource->lightningPass_Shader->setInt("ssaoTexture", i++);
 	renderResource->lightningPass_Shader->setInt("renderTarget", interfaceRessource->renderTarget);
 
-	glActiveTexture(GL_TEXTURE5);
+	glActiveTexture(GL_TEXTURE0 + i);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderResource->irradianceMap);
-	renderResource->lightningPass_Shader->setInt("irradianceMap", 5);
+	renderResource->lightningPass_Shader->setInt("irradianceMap", i++);
+
+
 
 	world->renderer->DrawQuad(renderResource);
 

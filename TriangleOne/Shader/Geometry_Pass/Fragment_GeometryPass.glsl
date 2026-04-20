@@ -22,10 +22,6 @@ uniform bool have_NormalMap;
 uniform vec3 viewPos;
 
 
-void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular);
-
-
-
 in vec3 FragPos;
 in vec3 normal;
 in vec2 TexCoords;
@@ -37,7 +33,6 @@ in mat3 TBN;
 void main()
 {
 	vec4 finalDiffuse = texture(material.diffuseText, TexCoords);
-	vec4 finalSpecular = texture(material.specularText, TexCoords);
 
 	if (finalDiffuse.a < 0.5)
 		discard;
@@ -55,19 +50,17 @@ void main()
 
     gPosition = FragPos;
 
-	if (hasARM_Text){
-		g_ARM.r = texture(material.AO_Text, TexCoords).r;
+	if (material.hasARM_Text){
+		vec3 ARM_text = texture(material.ARM_Text, TexCoords).rgb;
+		g_ARM.r = ARM_text.r * material.ao_Factor;
+		g_ARM.g = ARM_text.g * material.roughness_Factor;
+		g_ARM.b = ARM_text.b * material.metallic_Factor;
 	}
 	else {
-		g_ARM.r = ao_Factor;
-		g_ARM.g = roughness_Factor;
-		g_ARM.b = metallic_Factor;
+		g_ARM.r = material.ao_Factor;
+		g_ARM.g = material.roughness_Factor;
+		g_ARM.b = material.metallic_Factor;
 	}
 
-    gAlbedo = vec4(finalDiffuse, 1.0f);
-}
-
-void CheckOpacity(vec4 finalDiffuse, vec4 finalSpecular){
-	if(	finalDiffuse.a +  finalSpecular.a < 0.1)
-		discard;
+    gAlbedo = vec4(finalDiffuse.rgb, 1.0f);
 }

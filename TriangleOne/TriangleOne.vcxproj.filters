@@ -157,8 +157,8 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shader\Geometry_Pass\BaseVertexShader.glsl" />
-    <None Include="Shader\Geometry_Pass\BaseFragmentShader.glsl" />
+    <None Include="Shader\Geometry_Pass\Vertex_GeometryPass.glsl" />
+    <None Include="Shader\Geometry_Pass\Fragment_GeometryPass.glsl" />
     <None Include="Shader\LightShader\Light\LightFragShader.glsl" />
     <None Include="Shader\LightShader\Light\LightVertexShader.glsl" />
     <None Include="Shader\PostProcessShader\PostProcessVertex.glsl" />

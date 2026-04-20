@@ -18,6 +18,10 @@ void RenderSystem::gBufferToResolvedBuffer(WindowResource* windowData, RenderRes
 	glReadBuffer(GL_COLOR_ATTACHMENT2);
 	glDrawBuffer(GL_COLOR_ATTACHMENT2);
 	glBlitFramebuffer(0, 0, windowData->WIDTH, windowData->HEIGHT, 0, 0, windowData->WIDTH, windowData->HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	//ARM Text
+	glReadBuffer(GL_COLOR_ATTACHMENT3);
+	glDrawBuffer(GL_COLOR_ATTACHMENT3);
+	glBlitFramebuffer(0, 0, windowData->WIDTH, windowData->HEIGHT, 0, 0, windowData->WIDTH, windowData->HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 	glBlitFramebuffer(0, 0, windowData->WIDTH, windowData->HEIGHT, 0, 0, windowData->WIDTH, windowData->HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
@@ -498,10 +502,9 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	Shader::CreateDefaultWhiteTexture();
 	Shader::CreateNeutralNormalText();
 
-	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "TriangleOne/Shader/Geometry_Pass/BaseVertexShader.glsl", "TriangleOne/Shader/Geometry_Pass/BaseFragmentShader.glsl");
+	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "TriangleOne/Shader/Geometry_Pass/Vertex_GeometryPass.glsl", "TriangleOne/Shader/Geometry_Pass/Fragment_GeometryPass.glsl");
 	defaultMat.first.diffuse_Text_Handle = Shader::GetDefaultText();
 	defaultMat.first.normal_Text_Handle = Shader::GetNeutralNormalText();
-	defaultMat.first.specular_Text_Handle = -1;
 	renderData->mainMaterialHandle = defaultMat.second;
 
 	std::pair<unsigned  int, unsigned int> shadowDummy = CreateDummyShadowTextures();

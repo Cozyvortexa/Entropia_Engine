@@ -86,10 +86,19 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 		last_Shader_Use->setBool("have_NormalMap", currentMesh.hasTBN && currentMesh.hasUV && currentMesh.hasNormalMap);
 		i++;
 
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, ambientOcclusion_Text);
-		last_Shader_Use->setInt("material.AO_Text", i);
-		i++;
+		//glActiveTexture(GL_TEXTURE0 + i);
+		//glBindTexture(GL_TEXTURE_2D, ambientOcclusion_Text);
+		//last_Shader_Use->setInt("material.AO_Text", i);
+		//i++;
+
+		//ARM
+		last_Shader_Use->setBool("material.hasARM_Text", currentMat->hasARM_Text);
+		last_Shader_Use->setFloat("material.ao_Factor", currentMat->ao_Factor);
+		last_Shader_Use->setFloat("material.roughness_Factor", currentMat->roughness_Factor);
+		last_Shader_Use->setFloat("material.metallic_Factor", currentMat->metallic_Factor);
+		//if (currentMat->hasARM_Text) {  
+		//	last_Shader_Use->setInt("material.AO_Text", i);
+		//}
 
 		glActiveTexture(GL_TEXTURE0);
 
