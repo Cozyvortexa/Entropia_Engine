@@ -42,12 +42,14 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 
 		Material* currentMat = assetStore->Get_Material(subMesh.material_Handle);
 
-		bool haveSpecular = true;
+		bool hasRoughness = false;
+		bool hasMetallic = false;
 
-		unsigned int diffuse_Text = 0;
-		unsigned int specular_Text = 0;
+		unsigned int diffuse_Text = 0;  // diffuse or Albedo
 		unsigned int normal_Text = 0;
 		unsigned int ambientOcclusion_Text = 0;
+		unsigned int roughness_Text = 0;
+		unsigned int metallic_Text = 0;
 
 		// Get texture
 		// 
@@ -72,27 +74,50 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 		}
 		else { ambientOcclusion_Text = ambientOcclusion->id; }
 
+		//Roughness
+		Texture* roughness = assetStore->Get_Texture(currentMat->roughness_handle_Text_Handle);
+		if (roughness != nullptr) {
+			hasRoughness = true;
+		}
+		//Metallic
+		Texture* metallic = assetStore->Get_Texture(currentMat->metalness_handle_Text_Handle);
+		if (metallic != nullptr) {
+			hasMetallic = true;
+		}
+
+
 		// Bind
 		int i = 0;
 		//Diffuse/Albedo
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, diffuse_Text);
-		last_Shader_Use->setInt("material.diffuseText", i);
-		i++;
+		last_Shader_Use->setInt("material.diffuseText", i++);
 
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, normal_Text);
-		last_Shader_Use->setInt("material.normalText", i);
+		last_Shader_Use->setInt("material.normalText", i++);
 		last_Shader_Use->setBool("have_NormalMap", currentMesh.hasTBN && currentMesh.hasUV && currentMesh.hasNormalMap);
-		i++;
 
-		//glActiveTexture(GL_TEXTURE0 + i);
-		//glBindTexture(GL_TEXTURE_2D, ambientOcclusion_Text);
-		//last_Shader_Use->setInt("material.AO_Text", i);
-		//i++;
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, ambientOcclusion_Text);
+		last_Shader_Use->setInt("material.ambientOcclusion_Text", i++);
+
+		last_Shader_Use->setBool("material.hasRoughness_Text", hasRoughness);
+		if (hasRoughness) {
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, roughness_Text);
+			last_Shader_Use->setInt("material.roughness_Text", i++);
+		}
+		last_Shader_Use->setBool("material.hasMetallic_Text", hasMetallic);
+		if (hasMetallic) {
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, metallic_Text);
+			last_Shader_Use->setInt("material.metallic_Text", i++);
+		}
+
 
 		//ARM
-		last_Shader_Use->setBool("material.hasARM_Text", currentMat->hasARM_Text);
+		//last_Shader_Use->setBool("material.hasARM_Text", currentMat->hasARM_Text);
 		last_Shader_Use->setFloat("material.ao_Factor", currentMat->ao_Factor);
 		last_Shader_Use->setFloat("material.roughness_Factor", currentMat->roughness_Factor);
 		last_Shader_Use->setFloat("material.metallic_Factor", currentMat->metallic_Factor);

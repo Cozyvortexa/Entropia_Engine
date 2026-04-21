@@ -103,10 +103,10 @@ void main()
 	vec3 Normal = texture(gNormal, TexCoords).rgb;
 	vec3 Albedo = texture(gAlbedo, TexCoords).rgb;
 	Albedo = pow(Albedo, vec3(2.2));
-	float ssao_ambientOcclusion = texture(ssaoTexture, TexCoords).r;
 	
+	//ARM
 	vec3 ARM_Text = texture(gARM, TexCoords).rgb;
-	float ambientOcclusion = ARM_Text.r;
+	float ambientOcclusion = ARM_Text.r * texture(ssaoTexture, TexCoords).r;
 	float roughness = ARM_Text.g;
 	float metallic = ARM_Text.b;
 	
@@ -135,7 +135,7 @@ void main()
 		return;
 	}
 	else if (renderTarget == 5){
-		FragColor = vec4(vec3(ssao_ambientOcclusion), 1.0f);
+		FragColor = vec4(vec3(ambientOcclusion), 1.0f);
 		return;
 	}
 	else if (renderTarget == 6){
@@ -156,7 +156,7 @@ void main()
 	material.albedo = Albedo;
 	material.metallic = metallic;
 	material.roughness = roughness;
-	material.ambientOcclusion = ssao_ambientOcclusion;
+	material.ambientOcclusion = ambientOcclusion;
 
 	vec3 viewDir = normalize(viewPos - FragPos);
 

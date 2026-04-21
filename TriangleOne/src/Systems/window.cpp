@@ -102,8 +102,8 @@ void WindowSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	//Face culling     //fonctionne bizzarement ( faudrait chek l'ordre de dessin des vertex)
-	//glEnable(GL_CULL_FACE);
-	//glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 	//glFrontFace(GL_CCW);
 	glfwSwapInterval(0);
 	//MSAA

@@ -39,7 +39,7 @@ void RenderSystem::SSAO_Pass(World& world, WindowResource* windowData, RenderRes
 	renderData->ssaoPass_Shader->setVec("samples", renderData->ssaoKernel);  
 	renderData->ssaoPass_Shader->setInt("kernelNbr", renderData->kernelSample);
 
-	renderData->ssaoPass_Shader->setVec("noiseScale", glm::vec2(windowData->HEIGHT / 4.0f, windowData->WIDTH / 4.0f));
+	renderData->ssaoPass_Shader->setVec("noiseScale", glm::vec2(windowData->WIDTH / 4.0f,  windowData->HEIGHT / 4.0f));
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderData->gNormalResolved);
@@ -539,10 +539,10 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	world.add_components(model, sceneTag, materialHandle, meshHandle, modelTransform);
 
-
+	glEnable(GL_CULL_FACE);
 	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
 
-	float intensity = 4.0f;
+	float intensity = 2.0f;
 
 	glm::vec3 worldLightDir = glm::normalize(glm::vec3(-2.0f, 4.0f, -1.0f));
 
@@ -609,7 +609,7 @@ void RenderSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 
 	RenderScene(world, resourceBuffer, windowData, mainCamera);  
 	gBufferToResolvedBuffer(windowData, renderData);
-	SSAO_Pass(world, windowData, renderData, mainCamera);
+	//SSAO_Pass(world, windowData, renderData, mainCamera);
 }
 
 void RenderSystem::Shutdown(World& world) {

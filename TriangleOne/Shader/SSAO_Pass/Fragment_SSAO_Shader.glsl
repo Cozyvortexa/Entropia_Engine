@@ -1,68 +1,69 @@
 #version 430 core
 
+out float FragColor;
+in vec2 TexCoords;
+
 uniform sampler2D gNormal;
 uniform sampler2D texNoise;
 uniform sampler2D gDepthMap;
 
 uniform mat4 projection;
-uniform mat4 view;
 uniform mat4 invProjection;
+uniform mat4 view;
 
 uniform vec3 samples[64];
 uniform int kernelNbr;
-const float radius = 0.1;
-const float bias = 0.005;
+uniform vec2 noiseScale;
 
+const float radius = 0.5; // Augmenté pour être visible en View Space
+const float bias = 0.025;
 
-out float FragColor;
-in vec2 TexCoords;
-
-// tile noise texture over screen, based on screen dimensions / noise size
-uniform vec2 noiseScale; // screen = 800x600
-
-vec3 ReconstructViewSpace(vec2 TexCoords, float depth);
+// Fonction pour reconstruire la position en View Space à partir du Depth Buffer
+vec3 getFragPos(vec2 coords) {
+    float depth = texture(gDepthMap, coords).r;
+    // Conversion NDC [-1, 1]
+    vec4 clipSpacePos = vec4(coords * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    vec4 viewSpacePos = invProjection * clipSpacePos;
+    return viewSpacePos.xyz / viewSpacePos.w;
+}
 
 void main()
 {
-	vec3 normal = texture(gNormal, TexCoords).rgb;
-	normal = mat3(view) * normal;
-	vec3 randomVec = texture(texNoise, TexCoords * noiseScale).xyz;
-	float depth = texture(gDepthMap, TexCoords).r;
+    // 1. Récupérer les données du pixel
+    vec3 fragPos = getFragPos(TexCoords);
+    vec3 normal   = texture(gNormal, TexCoords).rgb;
+    // Important : On passe la normale en View Space pour qu'elle soit cohérente avec fragPos
+    normal = normalize(mat3(view) * normal);
+    
+    // 2. Récupérer le vecteur de bruit et créer la base TBN
+    vec3 randomVec = texture(texNoise, TexCoords * noiseScale).xyz;
+    vec3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
+    vec3 bitangent = cross(normal, tangent);
+    mat3 TBN       = mat3(tangent, bitangent, normal);
 
-	vec3 position = ReconstructViewSpace(TexCoords,depth);
+    // 3. Calculer l'occlusion
+    float occlusion = 0.0;
+    for(int i = 0; i < kernelNbr; ++i)
+    {
+        // On oriente l'échantillon vers l'hémisphère de la normale
+        vec3 samplePos = TBN * samples[i]; 
+        samplePos = fragPos + samplePos * radius; 
+        
+        // On projette la position de l'échantillon pour retrouver ses coordonnées UV
+        vec4 offset = vec4(samplePos, 1.0);
+        offset      = projection * offset;    
+        offset.xyz /= offset.w;               
+        offset.xyz  = offset.xyz * 0.5 + 0.5; 
+        
+        // Lire la profondeur réelle à cette position projetée
+        float sampleDepth = getFragPos(offset.xy).z;
 
+        // Vérification de la portée (évite l'occlusion sur des objets trop lointains derrière)
+        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
+        occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;           
+    }
 
-	//TBN 
-	vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
-	vec3 bitangent = cross(normal, tangent);
-	mat3 TBN = mat3(tangent, bitangent, normal);
-
-	float occlusion = 0.0;
-	for(int i = 0; i < kernelNbr; ++i)
-	{
-		// get sample position
-		vec3 currentSample = TBN * samples[i]; // from tangent to view-space
-		currentSample = position + currentSample * radius;
-
-		vec4 offset = vec4(currentSample, 1.0);
-		offset = projection * offset; // from view to clip-space
-		offset.xyz /= offset.w; // perspective divide
-		offset.xyz = offset.xyz * 0.5 + 0.5;
-
-		float sampleDepth = texture(gDepthMap, offset.xy).r;
-		vec3 otherPos = ReconstructViewSpace(offset.xy, sampleDepth);
-
-		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(position.z - otherPos.z));
-		occlusion += (otherPos.z >= currentSample.z + bias ? 1.0 : 0.0) * rangeCheck;
-	}
-	occlusion = 1.0 - (occlusion / kernelNbr);
-	float linearZ = position.z / -100.0; 
-	FragColor = occlusion;
-}
-
-//Reconstruct position
-vec3 ReconstructViewSpace(vec2 TextureCoords, float depth){
-	vec4 pos_NDC = vec4(TextureCoords.x * 2 - 1, TextureCoords.y * 2 - 1, depth * 2 - 1, 1.0);  //Screen Space (UV/Depth) to NDC
-	pos_NDC = invProjection * pos_NDC;  //NDC to view space
-	return pos_NDC.xyz / pos_NDC.w;
+    // On inverse et on moyenne
+    occlusion = 1.0 - (occlusion / float(kernelNbr));
+    FragColor = occlusion;
 }

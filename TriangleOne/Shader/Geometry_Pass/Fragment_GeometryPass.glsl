@@ -7,9 +7,16 @@ layout (location = 3) out vec3 g_ARM;
 struct Material {
 	sampler2D diffuseText;
 	sampler2D normalText;
-	sampler2D ARM_Text;
+	//sampler2D ARM_Text;
+	//ARM
+	sampler2D ambientOcclusion_Text;
+	sampler2D roughness_Text;
+	sampler2D metallic_Text;
 
-	bool hasARM_Text;
+	//bool hasARM_Text;
+
+	bool hasRoughness_Text;
+	bool hasMetallic_Text;
 
 	float ao_Factor;
 	float roughness_Factor;
@@ -50,16 +57,23 @@ void main()
 
     gPosition = FragPos;
 
-	if (material.hasARM_Text){
-		vec3 ARM_text = texture(material.ARM_Text, TexCoords).rgb;
-		g_ARM.r = ARM_text.r * material.ao_Factor;
-		g_ARM.g = ARM_text.g * material.roughness_Factor;
-		g_ARM.b = ARM_text.b * material.metallic_Factor;
+	g_ARM.r = texture(material.ambientOcclusion_Text, TexCoords).r * material.ao_Factor;
+	g_ARM.g = material.roughness_Factor;
+	g_ARM.b = material.metallic_Factor;
+
+	// if (material.hasARM_Text){
+	// 	vec3 ARM_text = texture(material.ARM_Text, TexCoords).rgb;
+	// 	g_ARM.r = ARM_text.r * material.ao_Factor;
+	// 	g_ARM.g = ARM_text.g * material.roughness_Factor;
+	// 	g_ARM.b = ARM_text.b * material.metallic_Factor;
+	// }   
+
+	//temp, case by case, AO have a fallback texture
+	if(material.hasRoughness_Text){
+		g_ARM.g = texture(material.roughness_Text, TexCoords).g * material.roughness_Factor;
 	}
-	else {
-		g_ARM.r = material.ao_Factor;
-		g_ARM.g = material.roughness_Factor;
-		g_ARM.b = material.metallic_Factor;
+	if(material.hasMetallic_Text){
+		g_ARM.b = texture(material.metallic_Text, TexCoords).b * material.metallic_Factor;
 	}
 
     gAlbedo = vec4(finalDiffuse.rgb, 1.0f);
