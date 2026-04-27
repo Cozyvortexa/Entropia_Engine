@@ -51,7 +51,7 @@ void main()
 		norm = normalize(TBN * norm);
 	}
 	else {
-		norm = normalize(normal);
+		norm = normal;
 	}
 	gNormal = normalize(norm);
 

@@ -127,7 +127,7 @@ void main()
 		return;
 	}
 	else if (renderTarget == 3){
-		FragColor = vec4(Normal, 1.0f);
+		FragColor = vec4(Normal * 0.5 + 0.5, 1.0);
 		return;
 	}
 	else if (renderTarget == 4){
@@ -375,8 +375,6 @@ float ShadowSpotLight(SpotLight light, int lightIndex, vec3 FragPos){
 	|| projCoords.x < 0.0 || projCoords.x > 1.0
 	|| projCoords.y < 0.0 || projCoords.y > 1.0)
 		return 0.0;
-
-	float currentDepth = projCoords.z ;
 
 	vec3 lightDir = normalize(light.position - FragPos);
     float bias = 0.005;

@@ -192,7 +192,8 @@ struct RenderResource : public Resource {
 	unsigned int ssao_NoiseText;
 
 	bool ssao_Enabled = true;
-	int kernelSample = 8;
+	int kernelSample = 16;
+	float SSAO_radius = 1.0f;
 	std::vector<glm::vec3> ssaoKernel;
 
 	//Light SSBO

@@ -20,6 +20,7 @@ void main()
 	FragPos = vec3(model * vec4(aPos, 1.0));
 
 	normal = mat3(transpose(inverse(model))) * aNormal;
+	normal = normalize(normal);
 	TexCoords = aTexCoords;
 
 	vec3 T = normalize(vec3(model * vec4(aTangent, 0.0)));

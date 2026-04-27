@@ -31,11 +31,13 @@ void RenderSystem::gBufferToResolvedBuffer(WindowResource* windowData, RenderRes
 
 void RenderSystem::SSAO_Pass(World& world, WindowResource* windowData, RenderResource* renderData, CameraComponent* mainCamera) {
 	///////////////SSAO
+	glDisable(GL_DEPTH_TEST);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->ssaoBuffer);
 	renderData->ssaoPass_Shader->Use();
 	renderData->ssaoPass_Shader->setMatrix("projection", renderData->projection);
 	renderData->ssaoPass_Shader->setMatrix("view", mainCamera->viewMatrice);
-	renderData->ssaoPass_Shader->setMatrix("invProjection", glm::inverse(renderData->projection));
+	renderData->ssaoPass_Shader->setFloat("radius", renderData->SSAO_radius);
+	renderData->ssaoPass_Shader->setMatrix("invProjection", glm::inverse( renderData->projection));
 	renderData->ssaoPass_Shader->setVec("samples", renderData->ssaoKernel);  
 	renderData->ssaoPass_Shader->setInt("kernelNbr", renderData->kernelSample);
 
@@ -64,13 +66,8 @@ void RenderSystem::SSAO_Pass(World& world, WindowResource* windowData, RenderRes
 
 	world.renderer->DrawQuad(renderData);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glEnable(GL_DEPTH_TEST);
 }
-
-inline float lerp(float a, float b, float f)
-{
-	return a + f * (b - a);
-}
-
 
 #pragma region Init
 
@@ -227,10 +224,10 @@ void RenderSystem::InitIntermediateFBO(WindowResource* windowData, RenderResourc
 	glBindTexture(GL_TEXTURE_2D, renderData->gDepthResolved);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//gltexparameteri(gl_texture_2d, gl_texture_min_filter, gl_linear);
+	//gltexparameteri(gl_texture_2d, gl_texture_mag_filter, gl_linear);
+	//gltexparameteri(gl_texture_2d, gl_texture_wrap_s, gl_clamp_to_edge);
+	//gltexparameteri(gl_texture_2d, gl_texture_wrap_t, gl_clamp_to_edge);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -330,8 +327,9 @@ void RenderSystem::InitSSAO(WindowResource* windowData, RenderResource* renderDa
 		);
 
 		sample = glm::normalize(sample);
-		sample *= randomFloats(generator); float scale = (float)i / renderData->kernelSample;
-		scale = lerp(0.1f, 1.0f, scale * scale);
+		sample *= randomFloats(generator); 
+		float scale = (float)i / renderData->kernelSample;
+		scale = glm::mix(0.1f, 1.0f, scale * scale);
 		sample *= scale;
 		renderData->ssaoKernel.push_back(sample);
 
@@ -349,7 +347,7 @@ void RenderSystem::InitSSAO(WindowResource* windowData, RenderResource* renderDa
 
 	glGenTextures(1, &renderData->ssao_NoiseText);
 	glBindTexture(GL_TEXTURE_2D, renderData->ssao_NoiseText);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 4, 4, 0, GL_RGB, GL_FLOAT,&ssaoNoise[0]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 4, 4, 0, GL_RGB, GL_FLOAT,&ssaoNoise[0]);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -609,7 +607,7 @@ void RenderSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 
 	RenderScene(world, resourceBuffer, windowData, mainCamera);  
 	gBufferToResolvedBuffer(windowData, renderData);
-	//SSAO_Pass(world, windowData, renderData, mainCamera);
+	SSAO_Pass(world, windowData, renderData, mainCamera);
 }
 
 void RenderSystem::Shutdown(World& world) {

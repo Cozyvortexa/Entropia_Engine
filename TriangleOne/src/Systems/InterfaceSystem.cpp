@@ -81,6 +81,11 @@ void InterfaceSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 
 	RenderTarget_Menu(interfaceData);
 
+	if (ImGui::CollapsingHeader("SSAO Param"))
+	{
+		ImGui::InputFloat("Radius", &renderData->SSAO_radius);
+		ImGui::InputInt("Sample Number", &renderData->kernelSample);
+	}
 	if (ImGui::CollapsingHeader("OtherParam"))
 	{
 		ImGui::Checkbox("bloomEnable", &renderData->bloomEnable);
