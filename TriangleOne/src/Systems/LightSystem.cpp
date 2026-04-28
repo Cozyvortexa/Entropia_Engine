@@ -551,7 +551,7 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, co
 	InterfaceRessource* interfaceRessource = resourceBuffer->interfaceRessource;
 	RenderResource* renderResource = resourceBuffer->renderResource;
 	glBindFramebuffer(GL_FRAMEBUFFER, renderResource->framebuffer);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
 	renderResource->lightningPass_Shader->Use();
@@ -559,19 +559,19 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, co
 
 	int i = 0;
 	glActiveTexture(GL_TEXTURE0 + i);
-	glBindTexture(GL_TEXTURE_2D, renderResource->gPositionResolved);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gPosition);
 	renderResource->lightningPass_Shader->setInt("gPosition", i++);
 	glActiveTexture(GL_TEXTURE0 + i);
-	glBindTexture(GL_TEXTURE_2D, renderResource->gNormalResolved);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gNormal);
 	renderResource->lightningPass_Shader->setInt("gNormal", i++);
 	glActiveTexture(GL_TEXTURE0 + i);
-	glBindTexture(GL_TEXTURE_2D, renderResource->gAlbedoResolved);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gAlbedo);
 	renderResource->lightningPass_Shader->setInt("gAlbedo", i++);
 	glActiveTexture(GL_TEXTURE0 + i);
-	glBindTexture(GL_TEXTURE_2D, renderResource->gDepthResolved);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gDepth);
 	renderResource->lightningPass_Shader->setInt("gDepth", i++);
 	glActiveTexture(GL_TEXTURE0 + i);
-	glBindTexture(GL_TEXTURE_2D, renderResource->gARM_Resolved);
+	glBindTexture(GL_TEXTURE_2D, renderResource->gARM);
 	renderResource->lightningPass_Shader->setInt("gARM", i++);
 	glActiveTexture(GL_TEXTURE0 + i);
 	glBindTexture(GL_TEXTURE_2D, renderResource->ssaoBlurText);
@@ -598,31 +598,27 @@ void LightSystem::Draw_SkyBox(World* world, const ResourceBuffer* resourceBuffer
 	RenderResource* renderData = resourceBuffer->renderResource;
 	WindowResource* windowResource = resourceBuffer->windowResource;
 
-	//Copie
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData->gBuffer);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData->framebuffer);
 
-	// On copie la profondeur avec les dimensions de ta fenêtre (ex: width, height)
 	glBlitFramebuffer(0, 0, windowResource->WIDTH, windowResource->HEIGHT, 0, 0, windowResource->WIDTH, windowResource->HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-
-
 
 	Shader* skyBoxshader = renderData->skyBox_Shader.get();
 	skyBoxshader->Use();
 
-
-	glDepthFunc(GL_LEQUAL);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
 	skyBoxshader->setInt("environmentMap", 0);
+
+	glDepthFunc(GL_LEQUAL);
+	//glDepthMask(GL_FALSE);
+
 	skyBoxshader->setMatrix("rootView", glm::mat4(glm::mat3(viewMatrice)));
 	skyBoxshader->setMatrix("projection", renderData->projection);
 	world->renderer->DrawCube();
 
-
+	//glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LESS);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 void LightSystem::DrawBlurEffect(RenderResource* renderData) {

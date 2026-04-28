@@ -28,12 +28,10 @@
 
 class RenderSystem : public System {
 public:
-	void gBufferToResolvedBuffer(WindowResource* windowData, RenderResource* renderData);
 	void SSAO_Pass(World& world, WindowResource* windowData, RenderResource* renderData, CameraComponent* mainCamera);
 
 	void InitQuadVao(WindowResource* windowData, RenderResource* renderData);
 	void InitMainFrameBuffer(WindowResource* windowData, RenderResource* renderData);
-	void InitIntermediateFBO(WindowResource* windowData, RenderResource* renderData);
 	void InitBloomFBO(WindowResource* windowData, RenderResource* renderData);
 	void InitGBuffer(WindowResource* windowData, RenderResource* renderData);
 	void InitSSAO(WindowResource* windowData, RenderResource* renderData);

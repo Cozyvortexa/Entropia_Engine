@@ -15,6 +15,8 @@ uniform int kernelNbr;
 uniform float radius = 1.0;
 const float bias = 0.025;
 
+uniform float zNear;
+uniform float zFar;
 
 out float FragColor;
 in vec2 TexCoords;
@@ -32,15 +34,17 @@ void main()
 
 	float depth = texture(gDepthMap, TexCoords).r;
 
-	vec3 position = ReconstructViewSpace(TexCoords, depth);
-
-	vec3 randomVec = texture(texNoise, TexCoords * noiseScale).xyz;
 
 
 	//TBN - view space
+	vec3 randomVec = normalize(texture(texNoise, TexCoords * noiseScale).xyz);
 	vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
 	vec3 bitangent = cross(normal, tangent);
 	mat3 TBN = mat3(tangent, bitangent, normal);
+
+	vec3 position = ReconstructViewSpace(TexCoords, depth);
+
+
 
 	float occlusion = 0.0;
 	for(int i = 0; i < kernelNbr; ++i)

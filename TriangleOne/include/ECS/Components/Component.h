@@ -159,10 +159,7 @@ struct RenderResource : public Resource {
 	//Lightning
 	unsigned int framebuffer;
 	GLuint finalTxtColorOutput[2];
-	GLuint finalTxtOutput;
-
-	////Intermediate
-	unsigned int intermediateFBO;
+	GLuint finalDepthOutput;
 
 	//Shadow
 	unsigned int dummyDepthMap2D = 0;
@@ -176,12 +173,6 @@ struct RenderResource : public Resource {
 	unsigned int gARM;
 
 	unsigned int gDepth;
-	//Deffered resolved Text (MSAA)
-	unsigned int gPositionResolved;
-	unsigned int gNormalResolved;
-	unsigned int gAlbedoResolved;
-	unsigned int gDepthResolved;
-	unsigned int gARM_Resolved;
 
 	//SSAO
 	unsigned int ssaoBuffer;
