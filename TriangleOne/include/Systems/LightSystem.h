@@ -75,7 +75,7 @@ class LightSystem : public System {
 	 void InitCaptureCubeMap(World& world, const ResourceBuffer* resourceBuffer);
 	 void InitPrefilter_IBL(World& world, RenderResource* renderData);
 	 void Init_IrradianceMap(World& world, const ResourceBuffer* resourceBuffer);
-
+	 void Init_BRDF_LUTTexture(World& world, const ResourceBuffer* resourceBuffer);
 #pragma endregion
 
 	 void ConvulateEnvCube(World& world, const ResourceBuffer* resourceBuffer, glm::mat4 captureProjection, glm::mat4 captureViews[]);

@@ -193,6 +193,8 @@
   <ItemGroup>
     <None Include="Shader\BloomShader\FragmentBloom.glsl" />
     <None Include="Shader\BloomShader\VertexBloom.glsl" />
+    <None Include="Shader\IBLshader\BRDF\Fragment_brdf.glsl" />
+    <None Include="Shader\IBLshader\BRDF\Vertex_brdf.glsl" />
     <None Include="Shader\IBLshader\Fragment_Equirectangular_to_Cubemap.glsl" />
     <None Include="Shader\IBLshader\Irradiance\Fragment_Irradiance_Convulation.glsl" />
     <None Include="Shader\IBLshader\SpecularIBL\Fragment_PreFilter.glsl" />

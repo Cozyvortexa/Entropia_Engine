@@ -439,6 +439,20 @@ void LightSystem::InitPrefilter_IBL(World& world, RenderResource* renderData) {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
+void LightSystem::Init_BRDF_LUTTexture(World& world, const ResourceBuffer* resourceBuffer) {
+	RenderResource* renderData = resourceBuffer->renderResource;
+	glGenTextures(1, &renderData->brdfLUTTexture);
+
+	glBindTexture(GL_TEXTURE_2D, renderData->brdfLUTTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 #pragma endregion
 
 void LightSystem::ConvulateEnvCube(World& world, const ResourceBuffer* resourceBuffer, glm::mat4 captureProjection, glm::mat4 captureViews[]) {
@@ -517,6 +531,7 @@ void LightSystem::Equirenctangular_To_CubeMap(World& world, const ResourceBuffer
 	glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderData->captureRBO);
+	glViewport(0, 0, 512, 512);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "FBO not complete before equirect render!" << std::endl;
@@ -539,7 +554,7 @@ void LightSystem::Equirenctangular_To_CubeMap(World& world, const ResourceBuffer
 	renderData->equirectangular_To_CubemapShader->setInt("equirectangularMap", 0);
 	renderData->equirectangular_To_CubemapShader->setMatrix("projection", captureProjection);
 
-	glViewport(0, 0, 512, 512);
+
 
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
@@ -560,6 +575,17 @@ void LightSystem::Equirenctangular_To_CubeMap(World& world, const ResourceBuffer
 
 	ConvulateEnvCube(world, resourceBuffer, captureProjection, captureViews);
 	Prefilter_EnvCub(world, renderData, windowData, captureProjection, captureViews);
+
+	//////brdfLUt
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData->brdfLUTTexture, 0);
+
+	renderData->brdf_Shader->Use();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	world.renderer->DrawQuad(renderData);
+	//////
 
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -833,6 +859,12 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, co
 	glActiveTexture(GL_TEXTURE0 + i);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderResource->irradianceMap);
 	renderResource->lightningPass_Shader->setInt("irradianceMap", i++);
+	glActiveTexture(GL_TEXTURE0 + i);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderResource->prefilterMap);
+	renderResource->lightningPass_Shader->setInt("prefilterMap", i++);
+	glActiveTexture(GL_TEXTURE0 + i);
+	glBindTexture(GL_TEXTURE_2D, renderResource->brdfLUTTexture);
+	renderResource->lightningPass_Shader->setInt("brdfLUT", i++);
 
 
 	world->renderer->DrawQuad(renderResource);
@@ -858,6 +890,7 @@ void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	InitCaptureCubeMap(world, resourceBuffer);
 	Init_IrradianceMap(world, resourceBuffer);
+	Init_BRDF_LUTTexture(world, resourceBuffer);
 
 	Equirenctangular_To_CubeMap(world, resourceBuffer, "Assets/SkyBox/InTheSky/kloofendal_48d_partly_cloudy_puresky_2k.hdr");  //qwantani_night_puresky_2k
 }

@@ -152,6 +152,7 @@ struct RenderResource : public Resource {
 	std::unique_ptr<Shader> skyBox_Shader = nullptr;
 	std::unique_ptr<Shader> irradiance_Shader = nullptr;
 	std::unique_ptr<Shader> prefilter_Shader = nullptr;
+	std::unique_ptr<Shader> brdf_Shader = nullptr;
 
 	glm::mat4 _model = glm::mat4(1.0f);
 
@@ -211,6 +212,7 @@ struct RenderResource : public Resource {
 	unsigned int prefilterMap;
 	unsigned int maxMipLevels = 5;
 	int specularResolution_Map = 128;
+	unsigned int brdfLUTTexture;
 
 	//Final render (To ImGui)
 	unsigned int toImGui_FBO;

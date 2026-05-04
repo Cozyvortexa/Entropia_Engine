@@ -73,7 +73,7 @@ float ShadowSpotLight(SpotLight light, int lightIndex, vec3 FragPos);
 
 ////////PBR
 vec3 fresnelSchlick(float cosTheta, vec3 F0);
-vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
@@ -89,6 +89,9 @@ uniform sampler2D gDepth;
 uniform sampler2D gARM;
 uniform sampler2D ssaoTexture;
 
+uniform samplerCube prefilterMap;
+uniform sampler2D brdfLUT;
+
 uniform samplerCube irradianceMap;
 
 uniform int renderTarget;
@@ -96,6 +99,7 @@ uniform int renderTarget;
 uniform mat4 lightSpaceMatrix;
 
 const float PI = 3.14159265359;
+const float MAX_REFLECTION_LOD = 4.0;
 
 void main()
 {
@@ -118,7 +122,7 @@ void main()
 	float roughness = ARM_Text.g;
 	float metallic = ARM_Text.b;
 	
-	vec3 indirectLight = texture(irradianceMap, Normal).rgb;
+	vec3 diffuse = texture(irradianceMap, Normal).rgb * Albedo;
 
 
 	if (renderTarget == 1){
@@ -150,7 +154,7 @@ void main()
 		return;
 	}
 	else if (renderTarget == 8){
-		FragColor = vec4(indirectLight / (indirectLight + vec3(1.0)), 1.0f);
+		FragColor = vec4(diffuse / (diffuse + vec3(1.0)), 1.0f);
 		return;
 	}
 
@@ -170,13 +174,19 @@ void main()
 	vec3 F0 = vec3(0.04);
 	F0 = mix(F0, material.albedo, material.metallic);
 	//Reflected light
-	vec3 kS = fresnelSchlickRoughness(max(dot(Normal, viewDir), 0.0), F0, material.roughness);
+	vec3 kS = FresnelSchlickRoughness(max(dot(Normal, viewDir), 0.0), F0, material.roughness);
 	//Absorbed light
 	vec3 kD = vec3(1.0) - kS;
 	kD *= 1.0 - material.metallic;
-	//Indirect Ambient
-	vec3 ambient = (kD * indirectLight) * material.ambientOcclusion;
 
+	vec3 R = reflect(-viewDir, Normal);
+	vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
+	vec3 F = FresnelSchlickRoughness(max(dot(Normal, viewDir), 0.0), F0, roughness);
+	vec2 envBRDF = texture(brdfLUT, vec2(max(dot(Normal, viewDir), 0.0), roughness)).rg;
+	vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+
+	//Indirect Ambient
+	vec3 ambient = (kD * diffuse + specular) * material.ambientOcclusion;
 
 
 	final_lightning += CalcDirLight(dirLight, viewDir, FragPos, Normal, Albedo, FragPosLightSpace, material, F0, kD, kS); // Une seule lumiere dir dans la scene 
@@ -412,7 +422,7 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
 	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
-vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
 	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
