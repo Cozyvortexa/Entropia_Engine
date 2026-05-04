@@ -139,7 +139,7 @@ void LightSystem::InitShadowBuffer(World& world) {
 
 #pragma endregion 
 
-#pragma region Draw Shadow
+#pragma region Shadow
 
 void LightSystem::DrawShadowForDirLight(World* world, RenderResource& renderResource, WindowResource& windowData, All_Light& lights) {  // Bug sur la window si resize
 	glViewport(0, 0, lights.dirLight_Shadow_Size.first, lights.dirLight_Shadow_Size.second);
@@ -254,7 +254,6 @@ void LightSystem::DrawShadowForSpotLight(World* world, RenderResource& renderRes
 	glViewport(0, 0, windowData.WIDTH, windowData.HEIGHT);
 }
 
-
 void LightSystem::ShadowPass(World* world, RenderResource* renderResource, WindowResource* windowResource, All_Light* lights) {
 	glCullFace(GL_FRONT);
 	DrawShadowForDirLight(world, *renderResource, *windowResource, *lights);
@@ -269,10 +268,93 @@ void LightSystem::ShadowPass(World* world, RenderResource* renderResource, Windo
 	glCullFace(GL_BACK);
 }
 
+void LightSystem::SendDepthMapToLightningShader(World* world, const RenderResource* renderResource, const ResourceBuffer* resourceBuffer, All_Light* lights) {
+	if (lights->pointLights_DepthMap.size() >= MAX_POINT_LIGHT) std::cout << "Max pointLight number reach" << std::endl;
+	if (lights->spotLights_DepthMap.size() >= MAX_SPOT_LIGHT) std::cout << "Max spotLight number reach" << std::endl;
+
+
+	Shader* currentShader = renderResource->lightningPass_Shader.get();
+	currentShader->Use();
+	// --- TEXTURE UNIT MANAGEMENT ---
+
+	const int SLOT_SHADOW_DIR = 16;
+	const int SLOT_SHADOW_POINT_START = 17;
+	const int SLOT_SHADOW_SPOT_START = 25;
+
+	// --- 2. GESTION LUMIERE DIRECTIONNELLE (Shadow Map 2D) ---
+	currentShader->setInt("shadowMap", SLOT_SHADOW_DIR);
+
+	glActiveTexture(GL_TEXTURE0 + SLOT_SHADOW_DIR);
+	if (lights->dirLight_DepthMap != 0) {  // WARNING, do a better check if the sun existe
+		glBindTexture(GL_TEXTURE_2D, lights->dirLight_DepthMap);
+		currentShader->setMatrix("lightSpaceMatrix", lights->dirLight_Matrice);
+	}
+	else {
+		glBindTexture(GL_TEXTURE_2D, resourceBuffer->renderResource->dummyDepthMap2D);
+	}
+
+	// --- 3. GESTION POINT LIGHTS (Shadow Cube Maps) ---
+	int maxPointLights = 8;
+	int activeLights = std::min((int)lights->pointLights_DepthMap.size(), maxPointLights);
+
+
+	//PointLight
+	for (int i = 0; i < maxPointLights; i++) {
+
+		// Construction du nom "shadowCubeMaps[0]", "shadowCubeMaps[1]"...
+		std::string uniformName = "shadowCubeMaps[" + std::to_string(i) + "]";
+
+		int currentSlot = SLOT_SHADOW_POINT_START + i;
+
+		// 1. On dit au shader : "Le sampler i doit lire dans le slot X"
+		currentShader->setInt(uniformName, currentSlot);
+
+		// 2. On active le slot X
+		glActiveTexture(GL_TEXTURE0 + currentSlot);
+
+		if (i < activeLights) {
+			glBindTexture(GL_TEXTURE_CUBE_MAP, lights->pointLights_DepthMap[i]);
+		}
+		else {
+			// Nettoyage des slots inutilisés (évite les bugs de "Sampler Type Mismatch")
+			glBindTexture(GL_TEXTURE_CUBE_MAP, resourceBuffer->renderResource->dummyDepthCubeMap);
+		}
+	}
+
+	//// Gestion Spot Light
+	int maxSpotLights = 8;
+	int activeSpotLights = std::min((int)lights->spotLights_DepthMap.size(), maxSpotLights);
+	for (int i = 0; i < maxSpotLights; i++) {
+		std::string uniformName = "shadowMapSpot[" + std::to_string(i) + "]";
+		std::string uniformNameMatrice = "spotLightMatrices[" + std::to_string(i) + "]";
+
+		int currentSlot = SLOT_SHADOW_SPOT_START + i;
+
+		currentShader->setInt(uniformName, currentSlot);
+
+
+		glActiveTexture(GL_TEXTURE0 + currentSlot);
+
+
+		if (i < activeSpotLights) {
+			currentShader->setMatrix(uniformNameMatrice, lights->spotLight_Matrice[i]);
+			glBindTexture(GL_TEXTURE_2D, lights->spotLights_DepthMap[i]);
+		}
+		else {
+			glBindTexture(GL_TEXTURE_2D, resourceBuffer->renderResource->dummyDepthMap2D);
+		}
+	}
+
+	glActiveTexture(GL_TEXTURE0);
+
+	// --- END TEXTURE MANAGEMENT ---
+}
+
 #pragma endregion
 
 #pragma region Light
 
+#pragma region Init
 void LightSystem::InitLightSSBO(World& world, const ResourceBuffer* resourceBuffer) {
 	int uniform_Light_Binding_Point = 1;
 	RenderResource* renderResource = resourceBuffer->renderResource;
@@ -297,7 +379,7 @@ void LightSystem::Init_IrradianceMap(World& world, const ResourceBuffer* resourc
 
 	for (unsigned int i = 0; i < 6; ++i)
 	{
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 32, 32, 0, GL_RGB, GL_FLOAT, nullptr);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 64, 64, 0, GL_RGB, GL_FLOAT, nullptr);
 	}
 
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -306,9 +388,6 @@ void LightSystem::Init_IrradianceMap(World& world, const ResourceBuffer* resourc
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "CubeMap Shadow Framebuffer not complete!" << std::endl;
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
@@ -335,16 +414,32 @@ void LightSystem::InitCaptureCubeMap(World& world, const ResourceBuffer* resourc
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "CubeMap Shadow Framebuffer not complete!" << std::endl;
+		std::cout << "Capture Framebuffer not complete!" << std::endl;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
+
+void LightSystem::InitPrefilter_IBL(World& world, RenderResource* renderData) {
+	glGenTextures(1, &renderData->prefilterMap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->prefilterMap);
+
+	glTexStorage2D(GL_TEXTURE_CUBE_MAP, renderData->maxMipLevels, GL_RGB16F, renderData->specularResolution_Map, renderData->specularResolution_Map);
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
+#pragma endregion
 
 void LightSystem::ConvulateEnvCube(World& world, const ResourceBuffer* resourceBuffer, glm::mat4 captureProjection, glm::mat4 captureViews[]) {
 	RenderResource* renderData = resourceBuffer->renderResource;
@@ -353,15 +448,17 @@ void LightSystem::ConvulateEnvCube(World& world, const ResourceBuffer* resourceB
 
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
 	glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 64, 64);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderData->captureRBO);
 
 	shader->Use();
-	shader->setInt("environmentMap", 0);
-	shader->setMatrix("projection", captureProjection);
 	glActiveTexture(GL_TEXTURE0);
+	shader->setInt("environmentMap", 0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
-	glViewport(0, 0, 32, 32);
-	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
+	shader->setMatrix("projection", captureProjection);
+	glViewport(0, 0, 64, 64);
+
+
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		shader->setMatrix("view", captureViews[i]);
@@ -370,23 +467,69 @@ void LightSystem::ConvulateEnvCube(World& world, const ResourceBuffer* resourceB
 		world.renderer->DrawCube();
 	}
 	glViewport(0, 0, windowData->WIDTH, windowData->HEIGHT);
+
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
-void LightSystem::Equiranctangular_To_CubeMap(World& world, const ResourceBuffer* resourceBuffer, std::string equirectangularMap_Path) {
+void LightSystem::Prefilter_EnvCub(World& world, RenderResource* renderData, WindowResource* windowData, glm::mat4 captureProjection, glm::mat4 captureViews[]) {
+	InitPrefilter_IBL(world, renderData);
+	renderData->prefilter_Shader->Use();
+	renderData->prefilter_Shader->setMatrix("projection", captureProjection);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
+	renderData->prefilter_Shader->setInt("environmentMap", 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
+
+
+	for (unsigned int mip = 0; mip < renderData->maxMipLevels; ++mip)
+	{
+		// reisze framebuffer according to mip-level size.
+		unsigned int mipWidth = renderData->specularResolution_Map * std::pow(0.5, mip);
+		unsigned int mipHeight = renderData->specularResolution_Map * std::pow(0.5, mip);
+		glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
+
+		glViewport(0, 0, mipWidth, mipHeight);
+		float roughness = (float)mip / (float)(renderData->maxMipLevels - 1);
+		renderData->prefilter_Shader->setFloat("roughness", roughness);
+		for (unsigned int i = 0; i < 6; ++i)
+		{
+			renderData->prefilter_Shader->setMatrix("view", captureViews[i]);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, renderData->prefilterMap, mip);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			world.renderer->DrawCube();
+		}
+	}
+	glViewport(0, 0, windowData->WIDTH, windowData->HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+}
+
+void LightSystem::Equirenctangular_To_CubeMap(World& world, const ResourceBuffer* resourceBuffer, std::string equirectangularMap_Path) {
 	RenderResource* renderData = resourceBuffer->renderResource;
 	WindowResource* windowData = resourceBuffer->windowResource;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderData->captureRBO);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "FBO not complete before equirect render!" << std::endl;
 
 	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 	glm::mat4 captureViews[] =
 	{
-	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
-	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f,  0.0f, 1.0f)),
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+	   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))
 	};
 
 	unsigned int equiRec_Map = TextureClass::LoadEquirectangularTex(equirectangularMap_Path);
@@ -400,7 +543,6 @@ void LightSystem::Equiranctangular_To_CubeMap(World& world, const ResourceBuffer
 
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
-	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		renderData->equirectangular_To_CubemapShader->setMatrix("view", captureViews[i]);
@@ -408,13 +550,21 @@ void LightSystem::Equiranctangular_To_CubeMap(World& world, const ResourceBuffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		world.renderer->DrawCube();
 	}
-	glEnable(GL_DEPTH_TEST);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 	glViewport(0, 0, windowData->WIDTH, windowData->HEIGHT);
 	glDeleteTextures(1, &equiRec_Map);
 
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
+	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
 	ConvulateEnvCube(world, resourceBuffer, captureProjection, captureViews);
+	Prefilter_EnvCub(world, renderData, windowData, captureProjection, captureViews);
+
+
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
 }
 
 glm::vec3 LightSystem::Calc_SpotLightDirection(glm::mat4 transformModel, glm::vec3 lightDirection) {
@@ -509,6 +659,7 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 	int spotLight_compteur = 0;
 	View viewSpotLight = world->view<SpotLight, Transform>();
 	viewSpotLight.each([&](int entity, SpotLight& spotLight, Transform& transform) {
+		spotLight_compteur++;
 		if (spotLight_compteur <= MAX_POINT_LIGHT) {
 			Padding_SpotLight p_spotLight;
 			//Spot_Light
@@ -546,6 +697,107 @@ All_Light* LightSystem::DataCollector(World* world, WindowResource* windowResour
 
 	return lights;
 }
+
+#pragma endregion
+
+#pragma region Draw
+void LightSystem::Draw_SkyBox(World* world, const ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice) {
+	RenderResource* renderData = resourceBuffer->renderResource;
+	WindowResource* windowResource = resourceBuffer->windowResource;
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData->gBuffer);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData->framebuffer);
+
+	glBlitFramebuffer(0, 0, windowResource->WIDTH, windowResource->HEIGHT, 0, 0, windowResource->WIDTH, windowResource->HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+	Shader* skyBoxshader = renderData->skyBox_Shader.get();
+	skyBoxshader->Use();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
+	skyBoxshader->setInt("environmentMap", 0);
+
+	glDepthFunc(GL_LEQUAL);
+	glDepthMask(GL_FALSE);
+
+	skyBoxshader->setMatrix("rootView", glm::mat4(glm::mat3(viewMatrice)));
+	skyBoxshader->setMatrix("projection", renderData->projection);
+	world->renderer->DrawCube();
+
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LESS);
+}
+
+void LightSystem::Draw_BloomBlurEffect(RenderResource* renderData) {
+	renderData->horizontal = true;
+	bool first_iteration = true;
+	unsigned int amount = renderData->bloom_iteration;
+
+	//float noir[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[0], noir);
+	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[1], noir);
+
+	renderData->bloomShader->Use();
+	glActiveTexture(GL_TEXTURE0);
+	renderData->bloomShader->setInt("image", 0);
+
+	glBindVertexArray(renderData->quadVAO);
+	glDisable(GL_DEPTH_TEST);
+	for (unsigned int i = 0; i < amount; i++)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, renderData->pingpongFBO[renderData->horizontal]);
+		renderData->bloomShader->setBool("horizontal", renderData->horizontal);
+		glBindTexture(GL_TEXTURE_2D, first_iteration ? renderData->finalTxtColorOutput[1] : renderData->pingpongBuffers[!renderData->horizontal]);
+
+		//Draw
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		renderData->horizontal = !renderData->horizontal;
+		if (first_iteration)
+			first_iteration = false;
+	}
+	glEnable(GL_DEPTH_TEST);
+	glBindVertexArray(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+//Post process
+void LightSystem::Draw_FinalPass(RenderResource* renderData) {
+	if (renderData->bloomEnable) {
+		Draw_BloomBlurEffect(renderData);
+	}
+
+	//glBindFramebuffer(GL_FRAMEBUFFER, renderData->toImGui_FBO);
+	//glClear(GL_COLOR_BUFFER_BIT);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//Post process
+	renderData->postProcessShader->Use();
+	glBindVertexArray(renderData->quadVAO);
+	//Parameters
+	renderData->postProcessShader->setFloat("exposure", renderData->exposure);
+	glDisable(GL_DEPTH_TEST);
+
+	//Scene image
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, renderData->finalTxtColorOutput[0]);
+	renderData->postProcessShader->setInt("scene", 0);
+
+	//Bloom image
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, renderData->pingpongBuffers[!renderData->horizontal]); // Le dernier buffer utilisé
+	renderData->postProcessShader->setInt("bloomBlur", 1);
+	renderData->postProcessShader->setBool("bloomEnable", renderData->bloomEnable);
+
+	//glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glBindVertexArray(0);
+	glEnable(GL_DEPTH_TEST);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 //Lightning Pass
 void LightSystem::LightningPass(World* world, Transform* transformMainCamera, const ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice) {
 	InterfaceRessource* interfaceRessource = resourceBuffer->interfaceRessource;
@@ -583,9 +835,7 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, co
 	renderResource->lightningPass_Shader->setInt("irradianceMap", i++);
 
 
-
 	world->renderer->DrawQuad(renderResource);
-
 	//Skybox
 	Draw_SkyBox(world, resourceBuffer, viewMatrice);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -593,195 +843,13 @@ void LightSystem::LightningPass(World* world, Transform* transformMainCamera, co
 
 #pragma endregion
 
-#pragma region Draw
-void LightSystem::Draw_SkyBox(World* world, const ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice) {
-	RenderResource* renderData = resourceBuffer->renderResource;
-	WindowResource* windowResource = resourceBuffer->windowResource;
-
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData->gBuffer);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData->framebuffer);
-
-	glBlitFramebuffer(0, 0, windowResource->WIDTH, windowResource->HEIGHT, 0, 0, windowResource->WIDTH, windowResource->HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-
-	Shader* skyBoxshader = renderData->skyBox_Shader.get();
-	skyBoxshader->Use();
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
-	skyBoxshader->setInt("environmentMap", 0);
-
-	glDepthFunc(GL_LEQUAL);
-	//glDepthMask(GL_FALSE);
-
-	skyBoxshader->setMatrix("rootView", glm::mat4(glm::mat3(viewMatrice)));
-	skyBoxshader->setMatrix("projection", renderData->projection);
-	world->renderer->DrawCube();
-
-	//glDepthMask(GL_TRUE);
-	glDepthFunc(GL_LESS);
-}
-
-void LightSystem::DrawBlurEffect(RenderResource* renderData) {
-	renderData->horizontal = true;
-	bool first_iteration = true;
-	unsigned int amount = renderData->bloom_iteration;
-
-	//float noir[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[0], noir);
-	//glClearBufferfv(GL_COLOR, renderData->pingpongFBO[1], noir);
-
-	renderData->bloomShader->Use();
-	glActiveTexture(GL_TEXTURE0);
-	renderData->bloomShader->setInt("image", 0);
-
-	glBindVertexArray(renderData->quadVAO);
-	glDisable(GL_DEPTH_TEST);
-	for (unsigned int i = 0; i < amount; i++)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, renderData->pingpongFBO[renderData->horizontal]);
-		renderData->bloomShader->setBool("horizontal", renderData->horizontal);
-		glBindTexture(GL_TEXTURE_2D, first_iteration ? renderData->finalTxtColorOutput[1] : renderData->pingpongBuffers[!renderData->horizontal]);
-
-		//Draw
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		renderData->horizontal = !renderData->horizontal;
-		if (first_iteration)
-			first_iteration = false;
-	}
-	glEnable(GL_DEPTH_TEST);
-	glBindVertexArray(0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-//Post process
-void LightSystem::Draw_FinalPass(RenderResource* renderData) {
-	if (renderData->bloomEnable) {
-		DrawBlurEffect(renderData);
-	}
-
-	//glBindFramebuffer(GL_FRAMEBUFFER, renderData->toImGui_FBO);
-	//glClear(GL_COLOR_BUFFER_BIT);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	//Post process
-	renderData->postProcessShader->Use();
-	glBindVertexArray(renderData->quadVAO);
-	//Parameters
-	renderData->postProcessShader->setFloat("exposure", renderData->exposure);
-	glDisable(GL_DEPTH_TEST);
-
-	//Scene image
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, renderData->finalTxtColorOutput[0]);
-	renderData->postProcessShader->setInt("scene", 0);
-
-	//Bloom image
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, renderData->pingpongBuffers[!renderData->horizontal]); // Le dernier buffer utilisé
-	renderData->postProcessShader->setInt("bloomBlur", 1);
-	renderData->postProcessShader->setBool("bloomEnable", renderData->bloomEnable);
-
-	//glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderData->finalTxtColorOutput);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-
-	glBindVertexArray(0);
-	glEnable(GL_DEPTH_TEST);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-
-#pragma endregion
-
-void LightSystem::SendDepthMapToLightningShader(World* world, const RenderResource* renderResource, const ResourceBuffer* resourceBuffer, All_Light* lights) {
-	if (lights->pointLights_DepthMap.size() >= MAX_POINT_LIGHT) std::cout << "Max pointLight number reach" << std::endl; 
-	if (lights->spotLights_DepthMap.size() >= MAX_SPOT_LIGHT) std::cout << "Max spotLight number reach" << std::endl;  
-
-
-	Shader* currentShader = renderResource->lightningPass_Shader.get();
-	currentShader->Use();
-	// --- TEXTURE UNIT MANAGEMENT ---
-
-	const int SLOT_SHADOW_DIR = 16;
-	const int SLOT_SHADOW_POINT_START = 17;
-	const int SLOT_SHADOW_SPOT_START = 25;
-
-	// --- 2. GESTION LUMIERE DIRECTIONNELLE (Shadow Map 2D) ---
-	currentShader->setInt("shadowMap", SLOT_SHADOW_DIR);
-
-	glActiveTexture(GL_TEXTURE0 + SLOT_SHADOW_DIR);
-	if (lights->dirLight_DepthMap != 0) {  // WARNING, do a better check if the sun existe
-		glBindTexture(GL_TEXTURE_2D, lights->dirLight_DepthMap);
-		currentShader->setMatrix("lightSpaceMatrix", lights->dirLight_Matrice);
-	}
-	else {
-		glBindTexture(GL_TEXTURE_2D, resourceBuffer->renderResource->dummyDepthMap2D);
-	}
-
-	// --- 3. GESTION POINT LIGHTS (Shadow Cube Maps) ---
-	int maxPointLights = 8;
-	int activeLights = std::min((int)lights->pointLights_DepthMap.size(), maxPointLights);
-
-
-	//PointLight
-	for (int i = 0; i < maxPointLights; i++) {
-
-		// Construction du nom "shadowCubeMaps[0]", "shadowCubeMaps[1]"...
-		std::string uniformName = "shadowCubeMaps[" + std::to_string(i) + "]";
-
-		int currentSlot = SLOT_SHADOW_POINT_START + i;
-
-		// 1. On dit au shader : "Le sampler i doit lire dans le slot X"
-		currentShader->setInt(uniformName, currentSlot);
-
-		// 2. On active le slot X
-		glActiveTexture(GL_TEXTURE0 + currentSlot);
-
-		if (i < activeLights) {
-			glBindTexture(GL_TEXTURE_CUBE_MAP, lights->pointLights_DepthMap[i]);
-		}
-		else {
-			// Nettoyage des slots inutilisés (évite les bugs de "Sampler Type Mismatch")
-			glBindTexture(GL_TEXTURE_CUBE_MAP, resourceBuffer->renderResource->dummyDepthCubeMap);
-		}
-	}
-
-	//// Gestion Spot Light
-	int maxSpotLights = 8;
-	int activeSpotLights = std::min((int)lights->spotLights_DepthMap.size(), maxSpotLights);
-	for (int i = 0; i < maxSpotLights; i++) {
-		std::string uniformName = "shadowMapSpot[" + std::to_string(i) + "]";
-		std::string uniformNameMatrice = "spotLightMatrices[" + std::to_string(i) + "]";
-
-		int currentSlot = SLOT_SHADOW_SPOT_START + i;
-
-		currentShader->setInt(uniformName, currentSlot);
-
-
-		glActiveTexture(GL_TEXTURE0 + currentSlot);
-
-
-		if (i < activeSpotLights) {
-			currentShader->setMatrix(uniformNameMatrice, lights->spotLight_Matrice[i]);
-			glBindTexture(GL_TEXTURE_2D, lights->spotLights_DepthMap[i]);
-		}
-		else {
-			glBindTexture(GL_TEXTURE_2D, resourceBuffer->renderResource->dummyDepthMap2D);
-		}
-	}
-
-	glActiveTexture(GL_TEXTURE0);
-
-	// --- END TEXTURE MANAGEMENT ---
-}
 
 void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	static_assert(sizeof(Padding_DirLight) == 32, "Invalide alignement");
 	static_assert(alignof(Padding_DirLight) == 16);
 
-	//static_assert(sizeof(Padding_PointLight) == 80, "Invalide alignement");
-	//static_assert(alignof(Padding_PointLight) == 16);
+	static_assert(sizeof(Padding_PointLight) == 32, "Invalide alignement");
+	static_assert(alignof(Padding_PointLight) == 16);
 
 	static_assert(sizeof(Padding_SpotLight) == 64, "Invalide alignement");
 	static_assert(alignof(Padding_SpotLight) == 16);
@@ -790,7 +858,8 @@ void LightSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 	InitCaptureCubeMap(world, resourceBuffer);
 	Init_IrradianceMap(world, resourceBuffer);
-	Equiranctangular_To_CubeMap(world, resourceBuffer, "Assets/SkyBox/InTheSky/kloofendal_48d_partly_cloudy_puresky_2k.hdr");  //qwantani_night_puresky_2k
+
+	Equirenctangular_To_CubeMap(world, resourceBuffer, "Assets/SkyBox/InTheSky/kloofendal_48d_partly_cloudy_puresky_2k.hdr");  //qwantani_night_puresky_2k
 }
 
 void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
@@ -809,16 +878,16 @@ void LightSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
 	}
 	/////////////////
 
-	All_Light* lights = DataCollector(&world, windowResource, mainCamera, renderResource);
+	renderResource->lights = DataCollector(&world, windowResource, mainCamera, renderResource);
 
-	ShadowPass(&world, renderResource, windowResource, lights);
-	UpdateLight(&world, renderResource, *lights);
-	SendDepthMapToLightningShader(&world, renderResource, resourceBuffer, lights);
+	ShadowPass(&world, renderResource, windowResource, renderResource->lights);
+	UpdateLight(&world, renderResource, *renderResource->lights);
+	SendDepthMapToLightningShader(&world, renderResource, resourceBuffer, renderResource->lights);
+	glDisable(GL_CULL_FACE);
 	LightningPass(&world, transformMainCamera, resourceBuffer, mainCamera->viewMatrice);
 	Draw_FinalPass(renderResource);
-
+	glEnable(GL_CULL_FACE);
 
 	//glfwSwapBuffers(windowResource->window);
 	glfwPollEvents();
-	delete lights;  // WARNING, in case for some misc reason lights is delete before all values are copy in the gpu
 }

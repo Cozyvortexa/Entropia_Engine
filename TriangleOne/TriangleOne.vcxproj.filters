@@ -184,5 +184,6 @@
     <None Include="Shader\IBLshader\Vertex_Equirectangular_to_Cubemap.glsl" />
     <None Include="Shader\IBLshader\Fragment_Equirectangular_to_Cubemap.glsl" />
     <None Include="Shader\IBLshader\Irradiance\Fragment_Irradiance_Convulation.glsl" />
+    <None Include="Shader\IBLshader\SpecularIBL\Fragment_PreFilter.glsl" />
   </ItemGroup>
 </Project>

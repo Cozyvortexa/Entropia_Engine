@@ -109,8 +109,8 @@ void WindowSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
 
-	//Correction gamma 
-	//glEnable(GL_FRAMEBUFFER_SRGB);
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
 }
 
 bool WindowSystem::ShouldClose(World& world) {

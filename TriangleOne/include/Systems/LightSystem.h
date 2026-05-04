@@ -69,20 +69,26 @@ class LightSystem : public System {
 	 void Init(World& world, const ResourceBuffer* resourceBuffer) override;
 	 void Update(World& world, const ResourceBuffer* resourceBuffer) override;
 
+#pragma region Init
+
 	 void InitLightSSBO(World& world, const ResourceBuffer* renderResource);
-
 	 void InitCaptureCubeMap(World& world, const ResourceBuffer* resourceBuffer);
-	 void ConvulateEnvCube(World& world, const ResourceBuffer* resourceBuffer, glm::mat4 captureProjection, glm::mat4 captureViews[]);
-	 void Equiranctangular_To_CubeMap(World& world, const ResourceBuffer* resourceBuffer, std::string equirectangularMap_Path);
-
-
-	 void LightningPass(World* world, Transform* transformMainCamera, const ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice);
-
+	 void InitPrefilter_IBL(World& world, RenderResource* renderData);
 	 void Init_IrradianceMap(World& world, const ResourceBuffer* resourceBuffer);
+
+#pragma endregion
+
+	 void ConvulateEnvCube(World& world, const ResourceBuffer* resourceBuffer, glm::mat4 captureProjection, glm::mat4 captureViews[]);
+	 void Equirenctangular_To_CubeMap(World& world, const ResourceBuffer* resourceBuffer, std::string equirectangularMap_Path);
+	 void Prefilter_EnvCub(World& world, RenderResource* renderData, WindowResource* windowData, glm::mat4 captureProjection, glm::mat4 captureViews[]);
+
 #pragma region Draw
-	 void DrawBlurEffect(RenderResource* renderData);
+
+	 void Draw_BloomBlurEffect(RenderResource* renderData);
 	 void Draw_FinalPass(RenderResource* renderData);
 	 void Draw_SkyBox(World* world, const ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice);
+	 void LightningPass(World* world, Transform* transformMainCamera, const ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice);
+
 #pragma endregion
 
 #pragma region Init shadow buffer 
@@ -92,7 +98,8 @@ class LightSystem : public System {
 	 void InitShadowBuffer(World& world);
 
 #pragma endregion
-#pragma region Draw Shadow
+
+#pragma region Shadow
 	 void DrawShadowForDirLight(World* world, RenderResource& renderResource, WindowResource& windowData, All_Light& currentLight);
 	 void DrawShadowForPointLight(World* world, RenderResource& renderResource, WindowResource& windowData, All_Light& lights, int index);
 	 void DrawShadowForSpotLight(World* world, RenderResource& renderResource, WindowResource& windowData, All_Light& lights, int index);
@@ -104,7 +111,7 @@ private:
 
 	void UpdateLight(World* world, RenderResource* renderResource, All_Light& lights);
 
-	void SendDepthMapToLightningShader(World* world, const RenderResource* renderResource, const ResourceBuffer* resourceBuffer, All_Light* lights); // Temp
+	void SendDepthMapToLightningShader(World* world, const RenderResource* renderResource, const ResourceBuffer* resourceBuffer, All_Light* lights);
 
 	glm::vec3 Calc_SpotLightDirection(glm::mat4 transformModel, glm::vec3 lightDirection);
 };

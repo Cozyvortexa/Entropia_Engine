@@ -62,7 +62,6 @@ std::pair<unsigned int, unsigned int> RenderSystem::CreateDummyShadowTextures() 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
 	// --- 2. Dummy CubeMap Depth Texture (for inactive Point lights) ---
-	glGenFramebuffers(1, &dummyDepthCubeMap);
 	glGenTextures(1, &dummyDepthCubeMap);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, dummyDepthCubeMap);
 
@@ -429,6 +428,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	renderData->equirectangular_To_CubemapShader = std::make_unique<Shader>("TriangleOne/Shader/IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "TriangleOne/Shader/IBLshader/Fragment_Equirectangular_to_Cubemap.glsl");
 	renderData->skyBox_Shader = std::make_unique<Shader>("TriangleOne/Shader/MiscShader/SkyBoxVertex.glsl", "TriangleOne/Shader/MiscShader/SkyBoxFrag.glsl");
 	renderData->irradiance_Shader = std::make_unique<Shader>("TriangleOne/Shader/IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "TriangleOne/Shader/IBLshader/Irradiance/Fragment_Irradiance_Convulation.glsl");
+	renderData->prefilter_Shader = std::make_unique<Shader>("TriangleOne/Shader/IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "TriangleOne/Shader/IBLshader/SpecularIBL/Fragment_Prefilter.glsl");
 
 	//Create the main cam  // TEMP / WARNING
 	Entity camEntity = world.Register();
@@ -495,10 +495,7 @@ void RenderSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 	//world.add_components(backpack, backPackTransform, sceneTag, materialHandle, backpackModeleHandle);
 
 
-	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
-
-
 	Init_AllBuffer(windowData, renderData);
 }
 
@@ -516,7 +513,9 @@ void RenderSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 
 
 	RenderScene(world, resourceBuffer, windowData, mainCamera);  
+	glDisable(GL_CULL_FACE);
 	SSAO_Pass(world, windowData, renderData, mainCamera);
+	glEnable(GL_CULL_FACE);
 }
 
 void RenderSystem::Shutdown(World& world) {

@@ -39,6 +39,7 @@ void RenderTarget_Menu(InterfaceRessource* interface) {
 		else if (ImGui::RadioButton("AmbientOcclusion", interface->renderTarget == RenderTarget::AmbientOcclusion)) { interface->renderTarget = RenderTarget::AmbientOcclusion; }
 		else if (ImGui::RadioButton("Metallic", interface->renderTarget == RenderTarget::Metallic)) { interface->renderTarget = RenderTarget::Metallic; }
 		else if (ImGui::RadioButton("Roughness", interface->renderTarget == RenderTarget::Roughness)) { interface->renderTarget = RenderTarget::Roughness; }
+		else if (ImGui::RadioButton("Irradiance_Map", interface->renderTarget == RenderTarget::Irradiance_Map)) { interface->renderTarget = RenderTarget::Irradiance_Map; }
 	}
 }
 

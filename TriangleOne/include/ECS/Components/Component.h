@@ -12,6 +12,8 @@
 
 #include "ImGui/imgui.h"
 
+class All_Light;
+
 struct Component {
 	virtual ~Component() = default;
 };
@@ -149,10 +151,10 @@ struct RenderResource : public Resource {
 	std::unique_ptr<Shader> equirectangular_To_CubemapShader = nullptr;
 	std::unique_ptr<Shader> skyBox_Shader = nullptr;
 	std::unique_ptr<Shader> irradiance_Shader = nullptr;
+	std::unique_ptr<Shader> prefilter_Shader = nullptr;
 
 	glm::mat4 _model = glm::mat4(1.0f);
 
-	int sample = 4;
 
 	glm::mat4 projection = glm::mat4(0);
 
@@ -184,10 +186,11 @@ struct RenderResource : public Resource {
 
 	bool ssao_Enabled = true;
 	int kernelSample = 16;
-	float SSAO_radius = 1.0f;
+	float SSAO_radius = 0.2f;
 	std::vector<glm::vec3> ssaoKernel;
 
 	//Light SSBO
+	All_Light* lights = nullptr;
 	std::vector<size_t> lightSSBO_Data_Size;
 	GLuint light_SSBO;
 
@@ -204,6 +207,10 @@ struct RenderResource : public Resource {
 	unsigned int captureRBO;
 	unsigned int envCubemap;
 	unsigned int irradianceMap;
+
+	unsigned int prefilterMap;
+	unsigned int maxMipLevels = 5;
+	int specularResolution_Map = 128;
 
 	//Final render (To ImGui)
 	unsigned int toImGui_FBO;
@@ -237,7 +244,8 @@ enum RenderTarget {
 	Depth,
 	AmbientOcclusion,
 	Roughness,
-	Metallic
+	Metallic,
+	Irradiance_Map
 };
 
 struct InterfaceRessource : public Resource {
