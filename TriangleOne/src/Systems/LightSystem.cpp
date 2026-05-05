@@ -255,7 +255,7 @@ void LightSystem::DrawShadowForSpotLight(World* world, RenderResource& renderRes
 }
 
 void LightSystem::ShadowPass(World* world, RenderResource* renderResource, WindowResource* windowResource, All_Light* lights) {
-	glCullFace(GL_FRONT);
+	glCullFace(GL_BACK);
 	DrawShadowForDirLight(world, *renderResource, *windowResource, *lights);
 
 	for (int i = 0; i < lights->pointLights.size(); i++) {
@@ -265,7 +265,6 @@ void LightSystem::ShadowPass(World* world, RenderResource* renderResource, Windo
 	for (int i = 0; i < lights->spotLights.size(); i++) {
 		DrawShadowForSpotLight(world, *renderResource, *windowResource, *lights, i);
 	}
-	glCullFace(GL_BACK);
 }
 
 void LightSystem::SendDepthMapToLightningShader(World* world, const RenderResource* renderResource, const ResourceBuffer* resourceBuffer, All_Light* lights) {

@@ -343,14 +343,14 @@ void RenderSystem::ResizeText(WindowResource* windowData, RenderResource* render
 
 	//Gbuffer
 	glBindTexture(GL_TEXTURE_2D, renderData->gPosition);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, renderData->gNormal);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, renderData->gAlbedo);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
-	glBindTexture(GL_TEXTURE_2D, renderData->gDepth);
 	glBindTexture(GL_TEXTURE_2D, renderData->gARM);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->gDepth);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, windowData->WIDTH, windowData->HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	//Bloom
