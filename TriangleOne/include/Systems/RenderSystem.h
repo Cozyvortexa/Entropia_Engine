@@ -28,12 +28,10 @@
 
 class RenderSystem : public System {
 public:
-	void gBufferToResolvedBuffer(WindowResource* windowData, RenderResource* renderData);
-	void SSAO_Pass(World& world, WindowResource* windowData, RenderResource* renderData);
+	void SSAO_Pass(World& world, WindowResource* windowData, RenderResource* renderData, CameraComponent* mainCamera);
 
 	void InitQuadVao(WindowResource* windowData, RenderResource* renderData);
 	void InitMainFrameBuffer(WindowResource* windowData, RenderResource* renderData);
-	void InitIntermediateFBO(WindowResource* windowData, RenderResource* renderData);
 	void InitBloomFBO(WindowResource* windowData, RenderResource* renderData);
 	void InitGBuffer(WindowResource* windowData, RenderResource* renderData);
 	void InitSSAO(WindowResource* windowData, RenderResource* renderData);
@@ -45,8 +43,6 @@ public:
 	std::pair<unsigned int, unsigned int> CreateDummyShadowTextures();
 
 	static void ResizeText(WindowResource* windowData, RenderResource* renderResource);
-	//void InitSkyBox();
-	//void DrawSkyBox(glm::mat4 projectionMatrix);
 
 	void Init(World& world, const ResourceBuffer* resourceBuffer) override;
 	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;

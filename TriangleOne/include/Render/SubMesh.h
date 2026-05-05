@@ -24,7 +24,11 @@ struct Texture {
 		None,
 		Diffuse,
 		Specular,
-		Normal
+		Normal,
+		Albedo,
+		Ambient_Occlusion,
+		Metalness,
+		MetalicRoughness
 	};
 	Type textureType = None; // Valeur par default
 	unsigned int id;

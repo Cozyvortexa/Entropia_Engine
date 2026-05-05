@@ -12,6 +12,8 @@
 
 #include "ImGui/imgui.h"
 
+class All_Light;
+
 struct Component {
 	virtual ~Component() = default;
 };
@@ -146,20 +148,21 @@ struct RenderResource : public Resource {
 	std::unique_ptr<Shader> lightningPass_Shader = nullptr;
 	std::unique_ptr<Shader> ssaoPass_Shader = nullptr;
 	std::unique_ptr<Shader> ssaoPass_Blur_Shader = nullptr;
+	std::unique_ptr<Shader> equirectangular_To_CubemapShader = nullptr;
+	std::unique_ptr<Shader> skyBox_Shader = nullptr;
+	std::unique_ptr<Shader> irradiance_Shader = nullptr;
+	std::unique_ptr<Shader> prefilter_Shader = nullptr;
+	std::unique_ptr<Shader> brdf_Shader = nullptr;
 
 	glm::mat4 _model = glm::mat4(1.0f);
 
-	int sample = 4;
 
 	glm::mat4 projection = glm::mat4(0);
 
 	//Lightning
 	unsigned int framebuffer;
 	GLuint finalTxtColorOutput[2];
-	GLuint finalTxtOutput;
-
-	////Intermediate
-	unsigned int intermediateFBO;
+	GLuint finalDepthOutput;
 
 	//Shadow
 	unsigned int dummyDepthMap2D = 0;
@@ -170,13 +173,9 @@ struct RenderResource : public Resource {
 	unsigned int gPosition;
 	unsigned int gNormal;
 	unsigned int gAlbedo;
+	unsigned int gARM;
 
 	unsigned int gDepth;
-	//Deffered resolved Text (MSAA)
-	unsigned int gPositionResolved;
-	unsigned int gNormalResolved;
-	unsigned int gAlbedoResolved;
-	unsigned int gDepthResolved;
 
 	//SSAO
 	unsigned int ssaoBuffer;
@@ -187,10 +186,12 @@ struct RenderResource : public Resource {
 	unsigned int ssao_NoiseText;
 
 	bool ssao_Enabled = true;
-	int kernelSample = 8;
+	int kernelSample = 16;
+	float SSAO_radius = 0.2f;
 	std::vector<glm::vec3> ssaoKernel;
 
 	//Light SSBO
+	All_Light* lights = nullptr;
 	std::vector<size_t> lightSSBO_Data_Size;
 	GLuint light_SSBO;
 
@@ -202,10 +203,16 @@ struct RenderResource : public Resource {
 	unsigned int pingpongBuffers[2];
 	bool horizontal = true;
 
-	//Capture cubeMap
+	//Capture cubeMap / IBL
 	unsigned int captureFBO;
 	unsigned int captureRBO;
-	unsigned int capture_Cubemap;
+	unsigned int envCubemap;
+	unsigned int irradianceMap;
+
+	unsigned int prefilterMap;
+	unsigned int maxMipLevels = 5;
+	int specularResolution_Map = 128;
+	unsigned int brdfLUTTexture;
 
 	//Final render (To ImGui)
 	unsigned int toImGui_FBO;
@@ -215,7 +222,7 @@ struct RenderResource : public Resource {
 	float exposure = 1.0f; // HDR exposure
 
 	//Bloom
-	bool bloomEnable = true;
+	bool bloomEnable = false;
 	int bloom_iteration = 10;
 
 	float quadVertices[24] = {
@@ -234,11 +241,13 @@ struct RenderResource : public Resource {
 enum RenderTarget {
 	Default,
 	Albedo,
-	Specular,
 	Position,
 	Normal,
 	Depth,
-	AmbientOcclusion
+	AmbientOcclusion,
+	Roughness,
+	Metallic,
+	Irradiance_Map
 };
 
 struct InterfaceRessource : public Resource {
