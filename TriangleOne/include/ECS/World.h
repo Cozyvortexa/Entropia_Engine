@@ -60,17 +60,17 @@ public:
 
     template<typename T>
     void add_component(int entity, T component) {  // WARNING, component is a copy 
-        static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
+        static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
         get_pool<T>()->insert(entity, component);
     }
     template<typename... Args>
     void add_components(int entity, Args ... args) {
-        static_assert((std::is_base_of_v<Component, Args>&& ...), "T must inherit from Component");
+        static_assert((std::is_base_of_v<Engine::Component::Component, Args>&& ...), "T must inherit from Engine::Component::Component");
         (add_component(entity, args), ...);
     }
     template<typename T>
     T* get_component(Entity entity) {
-        static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
+        static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
         auto it = pools.find(std::type_index(typeid(T)));
         if (it == pools.end()) return nullptr;
 
@@ -78,7 +78,7 @@ public:
     }
     template<typename T>
     bool remove_component(Entity entity) {
-        static_assert(std::is_base_of<Component, T>::value, "T must inherit from Component");
+        static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
         auto it = pools.find(std::type_index(typeid(T)));
         if (it == pools.end()) {
             assert(true, "La supression d'un composant sur l'entité numéro: " + entity + " à échouer");
@@ -89,7 +89,7 @@ public:
 
     template<typename T>
     T* get_ressource() {
-        static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
+        static_assert(std::is_base_of<Engine::Resource::Resource, T>::value, "T must inherit from Engine::Resource::Resource");
         auto type_id = std::type_index(typeid(T));
 
         if (ressources.find(type_id) == ressources.end()) {
@@ -105,7 +105,7 @@ public:
     Renderer* renderer;
 private:
     std::unordered_map<std::type_index, std::unique_ptr<ISparseSet>> pools;
-    std::unordered_map<std::type_index, std::unique_ptr<Resource>> ressources;
+    std::unordered_map<std::type_index, std::unique_ptr<Engine::Resource::Resource>> ressources;
     uint32_t entity_Register = 0;
 
     // Recupére/crée un pool spécifique
@@ -123,7 +123,7 @@ private:
 
     template<typename T>
     T* add_ressource() {
-        static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
+        static_assert(std::is_base_of<Engine::Resource::Resource, T>::value, "T must inherit from Engine::Resource::Resource");
         auto type_id = std::type_index(typeid(T));
 
         if (ressources.find(type_id) == ressources.end()) {

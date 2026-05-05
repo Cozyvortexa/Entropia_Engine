@@ -18,10 +18,10 @@
 #include "ECS/AssetStore.h"
 #include "Render/Renderer.h"
 
-class Engine {
+class EntropiaZero {
 public:
-	Engine();
-	~Engine();
+	EntropiaZero();
+	~EntropiaZero();
 
 	int Run();
 	void Shutdown();
@@ -30,8 +30,8 @@ private:
 	void InitEngine();
 	int WIDTH = 800;
 	int HEIGHT = 600;
-	static Engine* instance;
-	std::unique_ptr<WindowSystem> window;
+	static EntropiaZero* instance;
+	std::unique_ptr<Engine::Systems::WindowSystem> window;
 
 
 	std::unique_ptr<World> world;

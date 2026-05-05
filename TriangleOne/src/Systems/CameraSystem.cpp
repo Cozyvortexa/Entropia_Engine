@@ -1,14 +1,17 @@
 #include "Systems/CameraSystem.h"
 
+namespace Resource = Engine::Resource;
+namespace Component = Engine::Component;
+namespace Systems = Engine::Systems;
 
-void CameraSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
+void Systems::CameraSystem::Init(World& world, const Resource::ResourceBuffer* resourceBuffer) {
 	GLFWwindow* window = resourceBuffer->windowResource->window;
 	glfwSetWindowUserPointer(window, &world);  // Bind du world a la fenetre
 }
 
-void CameraSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
-	View view = world.view<CameraComponent, Transform>();
-	view.each([&](int entity, CameraComponent& currentCamera, Transform& transform) {
+void Systems::CameraSystem::Update(World& world, const Resource::ResourceBuffer* resourceBuffer) {
+	View view = world.view<Component::CameraComponent, Component::Transform>();
+	view.each([&](int entity, Component::CameraComponent& currentCamera, Component::Transform& transform) {
 		currentCamera.viewMatrice = glm::lookAt(transform.position, transform.position + currentCamera.cameraFront, currentCamera.cameraUp);
 	});
 

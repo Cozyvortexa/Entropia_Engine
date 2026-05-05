@@ -16,7 +16,7 @@
 
 class Scheduler {
 public:
-	Scheduler(World* world, WindowSystem* window);
+	Scheduler(World* world, Engine::Systems::WindowSystem* window);
 	~Scheduler();
 
 	Scheduler* Init();
@@ -27,11 +27,11 @@ public:
 	void CreateSystemes();
 private:
 	void FillResourceBuffer();
-	std::vector<std::unique_ptr<System>> systemes;
+	std::vector<std::unique_ptr<Engine::Systems::System>> systemes;
 
 	World* world;
 
-	WindowSystem* window;  // Systeme a part
+	Engine::Systems::WindowSystem* window;  // Systeme a part
 
-	std::unique_ptr<ResourceBuffer> resourceBuffer;
+	std::unique_ptr<Engine::Resource::ResourceBuffer> resourceBuffer;
 };

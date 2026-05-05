@@ -9,12 +9,14 @@
 
 #include <iostream>
 
-class InputSystem : public System {
-public:
-	virtual ~InputSystem() = default;
-	void Init(World& world, const ResourceBuffer* resourceBuffer) override;
-	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;
-	void Shutdown(World& world) override;
+namespace Engine::Systems {
+	class InputSystem : public System {
+	public:
+		virtual ~InputSystem() = default;
+		void Init(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;
+		void Update(World& world, const Engine::Resource::ResourceBuffer* ressourceBuffer) override;
+		void Shutdown(World& world) override;
 
-	void ProcessInput(GLFWwindow* window, CameraComponent* mainCamera, Transform* transformMainCamera, float deltaTime, InputResource* inputData);
-};
+		void ProcessInput(GLFWwindow* window, Engine::Component::CameraComponent* mainCamera, Engine::Component::Transform* transformMainCamera, float deltaTime, Engine::Resource::InputResource* inputData);
+	};
+}

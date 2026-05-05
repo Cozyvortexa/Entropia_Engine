@@ -13,262 +13,274 @@
 #include "ImGui/imgui.h"
 
 class All_Light;
-
-struct Component {
-	virtual ~Component() = default;
-};
-
-struct Transform : public Component
-{
-	Transform() {};
-	Transform(glm::vec3 position) { this->position = position; }
-	Transform(glm::vec3 position, glm::vec3 rotation) { this->position = position; this->rotation = rotation; }
-	Transform(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) { this->position = position; this->rotation = rotation; this->scale = scale; }
-	glm::vec3 position = glm::vec3(0.0f);
-	glm::vec3 rotation = glm::vec3(1.0f);
-	glm::vec3 scale = glm::vec3(1.0f);
-
-	glm::mat4 GetTransformModel() const{
-		glm::mat4 model(1.0f);
-
-
-		model = glm::translate(model, position);
-
-		model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1, 0, 0));
-		model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0, 1, 0));
-		model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0, 0, 1));
-
-		model = glm::scale(model, glm::vec3(scale));
-
-		return model;
-	}
-};
-
-struct CameraComponent : public Component {
-	CameraComponent(unsigned int SCR_WIDTH, unsigned int SCR_HEIGHT) {
-		this->SCR_WIDTH = SCR_WIDTH;
-		this->SCR_HEIGHT = SCR_HEIGHT;
-		lastX = SCR_WIDTH / 2.0f;
-		lastY = SCR_HEIGHT / 2.0f;
-	}
-	glm::mat4 projection = glm::mat4(1.0f);
-	glm::mat4 model = glm::mat4(1.0f);
-	glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
-
-	float yoffset = 0.0f;
-
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-	float nearPlane = 0.1f;
-	float farPlane = 200.0f;
-
-	float zoom = 45.0f;  // valeur de zoom par default 
-	//Rotation
-	float yaw = -90.0f;
-	float pitch = 0.0f;
-
-	bool firstMouse = true;
-
-	unsigned int SCR_WIDTH = 0;
-	unsigned int SCR_HEIGHT = 0;
-
-	float lastX = 1.0f;
-	float lastY = 1.0f;
-
-	glm::mat4 viewMatrice = glm::mat4(1.0f);  // Juste pour pas qu'il soit init a zero
-};
-
-struct SceneTag : public Component {
-	uint32_t scene_id = 0;  // Zero correspond to the main scene 
-};
-
-struct MeshHandle : public Component {
-	MeshHandle() {};
-	MeshHandle(uint32_t index) { this->index = index; }
-	MeshHandle(uint32_t index, bool castShadow, bool haveToBeDraw = true) { this->index = index; this->castShadow = castShadow; this->haveToBeDraw = haveToBeDraw; }
-	uint32_t index = 0;
-	bool castShadow = true;
-	bool haveToBeDraw = true;
-};
-
-struct MaterialHandle : Component {
-	MaterialHandle() {};
-	MaterialHandle(uint32_t index) { this->index = index; }
-	uint32_t index = 0;
-};
-
-enum LightTag {
-	None,
-	Directional_Tag,
-	PointLight_Tag,
-	SpotLight_Tag
-};
-
-struct LightToInitTag : public Component {
-	LightToInitTag() {};
-	LightToInitTag(LightTag tag) { this->tag = tag; }
-	LightTag tag = LightTag::None;
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct Resource {
-	Resource() = default;
-	virtual ~Resource() = default;
-
-	Resource(const Resource&) = delete;	// Pas de copie
-	Resource& operator=(const Resource&) = delete;	// Pas d'affectation
-};
-
-struct WindowResource : public Resource {
-	WindowResource() = default;
-
-	inline static int WIDTH = 1000;
-	inline static int HEIGHT = 800;
-
-	int sample = 4;
-
-	GLFWwindow* window = nullptr;
-};
-
-struct TimeResource : public Resource {
-	float deltaTime = 0.0f;
-	float lastFrame = 0.0f;
-
-	float currentFps;
-};
-
-struct RenderResource : public Resource {
-	unsigned int mainMaterialHandle;
-	std::unique_ptr<Shader> depthShader = nullptr;
-	std::unique_ptr<Shader> depthShaderCubeMap = nullptr;
-	std::unique_ptr<Shader> postProcessShader = nullptr;
-	std::unique_ptr<Shader> bloomShader = nullptr;
-	std::unique_ptr<Shader> lightningPass_Shader = nullptr;
-	std::unique_ptr<Shader> ssaoPass_Shader = nullptr;
-	std::unique_ptr<Shader> ssaoPass_Blur_Shader = nullptr;
-	std::unique_ptr<Shader> equirectangular_To_CubemapShader = nullptr;
-	std::unique_ptr<Shader> skyBox_Shader = nullptr;
-	std::unique_ptr<Shader> irradiance_Shader = nullptr;
-	std::unique_ptr<Shader> prefilter_Shader = nullptr;
-	std::unique_ptr<Shader> brdf_Shader = nullptr;
-
-	glm::mat4 _model = glm::mat4(1.0f);
-
-
-	glm::mat4 projection = glm::mat4(0);
-
-	//Lightning
-	unsigned int framebuffer;
-	GLuint finalTxtColorOutput[2];
-	GLuint finalDepthOutput;
-
-	//Shadow
-	unsigned int dummyDepthMap2D = 0;
-	unsigned int dummyDepthCubeMap = 0;
-
-	////Deffered - GBuffer
-	unsigned int gBuffer;
-	unsigned int gPosition;
-	unsigned int gNormal;
-	unsigned int gAlbedo;
-	unsigned int gARM;
-
-	unsigned int gDepth;
-
-	//SSAO
-	unsigned int ssaoBuffer;
-	unsigned int ssaoBlur_Buffer;
-
-	unsigned int ssaoText;
-	unsigned int ssaoBlurText;
-	unsigned int ssao_NoiseText;
-
-	bool ssao_Enabled = true;
-	int kernelSample = 16;
-	float SSAO_radius = 0.2f;
-	std::vector<glm::vec3> ssaoKernel;
-
-	//Light SSBO
-	All_Light* lights = nullptr;
-	std::vector<size_t> lightSSBO_Data_Size;
-	GLuint light_SSBO;
-
-	//Final render
-	unsigned int quadVAO;
-	unsigned int quadVBO;
-	//Bloom
-	unsigned int pingpongFBO[2];
-	unsigned int pingpongBuffers[2];
-	bool horizontal = true;
-
-	//Capture cubeMap / IBL
-	unsigned int captureFBO;
-	unsigned int captureRBO;
-	unsigned int envCubemap;
-	unsigned int irradianceMap;
-
-	unsigned int prefilterMap;
-	unsigned int maxMipLevels = 5;
-	int specularResolution_Map = 128;
-	unsigned int brdfLUTTexture;
-
-	//Final render (To ImGui)
-	unsigned int toImGui_FBO;
-	unsigned int toImGui_Texture;
-	
-	////////////////Parameters
-	float exposure = 1.0f; // HDR exposure
-
-	//Bloom
-	bool bloomEnable = false;
-	int bloom_iteration = 10;
-
-	float quadVertices[24] = {
-		// Position      // Text
-		-1.0f,  1.0f,     0.0f, 1.0f,
-		 1.0f, -1.0f,     1.0f, 0.0f,
-		-1.0f, -1.0f,     0.0f, 0.0f,
-
-		-1.0f,  1.0f,     0.0f, 1.0f,
-		 1.0f,  1.0f,     1.0f, 1.0f,
-		 1.0f, -1.0f,     1.0f, 0.0f
+namespace Engine::Component {
+	struct Component {
+		virtual ~Component() = default;
 	};
 
-};
+	struct Transform : public Component
+	{
+		Transform() {};
+		Transform(glm::vec3 position) { this->position = position; }
+		Transform(glm::vec3 position, glm::vec3 rotation) { this->position = position; this->rotation = rotation; }
+		Transform(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) { this->position = position; this->rotation = rotation; this->scale = scale; }
+		glm::vec3 position = glm::vec3(0.0f);
+		glm::vec3 rotation = glm::vec3(1.0f);
+		glm::vec3 scale = glm::vec3(1.0f);
 
-enum RenderTarget {
-	Default,
-	Albedo,
-	Position,
-	Normal,
-	Depth,
-	AmbientOcclusion,
-	Roughness,
-	Metallic,
-	Irradiance_Map
-};
+		glm::mat4 GetTransformModel() const {
+			glm::mat4 model(1.0f);
 
-struct InterfaceRessource : public Resource {
-	bool mainInterfaceOpen = true;
-	RenderTarget renderTarget = RenderTarget::Default;
-	ImVec2 renderWindows_Size;
-};
 
-struct InputResource : public Resource {
-	bool mouseInputEnable;
-};
+			model = glm::translate(model, position);
 
-struct ActiveCamera : public Resource {
-	Entity cameraID;
-};
+			model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+			model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+			model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0, 0, 1));
 
-struct ResourceBuffer {
-	WindowResource* windowResource;
-	TimeResource* timeResource;
-	RenderResource* renderResource;
-	ActiveCamera* activeCamera;
-	InputResource* inputResource;
-	InterfaceRessource* interfaceRessource;
-};
+			model = glm::scale(model, glm::vec3(scale));
+
+			return model;
+		}
+	};
+
+	struct CameraComponent : public Component {
+		CameraComponent(unsigned int SCR_WIDTH, unsigned int SCR_HEIGHT) {
+			this->SCR_WIDTH = SCR_WIDTH;
+			this->SCR_HEIGHT = SCR_HEIGHT;
+			lastX = SCR_WIDTH / 2.0f;
+			lastY = SCR_HEIGHT / 2.0f;
+		}
+		glm::mat4 projection = glm::mat4(1.0f);
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
+
+		float yoffset = 0.0f;
+
+		glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+		glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+		glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+		float nearPlane = 0.1f;
+		float farPlane = 200.0f;
+
+		float zoom = 45.0f;  // valeur de zoom par default 
+		//Rotation
+		float yaw = -90.0f;
+		float pitch = 0.0f;
+
+		bool firstMouse = true;
+
+		unsigned int SCR_WIDTH = 0;
+		unsigned int SCR_HEIGHT = 0;
+
+		float lastX = 1.0f;
+		float lastY = 1.0f;
+
+		glm::mat4 viewMatrice = glm::mat4(1.0f);  // Juste pour pas qu'il soit init a zero
+	};
+
+	struct SceneTag : public Component {
+		uint32_t scene_id = 0;  // Zero correspond to the main scene 
+	};
+
+	struct MeshHandle : public Component {
+		MeshHandle() {};
+		MeshHandle(uint32_t index) { this->index = index; }
+		MeshHandle(uint32_t index, bool castShadow, bool haveToBeDraw = true) { this->index = index; this->castShadow = castShadow; this->haveToBeDraw = haveToBeDraw; }
+		uint32_t index = 0;
+		bool castShadow = true;
+		bool haveToBeDraw = true;
+	};
+
+	struct MaterialHandle : Component {
+		MaterialHandle() {};
+		MaterialHandle(uint32_t index) { this->index = index; }
+		uint32_t index = 0;
+	};
+
+	enum LightTag {
+		None,
+		Directional_Tag,
+		PointLight_Tag,
+		SpotLight_Tag
+	};
+
+	struct LightToInitTag : public Component {
+		LightToInitTag() {};
+		LightToInitTag(LightTag tag) { this->tag = tag; }
+		LightTag tag = LightTag::None;
+	};
+}
+
+
+namespace Engine::Resource {
+
+	struct Resource {
+		Resource() = default;
+		virtual ~Resource() = default;
+
+		Resource(const Resource&) = delete;	// Pas de copie
+		Resource& operator=(const Resource&) = delete;	// Pas d'affectation
+	};
+
+	struct WindowResource : public Resource {
+		WindowResource() = default;
+
+		inline static int WIDTH = 1000;
+		inline static int HEIGHT = 800;
+
+		int sample = 4;
+
+		GLFWwindow* window = nullptr;
+	};
+
+	struct TimeResource : public Resource {
+		float deltaTime = 0.0f;
+		float lastFrame = 0.0f;
+
+		float currentFps;
+	};
+
+	struct R_Shader : public Resource {
+		std::unique_ptr<Shader> depthShader = nullptr;
+		std::unique_ptr<Shader> depthShaderCubeMap = nullptr;
+		std::unique_ptr<Shader> postProcessShader = nullptr;
+		std::unique_ptr<Shader> bloomShader = nullptr;
+		std::unique_ptr<Shader> lightningPass_Shader = nullptr;
+		std::unique_ptr<Shader> ssaoPass_Shader = nullptr;
+		std::unique_ptr<Shader> ssaoPass_Blur_Shader = nullptr;
+		std::unique_ptr<Shader> equirectangular_To_CubemapShader = nullptr;
+		std::unique_ptr<Shader> skyBox_Shader = nullptr;
+		std::unique_ptr<Shader> irradiance_Shader = nullptr;
+		std::unique_ptr<Shader> prefilter_Shader = nullptr;
+		std::unique_ptr<Shader> brdf_Shader = nullptr;
+	};
+
+	struct GBuffer : public Resource {
+		unsigned int gBuffer;
+		unsigned int gPosition;
+		unsigned int gNormal;
+		unsigned int gAlbedo;
+		unsigned int gARM;
+		unsigned int gDepth;
+	};
+
+	struct SSAO : public Resource {
+		unsigned int ssaoBuffer;
+		unsigned int ssaoBlur_Buffer;
+		unsigned int ssaoText;
+		unsigned int ssaoBlurText;
+		unsigned int ssao_NoiseText;
+
+		bool ssao_Enabled = true;
+		int kernelSample = 16;
+		float SSAO_radius = 0.2f;
+		std::vector<glm::vec3> ssaoKernel;
+	};
+
+
+	struct RenderResource : public Resource {
+		unsigned int mainMaterialHandle;
+
+		R_Shader r_Shader;
+
+		glm::mat4 _model = glm::mat4(1.0f);
+		glm::mat4 projection = glm::mat4(0);
+
+		//Lightning
+		unsigned int framebuffer;
+		GLuint finalTxtColorOutput[2];
+		GLuint finalDepthOutput;
+
+		//Shadow
+		unsigned int dummyDepthMap2D = 0;
+		unsigned int dummyDepthCubeMap = 0;
+
+		GBuffer gBuffer;
+
+		SSAO ssao;
+
+		//Light SSBO
+		All_Light* lights = nullptr;
+		std::vector<size_t> lightSSBO_Data_Size;
+		GLuint light_SSBO;
+
+		//Final render
+		unsigned int quadVAO;
+		unsigned int quadVBO;
+		//Bloom
+		unsigned int pingpongFBO[2];
+		unsigned int pingpongBuffers[2];
+		bool horizontal = true;
+
+		//Capture cubeMap / IBL
+		unsigned int captureFBO;
+		unsigned int captureRBO;
+		unsigned int envCubemap;
+		unsigned int irradianceMap;
+
+		unsigned int prefilterMap;
+		unsigned int maxMipLevels = 5;
+		int specularResolution_Map = 128;
+		unsigned int brdfLUTTexture;
+
+		//Final render (To ImGui)
+		unsigned int toImGui_FBO;
+		unsigned int toImGui_Texture;
+
+		////////////////Parameters
+		float exposure = 1.0f; // HDR exposure
+
+		//Bloom
+		bool bloomEnable = false;
+		int bloom_iteration = 10;
+
+		float quadVertices[24] = {
+			// Position      // Text
+			-1.0f,  1.0f,     0.0f, 1.0f,
+			 1.0f, -1.0f,     1.0f, 0.0f,
+			-1.0f, -1.0f,     0.0f, 0.0f,
+
+			-1.0f,  1.0f,     0.0f, 1.0f,
+			 1.0f,  1.0f,     1.0f, 1.0f,
+			 1.0f, -1.0f,     1.0f, 0.0f
+		};
+
+	};
+
+	enum RenderTarget {
+		Default,
+		Albedo,
+		Position,
+		Normal,
+		Depth,
+		AmbientOcclusion,
+		Roughness,
+		Metallic,
+		Irradiance_Map
+	};
+
+	struct InterfaceRessource : public Resource {
+		bool mainInterfaceOpen = true;
+		RenderTarget renderTarget = RenderTarget::Default;
+		ImVec2 renderWindows_Size;
+	};
+
+	struct InputResource : public Resource {
+		bool mouseInputEnable;
+	};
+
+	struct ActiveCamera : public Resource {
+		Entity cameraID;
+	};
+
+	struct ResourceBuffer {
+		WindowResource* windowResource;
+		TimeResource* timeResource;
+		RenderResource* renderResource;
+		ActiveCamera* activeCamera;
+		InputResource* inputResource;
+		InterfaceRessource* interfaceRessource;
+	};
+}

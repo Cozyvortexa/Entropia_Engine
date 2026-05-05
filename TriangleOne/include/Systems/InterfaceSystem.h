@@ -9,8 +9,10 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-class InterfaceSystem : public System {
-	void Init(World& world, const ResourceBuffer* resourceBuffer) override;
-	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;
-	void Shutdown(World& world) override;
-};
+namespace Engine::Systems {
+	class InterfaceSystem : public System {
+		void Init(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;
+		void Update(World& world, const Engine::Resource::ResourceBuffer* ressourceBuffer) override;
+		void Shutdown(World& world) override;
+	};
+}

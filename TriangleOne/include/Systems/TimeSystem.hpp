@@ -7,8 +7,10 @@
 
 #include "ECS/World.h"
 
-class TimeSystem : public System {  // Oui c'est un hpp, time.h existe deja ( utiliser dans une lib )
-public:
-	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;
-	void Shutdown(World& world) override;
-};
+namespace Engine::Systems {
+	class TimeSystem : public System {
+	public:
+		void Update(World& world, const Engine::Resource::ResourceBuffer* ressourceBuffer) override;
+		void Shutdown(World& world) override;
+	};
+}

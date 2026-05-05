@@ -10,15 +10,17 @@
 #include "ECS/World.h"
 #include "Systems/RenderSystem.h"
 
-class WindowSystem : public System {
-public:
-	WindowSystem();
+namespace Engine::Systems {
+	class WindowSystem : public System {
+	public:
+		WindowSystem();
 
-	static void Framebuffer_size_callback(GLFWwindow* window, int width, int height);
-	void ProcessInput(GLFWwindow* window);
-	bool ShouldClose(World& world);
+		static void Framebuffer_size_callback(GLFWwindow* window, int width, int height);
+		void ProcessInput(GLFWwindow* window);
+		bool ShouldClose(World& world);
 
-	void Init(World& world, const ResourceBuffer* resourceBuffer) override;
-	void Update(World& world, const ResourceBuffer* resourceBuffer) override;
-	void Shutdown(World& world) override;
-};
+		void Init(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;
+		void Update(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;
+		void Shutdown(World& world) override;
+	};
+}

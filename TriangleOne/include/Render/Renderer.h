@@ -22,7 +22,7 @@ public:
 	void DrawMesh(Mesh& currentMesh);
 	void DrawMesh_Without_Texture(Mesh& currentMesh);
 
-	void DrawQuad(RenderResource* renderData);
+	void DrawQuad(Engine::Resource::RenderResource* renderData);
 
 	void DrawCube();
 

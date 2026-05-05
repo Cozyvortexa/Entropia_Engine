@@ -1,10 +1,12 @@
 #include "Systems/InputSystem.h"
 
+namespace Resource = Engine::Resource;
+namespace Component = Engine::Component;
 
 void ScrollCallback(GLFWwindow* window, double xoffset, double ypos) {
 	World* world = static_cast<World*>(glfwGetWindowUserPointer(window));  // Recupere l'instance du world
-	Entity entityCam = world->get_ressource<ActiveCamera>()->cameraID;
-	CameraComponent* mainCamera = world->get_component<CameraComponent>(entityCam);
+	Entity entityCam = world->get_ressource<Resource::ActiveCamera>()->cameraID;
+	Component::CameraComponent* mainCamera = world->get_component<Component::CameraComponent>(entityCam);
 
 	if (mainCamera != nullptr) {
 		mainCamera->zoom -= (float)mainCamera->yoffset;
@@ -20,10 +22,10 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double ypos) {
 
 void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	World* world = static_cast<World*>(glfwGetWindowUserPointer(window));  // Recupere l'instance du world
-	Entity entityCam = world->get_ressource<ActiveCamera>()->cameraID;
-	//Entity entityCam = world->get_ressource<ActiveCamera>()->cameraID;
-	CameraComponent* mainCamera = world->get_component<CameraComponent>(entityCam);
-	InputResource* inputResource = world->get_ressource<InputResource>();
+	Entity entityCam = world->get_ressource<Resource::ActiveCamera>()->cameraID;
+	//Entity entityCam = world->get_ressource<Resource::ActiveCamera>()->cameraID;
+	Component::CameraComponent* mainCamera = world->get_component<Component::CameraComponent>(entityCam);
+	Resource::InputResource* inputResource = world->get_ressource<Resource::InputResource>();
 
 	if (!inputResource->mouseInputEnable) return;  // Cancel input
 
@@ -68,25 +70,25 @@ void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 
-void InputSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
+void Engine::Systems::InputSystem::Init(World& world, const Resource::ResourceBuffer* resourceBuffer) {
 	GLFWwindow* window = resourceBuffer->windowResource->window;
 
 	glfwSetCursorPosCallback(window, MouseCallback);  // Pour permetre le mouvement de la cam
 	glfwSetScrollCallback(window, ScrollCallback);
 }
 
-void InputSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
+void Engine::Systems::InputSystem::Update(World& world, const Resource::ResourceBuffer* resourceBuffer) {
 	// A déplacer dans un input manager
-	Entity entityCam = world.get_ressource<ActiveCamera>()->cameraID;
-	CameraComponent* mainCamera = world.get_component<CameraComponent>(entityCam);
-	Transform* transformMainCamera = world.get_component<Transform>(entityCam);
-	InputResource* inputData = resourceBuffer->inputResource;
+	Entity entityCam = world.get_ressource<Resource::ActiveCamera>()->cameraID;
+	Component::CameraComponent* mainCamera = world.get_component<Component::CameraComponent>(entityCam);
+	Component::Transform* transformMainCamera = world.get_component<Component::Transform>(entityCam);
+	Resource::InputResource* inputData = resourceBuffer->inputResource;
 	ProcessInput(resourceBuffer->windowResource->window, mainCamera, transformMainCamera, resourceBuffer->timeResource->deltaTime, inputData);
 	//
 }
 
 
-void InputSystem::ProcessInput(GLFWwindow* window, CameraComponent* mainCamera, Transform* transformMainCamera, float deltaTime, InputResource* inputData)
+void Engine::Systems::InputSystem::ProcessInput(GLFWwindow* window, Component::CameraComponent* mainCamera, Component::Transform* transformMainCamera, float deltaTime, Resource::InputResource* inputData)
 {
 	const float cameraSpeed = 9.0f * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -122,6 +124,6 @@ void InputSystem::ProcessInput(GLFWwindow* window, CameraComponent* mainCamera, 
 
 }
 
-void InputSystem::Shutdown(World& world) {
+void Engine::Systems::InputSystem::Shutdown(World& world) {
 	std::cout << "InputSystem shutting down" << std::endl;
 }

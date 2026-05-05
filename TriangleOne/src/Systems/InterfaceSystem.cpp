@@ -1,11 +1,14 @@
 #include "Systems/InterfaceSystem.h"
 
+namespace Resource = Engine::Resource;
+namespace Systems = Engine::Systems;
+
 static void glfw_error_callback(int error, const char* description)
 {
 	fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-void InterfaceSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
+void Systems::InterfaceSystem::Init(World& world, const Resource::ResourceBuffer* resourceBuffer) {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
@@ -28,22 +31,22 @@ void InterfaceSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 void ShowExampleAppDockSpace(bool* p_open);
 
-void RenderTarget_Menu(InterfaceRessource* interface) {
+void RenderTarget_Menu(Resource::InterfaceRessource* interface) {
 	if (ImGui::CollapsingHeader("RenderTarget"))
 	{
-		if (ImGui::RadioButton("Default render", interface->renderTarget == RenderTarget::Default)) { interface->renderTarget = RenderTarget::Default; }
-		else if (ImGui::RadioButton("Albedo", interface->renderTarget == RenderTarget::Albedo)) { interface->renderTarget = RenderTarget::Albedo; }
-		else if (ImGui::RadioButton("Position", interface->renderTarget == RenderTarget::Position)) { interface->renderTarget = RenderTarget::Position; }
-		else if (ImGui::RadioButton("Normal", interface->renderTarget == RenderTarget::Normal)) { interface->renderTarget = RenderTarget::Normal; }
-		else if (ImGui::RadioButton("Depth", interface->renderTarget == RenderTarget::Depth)) { interface->renderTarget = RenderTarget::Depth; }
-		else if (ImGui::RadioButton("AmbientOcclusion", interface->renderTarget == RenderTarget::AmbientOcclusion)) { interface->renderTarget = RenderTarget::AmbientOcclusion; }
-		else if (ImGui::RadioButton("Metallic", interface->renderTarget == RenderTarget::Metallic)) { interface->renderTarget = RenderTarget::Metallic; }
-		else if (ImGui::RadioButton("Roughness", interface->renderTarget == RenderTarget::Roughness)) { interface->renderTarget = RenderTarget::Roughness; }
-		else if (ImGui::RadioButton("Irradiance_Map", interface->renderTarget == RenderTarget::Irradiance_Map)) { interface->renderTarget = RenderTarget::Irradiance_Map; }
+		if (ImGui::RadioButton("Default render", interface->renderTarget == Resource::RenderTarget::Default)) { interface->renderTarget = Resource::RenderTarget::Default; }
+		else if (ImGui::RadioButton("Albedo", interface->renderTarget == Resource::RenderTarget::Albedo)) { interface->renderTarget = Resource::RenderTarget::Albedo; }
+		else if (ImGui::RadioButton("Position", interface->renderTarget == Resource::RenderTarget::Position)) { interface->renderTarget = Resource::RenderTarget::Position; }
+		else if (ImGui::RadioButton("Normal", interface->renderTarget == Resource::RenderTarget::Normal)) { interface->renderTarget = Resource::RenderTarget::Normal; }
+		else if (ImGui::RadioButton("Depth", interface->renderTarget == Resource::RenderTarget::Depth)) { interface->renderTarget = Resource::RenderTarget::Depth; }
+		else if (ImGui::RadioButton("AmbientOcclusion", interface->renderTarget == Resource::RenderTarget::AmbientOcclusion)) { interface->renderTarget = Resource::RenderTarget::AmbientOcclusion; }
+		else if (ImGui::RadioButton("Metallic", interface->renderTarget == Resource::RenderTarget::Metallic)) { interface->renderTarget = Resource::RenderTarget::Metallic; }
+		else if (ImGui::RadioButton("Roughness", interface->renderTarget == Resource::RenderTarget::Roughness)) { interface->renderTarget = Resource::RenderTarget::Roughness; }
+		else if (ImGui::RadioButton("Irradiance_Map", interface->renderTarget == Resource::RenderTarget::Irradiance_Map)) { interface->renderTarget = Resource::RenderTarget::Irradiance_Map; }
 	}
 }
 
-void RenderWindows(RenderResource* renderData, InterfaceRessource* interface) {
+void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRessource* interface) {
     ImGui::Begin("Render");
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     ImGui::Image(
@@ -55,9 +58,9 @@ void RenderWindows(RenderResource* renderData, InterfaceRessource* interface) {
     ImGui::End();
 }
 
-void InterfaceSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
-	RenderResource* renderData = resourceBuffer->renderResource;
-	InterfaceRessource* interfaceData = resourceBuffer->interfaceRessource;
+void Systems::InterfaceSystem::Update(World& world, const Resource::ResourceBuffer* resourceBuffer) {
+	Resource::RenderResource* renderData = resourceBuffer->renderResource;
+	Resource::InterfaceRessource* interfaceData = resourceBuffer->interfaceRessource;
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
@@ -84,8 +87,8 @@ void InterfaceSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 
 	if (ImGui::CollapsingHeader("SSAO Param"))
 	{
-		ImGui::InputFloat("Radius", &renderData->SSAO_radius);
-		ImGui::InputInt("Sample Number", &renderData->kernelSample);
+		ImGui::InputFloat("Radius", &renderData->ssao.SSAO_radius);
+		ImGui::InputInt("Sample Number", &renderData->ssao.kernelSample);
 	}
 	if (ImGui::CollapsingHeader("OtherParam"))
 	{
@@ -104,7 +107,7 @@ void InterfaceSystem::Update(World& world, const ResourceBuffer* resourceBuffer)
 }
 
 
-void InterfaceSystem::Shutdown(World& world) {
+void Systems::InterfaceSystem::Shutdown(World& world) {
 	std::cout << "InterfaceSystem shutting down" << std::endl;
 
 }

@@ -143,7 +143,7 @@ void Renderer::DrawMesh_Without_Texture(Mesh& currentMesh) {
 	}
 }
 
-void Renderer::DrawQuad(RenderResource* renderData) {
+void Renderer::DrawQuad(Engine::Resource::RenderResource* renderData) {
 	glDisable(GL_DEPTH_TEST);
 	glBindVertexArray(renderData->quadVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);

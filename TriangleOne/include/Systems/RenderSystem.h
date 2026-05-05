@@ -25,29 +25,30 @@
 #include "ECS/Components/Light.h"
 
 #include <random>
+namespace Engine::Systems {
+	class RenderSystem : public System {
+	public:
+		void SSAO_Pass(World& world, Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData, Engine::Component::CameraComponent* mainCamera);
 
-class RenderSystem : public System {
-public:
-	void SSAO_Pass(World& world, WindowResource* windowData, RenderResource* renderData, CameraComponent* mainCamera);
+		void InitQuadVao(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
+		void InitMainFrameBuffer(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
+		void InitBloomFBO(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
+		void InitGBuffer(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
+		void InitSSAO(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
+		void InitSSAO_Blur(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
+		void InitToImGui_FBO(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
 
-	void InitQuadVao(WindowResource* windowData, RenderResource* renderData);
-	void InitMainFrameBuffer(WindowResource* windowData, RenderResource* renderData);
-	void InitBloomFBO(WindowResource* windowData, RenderResource* renderData);
-	void InitGBuffer(WindowResource* windowData, RenderResource* renderData);
-	void InitSSAO(WindowResource* windowData, RenderResource* renderData);
-	void InitSSAO_Blur(WindowResource* windowData, RenderResource* renderData);
-	void InitToImGui_FBO(WindowResource* windowData, RenderResource* renderData);
+		void Init_AllBuffer(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
 
-	void Init_AllBuffer(WindowResource* windowData, RenderResource* renderData);
+		std::pair<unsigned int, unsigned int> CreateDummyShadowTextures();
 
-	std::pair<unsigned int, unsigned int> CreateDummyShadowTextures();
+		static void ResizeText(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderResource);
 
-	static void ResizeText(WindowResource* windowData, RenderResource* renderResource);
+		void Init(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;
+		void Update(World& world, const Engine::Resource::ResourceBuffer* ressourceBuffer) override;
+		void Shutdown(World& world) override;
 
-	void Init(World& world, const ResourceBuffer* resourceBuffer) override;
-	void Update(World& world, const ResourceBuffer* ressourceBuffer) override;
-	void Shutdown(World& world) override;
+		void RenderScene(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer, Engine::Resource::WindowResource* windowData, Engine::Component::CameraComponent* mainCamera);
 
-	void RenderScene(World& world, const ResourceBuffer* resourceBuffer, WindowResource* windowData, CameraComponent* mainCamera);
-
-};
+	};
+}

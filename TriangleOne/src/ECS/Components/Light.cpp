@@ -1,8 +1,9 @@
 #include <ECS/Components/Light.h>
 
+namespace Component = Engine::Component;
 #pragma region Init
 
-Light::Light(glm::vec3 color, float intensity) {
+Component::Light::Light(glm::vec3 color, float intensity) {
 	this->color = color;
 	this->intensity = intensity;
 }
@@ -10,7 +11,7 @@ Light::Light(glm::vec3 color, float intensity) {
 #pragma endregion Init
 
 #pragma region SpotLight
-SpotLight::SpotLight(glm::vec3 color, float intensity, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Shader* depthShaderSpotMap) : Light(color, intensity) {
+Component::SpotLight::SpotLight(glm::vec3 color, float intensity, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Shader* depthShaderSpotMap) : Light(color, intensity) {
 
 	cutOff = _cutOff;
 	outerCutOff = _outercutOff;
@@ -22,7 +23,7 @@ SpotLight::SpotLight(glm::vec3 color, float intensity, glm::vec3 _direction, flo
 
 #pragma region DirLight
 
-DirLight::DirLight(glm::vec3 color, float intensity, glm::vec3 _direction, Shader* depthShader ) : Light(color, intensity) {
+Component::DirLight::DirLight(glm::vec3 color, float intensity, glm::vec3 _direction, Shader* depthShader ) : Light(color, intensity) {
 	direction = _direction;
 
 	this->depthShader = depthShader;
@@ -37,7 +38,7 @@ DirLight::DirLight(glm::vec3 color, float intensity, glm::vec3 _direction, Shade
 	ndcCubePoint.push_back(glm::vec3(-1, 1, 1));
 	ndcCubePoint.push_back(glm::vec3(1, 1, 1));
 }
-std::vector<glm::vec3> DirLight::CalcWorldCorner(const glm::mat4 projection, glm::mat4 viewMatrice) {
+std::vector<glm::vec3> Component::DirLight::CalcWorldCorner(const glm::mat4 projection, glm::mat4 viewMatrice) {
 	glm::mat4 invProjectionViewMatrice = glm::inverse(projection * viewMatrice);
 	std::vector<glm::vec3> result;
 
@@ -49,7 +50,7 @@ std::vector<glm::vec3> DirLight::CalcWorldCorner(const glm::mat4 projection, glm
 	return result;
 }
 
-glm::vec3 DirLight::FrustumCenter(std::vector<glm::vec3> corners)
+glm::vec3 Component::DirLight::FrustumCenter(std::vector<glm::vec3> corners)
 {
 	glm::vec3 center(0.0f);
 
@@ -60,7 +61,7 @@ glm::vec3 DirLight::FrustumCenter(std::vector<glm::vec3> corners)
 }
 
 
-AABB DirLight::CalcBoundingBox(const std::vector<glm::vec3> worldCorner) {
+AABB Component::DirLight::CalcBoundingBox(const std::vector<glm::vec3> worldCorner) {
 	glm::vec3 minPoint(std::numeric_limits<float>::infinity());
 	glm::vec3 maxPoint(-std::numeric_limits<float>::infinity());
 
@@ -74,7 +75,7 @@ AABB DirLight::CalcBoundingBox(const std::vector<glm::vec3> worldCorner) {
 	return AABB(minPoint, maxPoint);
 }
 
-std::vector<glm::vec3> DirLight::WorldCornerToLightSpace(glm::mat4 lightViewMatrice, std::vector<glm::vec3> worldCorners) {
+std::vector<glm::vec3> Component::DirLight::WorldCornerToLightSpace(glm::mat4 lightViewMatrice, std::vector<glm::vec3> worldCorners) {
 	std::vector<glm::vec3> lightCorners;
 	for (glm::vec3 currentCorner : worldCorners) {
 		lightCorners.push_back(lightViewMatrice * glm::vec4(currentCorner, 1.0f));
@@ -82,7 +83,7 @@ std::vector<glm::vec3> DirLight::WorldCornerToLightSpace(glm::mat4 lightViewMatr
 	return lightCorners;
 }
 
-glm::mat4 DirLight::UpdateMatrix(const glm::mat4 viewMatrice, const glm::mat4 projectionCamera) {
+glm::mat4 Component::DirLight::UpdateMatrix(const glm::mat4 viewMatrice, const glm::mat4 projectionCamera) {
 	if (glm::length(direction) < 0.001f) direction = glm::vec3(0, -0.95, 0); // Valeur par défaut
 
 	std::vector<glm::vec3> worldCorners = CalcWorldCorner(projectionCamera, viewMatrice);
@@ -116,7 +117,7 @@ glm::mat4 DirLight::UpdateMatrix(const glm::mat4 viewMatrice, const glm::mat4 pr
 
 #pragma region PointLight
 
-PointLight::PointLight(glm::vec3 color, float intensity, float _range, Shader* depthShaderCubeMap) : Light(color, intensity) {
+Component::PointLight::PointLight(glm::vec3 color, float intensity, float _range, Shader* depthShaderCubeMap) : Light(color, intensity) {
 	range = _range;
 	near_plane = 0.01f;
 

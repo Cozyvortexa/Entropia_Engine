@@ -5,7 +5,10 @@
 #include "ImGui/backends/imgui_impl_glfw.h"
 #include "ImGui/backends/imgui_impl_opengl3.h"
 
-WindowSystem::WindowSystem() {}
+namespace Resource = Engine::Resource;
+namespace Systems = Engine::Systems;
+
+Systems::WindowSystem::WindowSystem() {}
 
 void GLAPIENTRY DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 	GLsizei length, const GLchar* message, const void* userParam) {
@@ -36,27 +39,27 @@ void GLAPIENTRY Debug_Critical_MessageCallback(GLenum source, GLenum type, GLuin
 	}
 }
 
-void WindowSystem::Framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void Systems::WindowSystem::Framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	World* world = static_cast<World*>(glfwGetWindowUserPointer(window));
-	RenderResource* renderResource = world->get_ressource<RenderResource>();
-	WindowResource* windowData = world->get_ressource<WindowResource>();
+	Resource::RenderResource* renderResource = world->get_ressource<Resource::RenderResource>();
+	Resource::WindowResource* windowData = world->get_ressource<Resource::WindowResource>();
 	windowData->HEIGHT = height;
 	windowData->WIDTH = width;
 
 	RenderSystem::ResizeText(windowData, renderResource);
 }
 
-void WindowSystem::ProcessInput(GLFWwindow* window)
+void Systems::WindowSystem::ProcessInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
 
-void WindowSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
-	WindowResource* windowData = resourceBuffer->windowResource;
+void Systems::WindowSystem::Init(World& world, const Resource::ResourceBuffer* resourceBuffer) {
+	Resource::WindowResource* windowData = resourceBuffer->windowResource;
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -113,8 +116,8 @@ void WindowSystem::Init(World& world, const ResourceBuffer* resourceBuffer) {
 
 }
 
-bool WindowSystem::ShouldClose(World& world) {
-	WindowResource* ressource = world.get_ressource<WindowResource>();  // WARNING
+bool Systems::WindowSystem::ShouldClose(World& world) {
+	Resource::WindowResource* ressource = world.get_ressource<Resource::WindowResource>();  // WARNING
 	if (!glfwWindowShouldClose(ressource->window)) {
 		return true;
 	}
@@ -122,14 +125,14 @@ bool WindowSystem::ShouldClose(World& world) {
 }
 
 
-void WindowSystem::Update(World& world, const ResourceBuffer* resourceBuffer) {
-	WindowResource* windowData = resourceBuffer->windowResource;
+void Systems::WindowSystem::Update(World& world, const Resource::ResourceBuffer* resourceBuffer) {
+	Resource::WindowResource* windowData = resourceBuffer->windowResource;
 	ProcessInput(windowData->window);  // gere les inputs 
 }
 
 
-void WindowSystem::Shutdown(World& world) {
-	WindowResource* Resource = world.get_ressource<WindowResource>();
+void Systems::WindowSystem::Shutdown(World& world) {
+	Resource::WindowResource* Resource = world.get_ressource<Resource::WindowResource>();
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

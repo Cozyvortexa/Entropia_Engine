@@ -2,7 +2,7 @@
 
 int main()
 {
-	Engine engine;
+	EntropiaZero engine;
 	engine.Run();
 	return 0;
 }
