@@ -155,6 +155,9 @@
     <ClInclude Include="include\Systems\InputSystem.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\Render\RenderObject.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\Geometry_Pass\Vertex_GeometryPass.glsl" />

@@ -27,7 +27,7 @@ void AssetStore::ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMe
 	{
 		aiMesh* subMesh = scene->mMeshes[node->mMeshes[i]];
 		if (!subMesh->HasTextureCoords(0)) currentMesh.hasUV = false;
-		currentMesh.subMeshs.push_back(ProcessSub_Mesh(subMesh, scene, currentMesh));
+		ProcessSub_Mesh(subMesh, scene, currentMesh);
 	}
 	// then do the same for each of its children
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
@@ -36,7 +36,7 @@ void AssetStore::ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMe
 	}
 }
 
-SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& currentMesh)
+void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& currentMesh)
 {
 	std::vector<Vertex> vertices;
 	vertices.reserve(sub_Mesh->mNumVertices);
@@ -145,8 +145,7 @@ SubMesh AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh
 		}
 
 	}
-
-	return SubMesh(vertices, indices, material_Handle);
+	currentMesh.Create_SubMesh(vertices, indices, material_Handle);
 }
 
 unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh)

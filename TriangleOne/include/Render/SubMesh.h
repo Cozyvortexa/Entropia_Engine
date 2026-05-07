@@ -12,6 +12,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Render/RenderObject.h"
+
 struct Vertex {
 	glm::vec3 Position = glm::vec3(0);
 	glm::vec3 Normal;
@@ -37,15 +39,20 @@ struct Texture {
 
 class SubMesh {
 public:
+	virtual ~SubMesh() = default;
 	// SubMesh data
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	unsigned int material_Handle;
 	SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle);
 
+	Engine::Render::VertexLayout layout;
 private:
-	// render data
-	unsigned int VAO, VBO, EBO;
 	friend class Renderer;
-	void SetupSubMesh();
+};
+
+class OpenGL_SubMesh : public SubMesh{
+public:
+	unsigned int VAO, VBO, EBO;
+	OpenGL_SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle);
 };

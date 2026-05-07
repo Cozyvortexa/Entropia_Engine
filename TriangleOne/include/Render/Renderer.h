@@ -12,28 +12,25 @@
 #include "ECS/Components/Component.h"
 #include "ECS/AssetStore.h"
 
+#include <variant>
+
 class Renderer {
 public:
 	Renderer(AssetStore* assetStore) { 
 		this->assetStore = assetStore; 
-		LoadDefaultCube(); 
 	}
+    virtual ~Renderer() = default;
 
-	void DrawMesh(Mesh& currentMesh);
-	void DrawMesh_Without_Texture(Mesh& currentMesh);
+	virtual void DrawMesh(Mesh& currentMesh) = 0;
+	virtual void DrawMesh_Without_Texture(Mesh& currentMesh) = 0;
 
-	void DrawQuad(Engine::Resource::RenderResource* renderData);
+	virtual void DrawQuad(Engine::Resource::RenderResource* renderData) = 0;
 
-	void DrawCube();
-
-private:
-	AssetStore* assetStore;
-	void LoadDefaultCube();
+	virtual void DrawCube() = 0;
 
 
-	unsigned int cubeVAO = -1;
-	unsigned int cubeVBO = -1;
-    float cubeVertices[108] = {
+
+    const float cubeVertices[108] = {
         // back face
         -1.0f, -1.0f, -1.0f,
          1.0f,  1.0f, -1.0f,
@@ -77,5 +74,26 @@ private:
          -1.0f,  1.0f,  1.0f,
          -1.0f,  1.0f, -1.0f,
     };
+protected: 
+    AssetStore* assetStore;
+};
 
+class OpenGL_Renderer : public Renderer{
+public:
+    OpenGL_Renderer(AssetStore* assetStore) : Renderer(assetStore) {
+        LoadDefaultCube();
+    }
+
+
+    void DrawMesh(Mesh& currentMesh) override;
+    
+    void DrawMesh_Without_Texture(Mesh& currentMesh) override;
+
+    void DrawQuad(Engine::Resource::RenderResource* renderData) override;
+
+    void DrawCube() override;
+
+    void LoadDefaultCube();
+    unsigned int cubeVAO = -1;
+    unsigned int cubeVBO = -1;
 };

@@ -6,9 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-//#include <Modules/Module.h>
 #include <Systems/windowSystem.h>
-//#include <Modules/TimeModule/Time.hpp>
 
 #include <iostream>
 #include <vector>
@@ -28,6 +26,7 @@ public:
 
 private:
 	void InitEngine();
+	void RendererFactory();
 	int WIDTH = 800;
 	int HEIGHT = 600;
 	static EntropiaZero* instance;

@@ -1,6 +1,6 @@
 #include "Render/Renderer.h"
 
-void Renderer::DrawMesh(Mesh& currentMesh) {
+void OpenGL_Renderer::DrawMesh(Mesh& currentMesh) {
 	if (currentMesh.subMeshs.size() == 0) {
 		std::cout << "The mesh: " << currentMesh.directory << " have no submesh, drawCall cancel" << std::endl;
 		return;
@@ -11,7 +11,7 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 
 	//Data preparation
 	for (int i = 0; i < currentMesh.subMeshs.size(); i++) {
-		mat_indices.push_back(std::make_pair(currentMesh.subMeshs[i].material_Handle, i));
+		mat_indices.push_back(std::make_pair(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[i]).material_Handle, i));
 	}
 	//Grouping submeshes with identical materials
 	std::sort(mat_indices.begin(), mat_indices.end(), [](const std::pair<unsigned int, size_t>& a, const std::pair<unsigned int, size_t>& b) {
@@ -34,7 +34,7 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 			last_Shader_Use = &last_Material_Use->shader;
 			last_Shader_Use->Use();
 		}
-		SubMesh& subMesh = currentMesh.subMeshs[current_Material_Handle.second];
+		OpenGL_SubMesh& subMesh = dynamic_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[current_Material_Handle.second]));
 
 
 		assert(glIsVertexArray(subMesh.VAO));
@@ -135,15 +135,17 @@ void Renderer::DrawMesh(Mesh& currentMesh) {
 	}
 }
 
-void Renderer::DrawMesh_Without_Texture(Mesh& currentMesh) {
-	for (SubMesh& subMesh : currentMesh.subMeshs) {
-		glBindVertexArray(subMesh.VAO);
-		glDrawElements(GL_TRIANGLES, subMesh.indices.size(), GL_UNSIGNED_INT, 0);
+void OpenGL_Renderer::DrawMesh_Without_Texture(Mesh& currentMesh) {
+	for (auto& subMesh : currentMesh.subMeshs) {
+		OpenGL_SubMesh& openGL_subMesh = std::get<OpenGL_SubMesh>(subMesh); 
+
+		glBindVertexArray(openGL_subMesh.VAO);
+		glDrawElements(GL_TRIANGLES, openGL_subMesh.indices.size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 	}
 }
 
-void Renderer::DrawQuad(Engine::Resource::RenderResource* renderData) {
+void OpenGL_Renderer::DrawQuad(Engine::Resource::RenderResource* renderData) {
 	glDisable(GL_DEPTH_TEST);
 	glBindVertexArray(renderData->quadVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -151,14 +153,14 @@ void Renderer::DrawQuad(Engine::Resource::RenderResource* renderData) {
 	glEnable(GL_DEPTH_TEST);
 }
 
-void Renderer::DrawCube() {
+void OpenGL_Renderer::DrawCube() {
 
 	glBindVertexArray(cubeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 }
 
-void Renderer::LoadDefaultCube() {
+void OpenGL_Renderer::LoadDefaultCube() {
 	glGenVertexArrays(1, &cubeVAO);
 	glBindVertexArray(cubeVAO);
 

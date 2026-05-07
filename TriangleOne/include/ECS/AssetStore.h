@@ -43,10 +43,10 @@ private:
 	//Mesh creation
 	Mesh LoadMesh(std::string path);
 	void ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMesh);
-	SubMesh ProcessSub_Mesh(aiMesh* mesh, const aiScene* scene, Mesh& currentMesh);
+	void ProcessSub_Mesh(aiMesh* mesh, const aiScene* scene, Mesh& currentMesh);
 	unsigned int LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh);
 
 	//friend
 	friend class LightSystem;  // WARNING, temp
-	friend class Renderer;
+	friend class OpenGL_Renderer;
 };
