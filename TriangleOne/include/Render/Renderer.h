@@ -28,7 +28,7 @@ public:
 
 	virtual void DrawCube() = 0;
 
-
+    virtual void SetViewport_Size(glm::vec2 newSize) = 0;
 
     const float cubeVertices[108] = {
         // back face
@@ -94,6 +94,9 @@ public:
     void DrawCube() override;
 
     void LoadDefaultCube();
+
+    void SetViewport_Size(glm::vec2 newSize) override;
+
     unsigned int cubeVAO = -1;
     unsigned int cubeVBO = -1;
 };

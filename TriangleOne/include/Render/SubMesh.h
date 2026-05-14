@@ -44,11 +44,12 @@ public:
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	unsigned int material_Handle;
-	SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle);
+
 
 	Engine::Render::VertexLayout layout;
-private:
-	friend class Renderer;
+
+protected: 
+	SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle);
 };
 
 class OpenGL_SubMesh : public SubMesh{

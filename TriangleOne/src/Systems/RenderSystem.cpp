@@ -4,7 +4,7 @@ namespace Resource = Engine::Resource;
 namespace Component = Engine::Component;
 namespace Systems = Engine::Systems;
 
-void Systems::RenderSystem::SSAO_Pass(World& world, Resource::WindowResource* windowData, Resource::RenderResource* renderData, Component::CameraComponent* mainCamera) {
+void Systems::RenderSystem::SSAO_Pass(World& world, Resource::RenderResource* renderData, Component::CameraComponent* mainCamera) {
 	///////////////SSAO
 	glDisable(GL_DEPTH_TEST);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->ssao.ssaoBuffer);
@@ -19,7 +19,7 @@ void Systems::RenderSystem::SSAO_Pass(World& world, Resource::WindowResource* wi
 	ssaoPass_Shader->setVec("samples", renderData->ssao.ssaoKernel);  
 	ssaoPass_Shader->setInt("kernelNbr", renderData->ssao.kernelSample);
 
-	ssaoPass_Shader->setVec("noiseScale", glm::vec2(windowData->WIDTH / 4.0f,  windowData->HEIGHT / 4.0f));
+	ssaoPass_Shader->setVec("noiseScale", glm::vec2(renderData->renderWIDTH / 4.0f,  renderData->renderHEIGHT / 4.0f));
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gNormal);
@@ -86,7 +86,7 @@ std::pair<unsigned int, unsigned int> Systems::RenderSystem::CreateDummyShadowTe
 	return std::make_pair(dummyDepthMap2D, dummyDepthCubeMap);
 }
 
-void Systems::RenderSystem::InitMainFrameBuffer(Resource::WindowResource* windowData, Resource::RenderResource* renderData) {
+void Systems::RenderSystem::InitMainFrameBuffer(Resource::RenderResource* renderData) {
 	///////////////////Init fbo
 	glGenFramebuffers(1, &renderData->framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->framebuffer);
@@ -95,7 +95,7 @@ void Systems::RenderSystem::InitMainFrameBuffer(Resource::WindowResource* window
 	//////////////////Init texture depth
 	glGenTextures(1, &renderData->finalDepthOutput);
 	glBindTexture(GL_TEXTURE_2D, renderData->finalDepthOutput);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, windowData->WIDTH, windowData->HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -112,7 +112,7 @@ void Systems::RenderSystem::InitMainFrameBuffer(Resource::WindowResource* window
 	for (unsigned int i = 0; i < 2; i++)
 	{
 		glBindTexture(GL_TEXTURE_2D, renderData->finalTxtColorOutput[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -134,7 +134,7 @@ void Systems::RenderSystem::InitMainFrameBuffer(Resource::WindowResource* window
 
 }
 
-void Systems::RenderSystem::InitQuadVao(Resource::WindowResource* windowData, Resource::RenderResource* renderData) {
+void Systems::RenderSystem::InitQuadVao(Resource::RenderResource* renderData) {
 	//Init quadVAO
 	glGenVertexArrays(1, &renderData->quadVAO);
 	glBindVertexArray(renderData->quadVAO);
@@ -154,14 +154,14 @@ void Systems::RenderSystem::InitQuadVao(Resource::WindowResource* windowData, Re
 	glBindVertexArray(0);
 }
 
-void Systems::RenderSystem::InitBloomFBO(Resource::WindowResource* windowData, Resource::RenderResource* renderData) {
+void Systems::RenderSystem::InitBloomFBO(Resource::RenderResource* renderData) {
 	glGenFramebuffers(2, renderData->pingpongFBO);
 	glGenTextures(2, renderData->pingpongBuffers);
 	for (unsigned int i = 0; i < 2; i++)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, renderData->pingpongFBO[i]);
 		glBindTexture(GL_TEXTURE_2D, renderData->pingpongBuffers[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0,GL_RGBA, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0,GL_RGBA, GL_FLOAT, NULL);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -171,14 +171,14 @@ void Systems::RenderSystem::InitBloomFBO(Resource::WindowResource* windowData, R
 	}
 }
 
-void Systems::RenderSystem::InitGBuffer(Resource::WindowResource* windowData, Resource::RenderResource* renderData) {
+void Systems::RenderSystem::InitGBuffer(Resource::RenderResource* renderData) {
 	glGenFramebuffers(1, &renderData->gBuffer.gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->gBuffer.gBuffer);
 
 	//Position
 	glGenTextures(1, &renderData->gBuffer.gPosition);
 	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gPosition);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData->gBuffer.gPosition, 0);
@@ -186,7 +186,7 @@ void Systems::RenderSystem::InitGBuffer(Resource::WindowResource* windowData, Re
 	//Normal
 	glGenTextures(1, &renderData->gBuffer.gNormal);
 	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gNormal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, renderData->gBuffer.gNormal, 0);
@@ -194,7 +194,7 @@ void Systems::RenderSystem::InitGBuffer(Resource::WindowResource* windowData, Re
 	//Albedo
 	glGenTextures(1, &renderData->gBuffer.gAlbedo);
 	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gAlbedo);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, renderData->gBuffer.gAlbedo, 0);
@@ -202,7 +202,7 @@ void Systems::RenderSystem::InitGBuffer(Resource::WindowResource* windowData, Re
 	//ARM - Ambient Occlusion Roughness Metallic
 	glGenTextures(1, &renderData->gBuffer.gARM);
 	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gARM);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, renderData->gBuffer.gARM, 0);
@@ -215,7 +215,7 @@ void Systems::RenderSystem::InitGBuffer(Resource::WindowResource* windowData, Re
 	//////////////////Init texture depth
 	glGenTextures(1, &renderData->gBuffer.gDepth);
 	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gDepth);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, windowData->WIDTH, windowData->HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -232,13 +232,13 @@ void Systems::RenderSystem::InitGBuffer(Resource::WindowResource* windowData, Re
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Systems::RenderSystem::InitSSAO(Resource::WindowResource* windowData, Resource::RenderResource* renderData){
+void Systems::RenderSystem::InitSSAO(Resource::RenderResource* renderData){
 	glGenFramebuffers(1, &renderData->ssao.ssaoBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->ssao.ssaoBuffer);
 
 	glGenTextures(1, &renderData->ssao.ssaoText);
 	glBindTexture(GL_TEXTURE_2D, renderData->ssao.ssaoText);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, windowData->WIDTH, windowData->HEIGHT, 0, GL_RED, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RED, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData->ssao.ssaoText, 0);
@@ -286,13 +286,13 @@ void Systems::RenderSystem::InitSSAO(Resource::WindowResource* windowData, Resou
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Systems::RenderSystem::InitSSAO_Blur(Resource::WindowResource* windowData, Resource::RenderResource* renderData) {
+void Systems::RenderSystem::InitSSAO_Blur(Resource::RenderResource* renderData) {
 	glGenFramebuffers(1, &renderData->ssao.ssaoBlur_Buffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->ssao.ssaoBlur_Buffer);
 
 	glGenTextures(1, &renderData->ssao.ssaoBlurText);
 	glBindTexture(GL_TEXTURE_2D, renderData->ssao.ssaoBlurText);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, windowData->WIDTH, windowData->HEIGHT, 0, GL_RED, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RED, GL_FLOAT, NULL);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -301,14 +301,14 @@ void Systems::RenderSystem::InitSSAO_Blur(Resource::WindowResource* windowData, 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Systems::RenderSystem::InitToImGui_FBO(Resource::WindowResource* windowData, Resource::RenderResource* renderData) {
+void Systems::RenderSystem::InitToImGui_FBO(Resource::RenderResource* renderData) {
 	glGenFramebuffers(1, &renderData->toImGui_FBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->toImGui_FBO);
 
 	glGenTextures(1, &renderData->toImGui_Texture);
 	glBindTexture(GL_TEXTURE_2D, renderData->toImGui_Texture);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -325,60 +325,64 @@ void Systems::RenderSystem::InitToImGui_FBO(Resource::WindowResource* windowData
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Systems::RenderSystem::Init_AllBuffer(Resource::WindowResource* windowData, Resource::RenderResource* renderData) {
-	InitMainFrameBuffer(windowData, renderData);
-	InitBloomFBO(windowData, renderData);
-	InitQuadVao(windowData, renderData);
-	InitGBuffer(windowData, renderData);
-	InitSSAO(windowData, renderData);
-	InitSSAO_Blur(windowData, renderData);
-	//InitToImGui_FBO(windowData, renderData);
+void Systems::RenderSystem::Init_AllBuffer(Resource::RenderResource* renderData) {
+	InitMainFrameBuffer(renderData);
+	InitBloomFBO(renderData);
+	InitQuadVao(renderData);
+	InitGBuffer(renderData);
+	InitSSAO(renderData);
+	InitSSAO_Blur(renderData);
+	InitToImGui_FBO(renderData);
 }
 
 #pragma endregion
 
 //Call when the viewport is re-scall
-void Systems::RenderSystem::ResizeText(Resource::WindowResource* windowData, Resource::RenderResource* renderData) {
+void Systems::RenderSystem::ResizeFrameBufferText(Resource::RenderResource* renderData) {
 	glBindTexture(GL_TEXTURE_2D, renderData->finalDepthOutput);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, windowData->WIDTH, windowData->HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	glBindTexture(GL_TEXTURE_2D, renderData->finalTxtColorOutput[0]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, renderData->finalTxtColorOutput[1]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 
 	//Gbuffer
 	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gPosition);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gNormal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gAlbedo);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gARM);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gDepth);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, windowData->WIDTH, windowData->HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	//Bloom
 	glBindTexture(GL_TEXTURE_2D, renderData->pingpongBuffers[0]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glBindTexture(GL_TEXTURE_2D, renderData->pingpongBuffers[1]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowData->WIDTH, windowData->HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	//SSAO
 	glBindTexture(GL_TEXTURE_2D, renderData->ssao.ssaoText);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, windowData->WIDTH, windowData->HEIGHT, 0, GL_RED, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RED, GL_FLOAT, NULL);
 	//SSAO-Blur
 	glBindTexture(GL_TEXTURE_2D, renderData->ssao.ssaoBlurText);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, windowData->WIDTH, windowData->HEIGHT, 0, GL_RED, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RED, GL_FLOAT, NULL);
+
+	//Imgui
+	glBindTexture(GL_TEXTURE_2D, renderData->toImGui_Texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 // Geometry Pass
-void Systems::RenderSystem::RenderScene(World& world, const Resource::ResourceBuffer* resourceBuffer, Resource::WindowResource* windowData, Component::CameraComponent* mainCamera) {
+void Systems::RenderSystem::RenderScene(World& world, const Resource::ResourceBuffer* resourceBuffer, Component::CameraComponent* mainCamera) {
 	glBindFramebuffer(GL_FRAMEBUFFER, resourceBuffer->renderResource->gBuffer.gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -404,8 +408,8 @@ void Systems::RenderSystem::RenderScene(World& world, const Resource::ResourceBu
 }
 
 void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* resourceBuffer) {
-	Resource::WindowResource* windowData = world.get_ressource<Resource::WindowResource>();
-	Resource::RenderResource* renderData = world.get_ressource<Resource::RenderResource>();
+	Resource::WindowResource* windowData = resourceBuffer->windowResource;
+	Resource::RenderResource* renderData = resourceBuffer->renderResource;
 
 	if (windowData->window == nullptr) {
 		std::cout << "Reference de la window impossible a recuperer" << std::endl;
@@ -449,10 +453,10 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	Component::Transform modelTransform; // ("Assets/main_sponza/main_sponza/NewSponza_Main_Yup_003.fbx");
 	std::pair<Mesh&, int> value = world.assetStore->Get_Mesh("Assets/ImpScene/autumn_house.glb");
 	Component::MeshHandle meshHandle(value.second);
-	Component::SceneTag sceneTag;
+	Component::SceneTag mesh_scene_Tag("Maison");
 	Component::MaterialHandle materialHandle(renderData->mainMaterialHandle);
 
-	world.add_components(model, sceneTag, materialHandle, meshHandle, modelTransform);
+	world.add_components(model, mesh_scene_Tag, materialHandle, meshHandle, modelTransform);
 
 	glEnable(GL_CULL_FACE);
 	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -469,8 +473,9 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 
 	Component::LightToInitTag tag(Component::LightTag::Directional_Tag);
 	Component::Transform lightTransform(glm::vec3(0.0f, 4.0f, -6.0f));
+	Component::SceneTag dir_scene_Tag("Dir Light");
 
-	world.add_components(dirLight_E, transform, dirLight, tag);
+	world.add_components(dirLight_E, dir_scene_Tag, transform, dirLight, tag);
 
 	/////////////////////////////////////
 
@@ -478,8 +483,9 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	Component::Transform spotTransform(glm::vec3(0.0f, 4.0f, -6.0f));
 	Component::SpotLight spotLight(color, 1000.0f, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->r_Shader.depthShader.get());
 	Component::LightToInitTag spotTag(Component::LightTag::SpotLight_Tag);
+	Component::SceneTag spotLight_scene_Tag("Spot Light");
 
-	world.add_components(spotLightEntity, spotTransform, spotLight, spotTag);
+	world.add_components(spotLightEntity, spotLight_scene_Tag, spotTransform, spotLight, spotTag);
 
 
 	/////////////////////////////////////
@@ -488,8 +494,9 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	Component::Transform transformPointLight(glm::vec3(1.0f, 5.0f, 0.0f));
 	Component::PointLight pointLight(color, 150.0f, 8.0f, renderData->r_Shader.depthShaderCubeMap.get());
 	Component::LightToInitTag pointTag(Component::LightTag::PointLight_Tag);
+	Component::SceneTag pointLight_scene_Tag("Point Light");
 
-	world.add_components(pointLightEntity, transformPointLight, pointLight, pointTag);
+	world.add_components(pointLightEntity, pointLight_scene_Tag, transformPointLight, pointLight, pointTag);
 
 	/////////////////////////////////////
 
@@ -501,9 +508,10 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 
 	//world.add_components(backpack, backPackTransform, sceneTag, materialHandle, backpackModeleHandle);
 
+	//world.renderer->SetViewport_Size(glm::vec2(renderData->renderWIDTH, renderData->renderHEIGHT));
 
 	glEnable(GL_DEPTH_TEST);
-	Init_AllBuffer(windowData, renderData);
+	Init_AllBuffer(renderData);
 }
 
 void Systems::RenderSystem::Update(World& world, const Resource::ResourceBuffer* resourceBuffer)
@@ -516,12 +524,12 @@ void Systems::RenderSystem::Update(World& world, const Resource::ResourceBuffer*
 	Component::CameraComponent* mainCamera = world.get_component<Component::CameraComponent>(entityCam);
 	///////////////////
 	//Update Projection
-	renderData->projection = glm::perspective(glm::radians(mainCamera->zoom), (float)windowData->WIDTH / (float)windowData->HEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
+	renderData->projection = glm::perspective(glm::radians(mainCamera->zoom), (float)renderData->renderWIDTH / (float)renderData->renderHEIGHT, mainCamera->nearPlane, mainCamera->farPlane);
 
 
-	RenderScene(world, resourceBuffer, windowData, mainCamera);  
+	RenderScene(world, resourceBuffer, mainCamera);  
 	glDisable(GL_CULL_FACE);
-	SSAO_Pass(world, windowData, renderData, mainCamera);
+	SSAO_Pass(world, renderData, mainCamera);
 	glEnable(GL_CULL_FACE);
 }
 

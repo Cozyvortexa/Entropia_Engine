@@ -12,6 +12,8 @@
 #include "ECS/Components/Component.h"
 #include "ECS/AssetStore.h"
 
+#include "Render/Renderer.h"
+
 #include <unordered_map>
 #include <typeindex>
 #include <cassert>

@@ -1,53 +1,103 @@
 #include "Systems/InterfaceSystem.h"
 
 namespace Resource = Engine::Resource;
+namespace Component = Engine::Component;
 namespace Systems = Engine::Systems;
+
+static bool opt_fullscreen = true;
 
 static void glfw_error_callback(int error, const char* description)
 {
 	fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-void Systems::InterfaceSystem::Init(World& world, const Resource::ResourceBuffer* resourceBuffer) {
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_IsSRGB;
-	io.DeltaTime = true;
-	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+#pragma region Theme
+static void SetTwilightPurpleTheme()
+{
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImVec4* colors = style.Colors;
 
-	ImGui_ImplOpenGL3_Init();
-	ImGui_ImplGlfw_InitForOpenGL(resourceBuffer->windowResource->window, true);
+    // Fonds
+    colors[ImGuiCol_WindowBg] = ImVec4(0.09f, 0.07f, 0.12f, 1.00f);
+    colors[ImGuiCol_ChildBg] = ImVec4(0.11f, 0.08f, 0.14f, 1.00f);
+    colors[ImGuiCol_PopupBg] = ImVec4(0.12f, 0.09f, 0.16f, 1.00f);
 
-	resourceBuffer->interfaceRessource->mainInterfaceOpen = true;
+    // Bordures
+    colors[ImGuiCol_Border] = ImVec4(0.35f, 0.25f, 0.45f, 0.50f);
 
-	glfwSetErrorCallback(glfw_error_callback);
-	if (!glfwInit()) abort();
+    // Headers
+    colors[ImGuiCol_Header] = ImVec4(0.40f, 0.20f, 0.60f, 0.80f);
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.55f, 0.30f, 0.80f, 0.80f);
+    colors[ImGuiCol_HeaderActive] = ImVec4(0.65f, 0.35f, 0.90f, 1.00f);
 
-	//resourceBuffer->renderResource->testInterface = new bool(true);
+    // Boutons
+    colors[ImGuiCol_Button] = ImVec4(0.38f, 0.18f, 0.55f, 0.85f);
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.55f, 0.28f, 0.78f, 1.00f);
+    colors[ImGuiCol_ButtonActive] = ImVec4(0.68f, 0.35f, 0.92f, 1.00f);
+
+    // Tabs
+    colors[ImGuiCol_Tab] = ImVec4(0.25f, 0.12f, 0.38f, 1.00f);
+    colors[ImGuiCol_TabHovered] = ImVec4(0.50f, 0.25f, 0.75f, 1.00f);
+    colors[ImGuiCol_TabActive] = ImVec4(0.42f, 0.20f, 0.65f, 1.00f);
+
+    // Titres
+    colors[ImGuiCol_TitleBg] = ImVec4(0.12f, 0.08f, 0.18f, 1.00f);
+    colors[ImGuiCol_TitleBgActive] = ImVec4(0.30f, 0.15f, 0.45f, 1.00f);
+
+    // Frame
+    colors[ImGuiCol_FrameBg] = ImVec4(0.16f, 0.11f, 0.22f, 1.00f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.30f, 0.18f, 0.42f, 1.00f);
+    colors[ImGuiCol_FrameBgActive] = ImVec4(0.40f, 0.24f, 0.55f, 1.00f);
+
+    // Texte
+    colors[ImGuiCol_Text] = ImVec4(0.92f, 0.88f, 1.00f, 1.00f);
+
+    // Arrondis
+    style.WindowRounding = 10.0f;
+    style.FrameRounding = 6.0f;
+    style.GrabRounding = 6.0f;
+    style.TabRounding = 8.0f;
 }
 
+#pragma endregion
 
-void ShowExampleAppDockSpace(bool* p_open);
-
-void RenderTarget_Menu(Resource::InterfaceRessource* interface) {
+#pragma region Render
+void RenderTarget_Menu(Resource::InterfaceRessource* interfaceData) {
 	if (ImGui::CollapsingHeader("RenderTarget"))
 	{
-		if (ImGui::RadioButton("Default render", interface->renderTarget == Resource::RenderTarget::Default)) { interface->renderTarget = Resource::RenderTarget::Default; }
-		else if (ImGui::RadioButton("Albedo", interface->renderTarget == Resource::RenderTarget::Albedo)) { interface->renderTarget = Resource::RenderTarget::Albedo; }
-		else if (ImGui::RadioButton("Position", interface->renderTarget == Resource::RenderTarget::Position)) { interface->renderTarget = Resource::RenderTarget::Position; }
-		else if (ImGui::RadioButton("Normal", interface->renderTarget == Resource::RenderTarget::Normal)) { interface->renderTarget = Resource::RenderTarget::Normal; }
-		else if (ImGui::RadioButton("Depth", interface->renderTarget == Resource::RenderTarget::Depth)) { interface->renderTarget = Resource::RenderTarget::Depth; }
-		else if (ImGui::RadioButton("AmbientOcclusion", interface->renderTarget == Resource::RenderTarget::AmbientOcclusion)) { interface->renderTarget = Resource::RenderTarget::AmbientOcclusion; }
-		else if (ImGui::RadioButton("Metallic", interface->renderTarget == Resource::RenderTarget::Metallic)) { interface->renderTarget = Resource::RenderTarget::Metallic; }
-		else if (ImGui::RadioButton("Roughness", interface->renderTarget == Resource::RenderTarget::Roughness)) { interface->renderTarget = Resource::RenderTarget::Roughness; }
-		else if (ImGui::RadioButton("Irradiance_Map", interface->renderTarget == Resource::RenderTarget::Irradiance_Map)) { interface->renderTarget = Resource::RenderTarget::Irradiance_Map; }
+		if (ImGui::RadioButton("Default render", interfaceData->renderTarget == Resource::RenderTarget::Default)) { interfaceData->renderTarget = Resource::RenderTarget::Default; }
+		else if (ImGui::RadioButton("Albedo", interfaceData->renderTarget == Resource::RenderTarget::Albedo)) { interfaceData->renderTarget = Resource::RenderTarget::Albedo; }
+		else if (ImGui::RadioButton("Position", interfaceData->renderTarget == Resource::RenderTarget::Position)) { interfaceData->renderTarget = Resource::RenderTarget::Position; }
+		else if (ImGui::RadioButton("Normal", interfaceData->renderTarget == Resource::RenderTarget::Normal)) { interfaceData->renderTarget = Resource::RenderTarget::Normal; }
+		else if (ImGui::RadioButton("Depth", interfaceData->renderTarget == Resource::RenderTarget::Depth)) { interfaceData->renderTarget = Resource::RenderTarget::Depth; }
+		else if (ImGui::RadioButton("AmbientOcclusion", interfaceData->renderTarget == Resource::RenderTarget::AmbientOcclusion)) { interfaceData->renderTarget = Resource::RenderTarget::AmbientOcclusion; }
+		else if (ImGui::RadioButton("Metallic", interfaceData->renderTarget == Resource::RenderTarget::Metallic)) { interfaceData->renderTarget = Resource::RenderTarget::Metallic; }
+		else if (ImGui::RadioButton("Roughness", interfaceData->renderTarget == Resource::RenderTarget::Roughness)) { interfaceData->renderTarget = Resource::RenderTarget::Roughness; }
+		else if (ImGui::RadioButton("Irradiance_Map", interfaceData->renderTarget == Resource::RenderTarget::Irradiance_Map)) { interfaceData->renderTarget = Resource::RenderTarget::Irradiance_Map; }
 	}
 }
 
-void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRessource* interface) {
-    ImGui::Begin("Render");
+void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData) {
+    ImGui::Begin("Render settings", &interfaceData->mainInterfaceOpen, ImGuiWindowFlags_MenuBar);
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "FPS: %.1f", io.Framerate);
+    RenderTarget_Menu(interfaceData);
+
+    if (ImGui::CollapsingHeader("SSAO Param"))
+    {
+        ImGui::InputFloat("Radius", &renderData->ssao.SSAO_radius);
+        ImGui::InputInt("Sample Number", &renderData->ssao.kernelSample);
+    }
+    if (ImGui::CollapsingHeader("OtherParam"))
+    {
+        ImGui::Checkbox("bloomEnable", &renderData->bloomEnable);
+        ImGui::InputFloat("Exposure", &renderData->exposure);
+    }
+    ImGui::End();
+}
+
+void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRessource* interfaceData, Resource::WindowResource* windowsData) {
+    ImGui::Begin("Render", &interfaceData->renderWindowsToggle);
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     ImGui::Image(
         (ImTextureID)(intptr_t)renderData->toImGui_Texture,
@@ -55,49 +105,362 @@ void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRess
         ImVec2(0, 1),
         ImVec2(1, 0)
     );
+    if (viewportPanelSize.x != interfaceData->previousSize.x || viewportPanelSize.y != interfaceData->previousSize.y) {
+
+        renderData->renderWIDTH = (int)viewportPanelSize.x;
+        renderData->renderHEIGHT = (int)viewportPanelSize.y;
+        Systems::RenderSystem::ResizeFrameBufferText(renderData);
+    }
+    interfaceData->previousSize = viewportPanelSize;
+    renderData->renderWIDTH;
+    renderData->renderHEIGHT;
     ImGui::End();
+}
+
+#pragma endregion
+
+#pragma region  Hierarchy
+void Display_Hierarchy_Menu(World* world, Resource::InterfaceRessource* interfaceData) {
+    ImGui::Begin("Hierarchy", &interfaceData->hierarchy_menu);
+
+    View view = world->view<Component::SceneTag>();
+    view.each([&](int entity, Component::SceneTag& currentSceneTag) {
+        if (currentSceneTag.scene_id == 0) {
+            ImGui::PushID(entity); // To avoid to have a id egall to ""
+            if (ImGui::Selectable(currentSceneTag.name.c_str(), interfaceData->focusGameObject == entity)) {
+                interfaceData->focusGameObject = entity;
+            }
+            ImGui::PopID();
+        }
+    });
+
+
+    ImGui::End();
+}
+
+#pragma endregion
+
+#pragma region NavBar
+void NavBar(Resource::RenderResource* renderData, Resource::InterfaceRessource* interfaceData) {
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
+            if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
+            if (ImGui::MenuItem("Close", "Ctrl+W")) { interfaceData->mainInterfaceOpen = false; }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Windows"))
+        {
+            ImGui::Checkbox("sceneObjectMenu", &interfaceData->hierarchy_menu);
+            ImGui::Checkbox("renderWindowsToggle", &interfaceData->renderWindowsToggle);
+            ImGui::Checkbox("inspecteur_Toogle", &interfaceData->inspecteur_Toogle);
+            ImGui::Checkbox("arbo_Toogle", &interfaceData->arbo_Toogle);
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+}
+
+#pragma endregion 
+
+#pragma region Inpecteur
+void Inspecteur_Light(Component::Light* light) {
+    ImGui::Text("Color");
+    ImGui::SameLine();
+    ImGui::InputFloat3("##Color", &light->color.x);
+    ImGui::Text("Intensity");
+    ImGui::SameLine();
+    ImGui::InputFloat("##Intensity", &light->intensity);
+}
+
+void Display_Inspecteur_Menu(World* world, Resource::InterfaceRessource* interfaceData) {
+    ImGui::Begin("Inspecteur", &interfaceData->inspecteur_Toogle);
+    if (interfaceData->focusGameObject != Engine::Component::INVALIDE_uint32_t) {
+
+        //Name
+        std::string* name = &world->get_component<Component::SceneTag>(interfaceData->focusGameObject)->name;
+        ImGui::Text("Name: ");
+        ImGui::SameLine();
+        ImGui::InputText("##name", name);
+
+        //Transform
+        Component::Transform* currentTransform = world->get_component<Component::Transform>(interfaceData->focusGameObject);
+        if (currentTransform != nullptr && ImGui::CollapsingHeader("Transform")) {
+            ImGui::Text("Position");
+            ImGui::SameLine(100);
+            ImGui::InputFloat3("##Position", &currentTransform->position.x);
+            ImGui::Text("Rotation");
+            ImGui::SameLine(100);
+            ImGui::InputFloat3("##Rotation", &currentTransform->rotation.x);
+            ImGui::Text("Scale");
+            ImGui::SameLine(100);
+            ImGui::InputFloat3("##Scale", &currentTransform->scale.x);
+        }
+
+        ////Light
+        //PointLight
+        Component::PointLight* current_PointLight = world->get_component<Component::PointLight>(interfaceData->focusGameObject);
+        if (current_PointLight != nullptr && ImGui::CollapsingHeader("Point light")) {
+            Inspecteur_Light(current_PointLight);
+            ImGui::InputFloat("Range ", &current_PointLight->range);
+        }
+        //DirLight
+        Component::DirLight* current_DirLight = world->get_component<Component::DirLight>(interfaceData->focusGameObject);
+        if (current_DirLight != nullptr && ImGui::CollapsingHeader("Directionnal Light ")) {
+            Inspecteur_Light(current_DirLight);
+            ImGui::InputFloat3("Direction ", &current_DirLight->direction.x);
+        }
+        //SpotLight
+        Component::SpotLight* current_SpotLight = world->get_component<Component::SpotLight>(interfaceData->focusGameObject);
+        if (current_SpotLight != nullptr && ImGui::CollapsingHeader("Spot light")) {
+            Inspecteur_Light(current_SpotLight);
+            ImGui::InputFloat("cutOFF ", &current_SpotLight->cutOff);
+            ImGui::InputFloat("outerCutOff ", &current_SpotLight->outerCutOff);
+        }
+
+    }
+    ImGui::End();
+}
+
+#pragma endregion
+
+#pragma region Arbo
+Resource::FileType Systems::InterfaceSystem::GetType(const std::filesystem::path& path) {
+    if (std::filesystem::is_directory(path))
+        return Resource::FileType::Directory;
+
+    std::string ext = path.extension().string();
+
+    if (ext == ".mp3" || ext == ".wav")
+        return Resource::FileType::Audio;
+
+    if (ext == ".mp4" || ext == ".mkv")
+        return Resource::FileType::Video;
+
+    if (ext == ".png" || ext == ".jpg")
+        return Resource::FileType::Image;
+
+    if (ext == ".fbx" || ext == ".obj" || ext == "glb")
+        return Resource::FileType::Model;
+
+    return Resource::FileType::Other;
+}
+
+std::unique_ptr<Resource::Node> Systems::InterfaceSystem::BuildTree(const std::filesystem::path& rootPath, Resource::Node* parent) {
+    auto node = std::make_unique<Resource::Node>();
+    node->name = rootPath.filename().string();
+    node->path = rootPath.string();
+    node->parent = parent;
+
+    if (std::filesystem::is_directory(rootPath)) {
+        node->type = Resource::FileType::Directory;
+
+        for (const auto& entry : std::filesystem::directory_iterator(rootPath)) {
+            node->children.push_back(BuildTree(entry.path(), node.get()));
+        }
+    }
+    else {
+        node->type = GetType(rootPath);
+    }
+
+    return node;
+}
+
+void Systems::InterfaceSystem::Display_ArboMenu(Resource::InterfaceRessource* interfaceData) {
+    ImGui::Begin("Arbo", &interfaceData->arbo_Toogle);
+    ImGui::SetWindowFontScale(1.5f);
+
+    // Navigation bar (breadcrumb) 
+    // Reconstructs the path from the root to the current folder
+    std::vector<Resource::Node*> breadcrumb;
+    {
+        Resource::Node* cursor = interfaceData->focusDirectory;
+        while (cursor != nullptr && cursor != cursor->parent) {
+            breadcrumb.push_back(cursor);
+            cursor = cursor->parent;
+        }
+        // Add the root if it is not already included
+        if (cursor != nullptr && (breadcrumb.empty() || breadcrumb.back() != cursor))
+            breadcrumb.push_back(cursor);
+        std::reverse(breadcrumb.begin(), breadcrumb.end());
+    }
+
+    // Displays the breadcrumb buttons on a single line
+    for (size_t i = 0; i < breadcrumb.size(); ++i) {
+        if (i > 0) {
+            ImGui::SameLine();
+            ImGui::TextDisabled("/");
+            ImGui::SameLine();
+        }
+        ImGui::PushID(static_cast<int>(i));
+        // Last item = current folder, highlighted
+        if (i == breadcrumb.size() - 1) {
+            ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "%s", breadcrumb[i]->name.c_str());
+        }
+        else {
+            if (ImGui::SmallButton(breadcrumb[i]->name.c_str())) {
+                interfaceData->focusDirectory = breadcrumb[i];
+            }
+        }
+        ImGui::PopID();
+    }
+
+    // Refresh button
+    std::string refreshLabel = std::string(ICON_FA_SYNC_ALT) + " ";
+    float buttonWidth = ImGui::CalcTextSize(refreshLabel.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f;
+    float available = ImGui::GetContentRegionAvail().x;
+    ImGui::SameLine(available - buttonWidth + ImGui::GetStyle().WindowPadding.x);
+    if (ImGui::Button(refreshLabel.c_str())) {
+        interfaceData->mainDirectory = BuildTree("Assets");
+        interfaceData->focusDirectory = interfaceData->mainDirectory.get();
+    }
+
+    ImGui::Separator();
+
+    // File/folder grid 
+    const float iconButtonSize = 80.0f;
+    float windowWidth = ImGui::GetContentRegionAvail().x;
+    int   columns = std::max(1, static_cast<int>(windowWidth / iconButtonSize));
+
+    int itemIndex = 0;
+    for (const auto& currentNode_unique_ptr : interfaceData->focusDirectory->children) {
+        Resource::Node* currentNode = currentNode_unique_ptr.get();
+
+        // Automatic line break based on the number of columns
+        if (itemIndex > 0 && itemIndex % columns != 0)
+            ImGui::SameLine();
+
+        ImGui::PushID(currentNode);
+        ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(60, 120, 255, 0));
+
+
+        std::string icon;
+        if (currentNode->type == Resource::FileType::Directory)
+            icon = ICON_FA_FOLDER;
+        else if (currentNode->type == Resource::FileType::Image)
+            icon = ICON_FA_IMAGE;
+        else if (currentNode->type == Resource::FileType::Audio)
+            icon = ICON_FA_MUSIC;
+        else if (currentNode->type == Resource::FileType::Model)
+            icon = ICON_FA_DICE_D6;
+        else if (currentNode->type == Resource::FileType::Video)
+            icon = ICON_FA_FILM;
+        else
+            icon = ICON_FA_FILE;
+
+        // Truncate the name if it is too long to fit in the button
+        std::string displayName = currentNode->name;
+        if (displayName.size() > 9)
+            displayName = displayName.substr(0, 8) + "..";
+
+        std::string label = icon + "\n" + displayName;
+
+        if (ImGui::Button(label.c_str(), ImVec2(iconButtonSize, iconButtonSize))) {
+            if (currentNode->type == Resource::FileType::Directory) {
+                interfaceData->focusDirectory = currentNode;
+            }
+            else if (currentNode->type == Resource::FileType::Image) {
+                // TODO
+            }
+            else if (currentNode->type == Resource::FileType::Audio) {
+                // TODO
+            }
+            else if (currentNode->type == Resource::FileType::Model) {
+                // TODO
+            }
+        }
+
+        // Dispaly item name on Hover
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("%s", currentNode->name.c_str());
+
+        ImGui::PopStyleColor(1);
+        ImGui::PopID();
+
+        ++itemIndex;
+    }
+
+    ImGui::SetWindowFontScale(1.0f);
+    ImGui::End();
+}
+
+#pragma endregion
+
+void Systems::InterfaceSystem::Init(World& world, const Resource::ResourceBuffer* resourceBuffer) {
+    Resource::InterfaceRessource* interfaceData = resourceBuffer->interfaceRessource;
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_IsSRGB;
+    io.DeltaTime = true;
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+
+    ////Icon & Font
+    static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+    ImFontConfig config;
+    config.MergeMode = true;
+    config.PixelSnapH = true;
+    ImFont* font = io.Fonts->AddFontFromFileTTF("Assets/Font/Amarna-VariableFont_wght.ttf");
+    io.Fonts->AddFontFromFileTTF("Assets/Font/Font_Awesome_7_Free-Solid-900.otf", 16.0f, &config, icons_ranges);
+
+
+    ////
+
+    ImGui_ImplOpenGL3_Init();
+    ImGui_ImplGlfw_InitForOpenGL(resourceBuffer->windowResource->window, true);
+
+    SetTwilightPurpleTheme();
+
+    glfwSetErrorCallback(glfw_error_callback);
+    if (!glfwInit()) abort();
+
+    interfaceData->OnEditorView = true;
+
+    interfaceData->mainDirectory = BuildTree("Assets", interfaceData->mainDirectory.get());
+    interfaceData->focusDirectory = interfaceData->mainDirectory.get();
 }
 
 void Systems::InterfaceSystem::Update(World& world, const Resource::ResourceBuffer* resourceBuffer) {
 	Resource::RenderResource* renderData = resourceBuffer->renderResource;
 	Resource::InterfaceRessource* interfaceData = resourceBuffer->interfaceRessource;
+	Resource::WindowResource* windowsData = resourceBuffer->windowResource;
+
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-	//ImGui::DockSpaceOverViewport();
 
-	//ImGui::ShowDemoWindow();
-	// Create a window called "My First Tool", with a menu bar.
-	ImGui::Begin("Main Page", &resourceBuffer->interfaceRessource->mainInterfaceOpen, ImGuiWindowFlags_MenuBar);
-	if (ImGui::BeginMenuBar())
-	{
-		if (ImGui::BeginMenu("File"))
-		{
-			if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
-			if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
-			if (ImGui::MenuItem("Close", "Ctrl+W")) { resourceBuffer->interfaceRessource->mainInterfaceOpen = false; }
-			ImGui::EndMenu();
-		}
-		ImGui::EndMenuBar();
-	}
-	ImGuiIO& io = ImGui::GetIO();
-	ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "FPS: %.1f", io.Framerate);
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
-	RenderTarget_Menu(interfaceData);
+    // Set the parent window's position, size, and viewport to match that of the main viewport. This is so the parent window
+    // completely covers the main viewport, giving it a "full-screen" feel.
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::Begin("Main Page", &resourceBuffer->interfaceRessource->mainInterfaceOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar | 
+    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoDocking);
+    NavBar(renderData, interfaceData);
 
-	if (ImGui::CollapsingHeader("SSAO Param"))
-	{
-		ImGui::InputFloat("Radius", &renderData->ssao.SSAO_radius);
-		ImGui::InputInt("Sample Number", &renderData->ssao.kernelSample);
-	}
-	if (ImGui::CollapsingHeader("OtherParam"))
-	{
-		ImGui::Checkbox("bloomEnable", &renderData->bloomEnable);
-		ImGui::InputFloat("Exposure", &renderData->exposure);
-	}
-    //ShowExampleAppDockSpace(&resourceBuffer->interfaceRessource->mainInterfaceOpen);
 
-    //RenderWindows(renderData, interfaceData);
+    ImGuiID dockspace_id = ImGui::GetID("MainDockSpace");
+    ImGui::DockSpace(
+        dockspace_id,
+        ImVec2(0.0f, 0.0f),             
+        ImGuiDockNodeFlags_PassthruCentralNode
+    );
+
+
+    RenderWindows(renderData, interfaceData, windowsData);
+    Display_RenderMenu(interfaceData, renderData);
+    Display_Hierarchy_Menu(&world, interfaceData);
+    Display_Inspecteur_Menu(&world, interfaceData);
+    Display_ArboMenu(interfaceData);
+
+
 
     ImGui::End();
     ImGui::Render();
@@ -106,155 +469,6 @@ void Systems::InterfaceSystem::Update(World& world, const Resource::ResourceBuff
 	glfwSwapBuffers(resourceBuffer->windowResource->window);
 }
 
-
 void Systems::InterfaceSystem::Shutdown(World& world) {
 	std::cout << "InterfaceSystem shutting down" << std::endl;
-
 }
-
-
-// CHANGES MADE:
-// Added more clarifying comments inside the function.
-// Removed MSVC warning C6011 - null pointer dereference.
-// Fixed a slight grammar error - "This demo app only demonstrate" => "This demo app only demonstrates"
-
-// Demonstrate using DockSpace() to create an explicit docking node within an existing window.
-// Note: You can use most Docking facilities without calling any API. You DO NOT need to call DockSpace() to use Docking!
-// - Drag from window title bar or their tab to dock/undock. Hold SHIFT to disable docking.
-// - Drag from window menu button (upper-left button) to undock an entire node (all windows).
-// About dockspaces:
-// - Use DockSpace() to create an explicit dock node _within_ an existing window.
-// - Use DockSpaceOverViewport() to create an explicit dock node covering the screen or a specific viewport.
-//   This is often used with ImGuiDockNodeFlags_PassthruCentralNode.
-// - Important: Dockspaces need to be submitted _before_ any window they can host. Submit it early in your frame! (*)
-// - Important: Dockspaces need to be kept alive if hidden, otherwise windows docked into it will be undocked.
-//   e.g. if you have multiple tabs with a dockspace inside each tab: submit the non-visible dockspaces with ImGuiDockNodeFlags_KeepAliveOnly.
-// (*) because of this constraint, the implicit \"Debug\" window can not be docked into an explicit DockSpace() node,
-// because that window is submitted as part of the part of the NewFrame() call. An easy workaround is that you can create
-// your own implicit "Debug##2" window after calling DockSpace() and leave it in the window stack for anyone to use.
-//void ShowExampleAppDockSpace(bool* p_open)
-//{
-//    // Variables to configure the Dockspace example.
-//    static bool opt_fullscreen = true; // Is the Dockspace full-screen?
-//    static bool opt_padding = false; // Is there padding (a blank space) between the window edge and the Dockspace?
-//    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None; // Config flags for the Dockspace
-//
-//    // In this example, we're embedding the Dockspace into an invisible parent window to make it more configurable.
-//    // We set ImGuiWindowFlags_NoDocking to make sure the parent isn't dockable into because this is handled by the Dockspace.
-//    //
-//    // ImGuiWindowFlags_MenuBar is to show a menu bar with config options. This isn't necessary to the functionality of a
-//    // Dockspace, but it is here to provide a way to change the configuration flags interactively.
-//    // You can remove the MenuBar flag if you don't want it in your app, but also remember to remove the code which actually
-//    // renders the menu bar, found at the end of this function.
-//    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-//
-//    // Is the example in Fullscreen mode?
-//    if (opt_fullscreen)
-//    {
-//        // If so, get the main viewport:
-//        const ImGuiViewport* viewport = ImGui::GetMainViewport();
-//
-//        // Set the parent window's position, size, and viewport to match that of the main viewport. This is so the parent window
-//        // completely covers the main viewport, giving it a "full-screen" feel.
-//        ImGui::SetNextWindowPos(viewport->WorkPos);
-//        ImGui::SetNextWindowSize(viewport->WorkSize);
-//        ImGui::SetNextWindowViewport(viewport->ID);
-//
-//        // Set the parent window's styles to match that of the main viewport:
-//        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f); // No corner rounding on the window
-//        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); // No border around the window
-//
-//        // Manipulate the window flags to make it inaccessible to the user (no titlebar, resize/move, or navigation)
-//        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-//        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-//    }
-//    else
-//    {
-//        // The example is not in Fullscreen mode (the parent window can be dragged around and resized), disable the
-//        // ImGuiDockNodeFlags_PassthruCentralNode flag.
-//        dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
-//    }
-//
-//    // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
-//    // and handle the pass-thru hole, so the parent window should not have its own background:
-//    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-//        window_flags |= ImGuiWindowFlags_NoBackground;
-//
-//    // If the padding option is disabled, set the parent window's padding size to 0 to effectively hide said padding.
-//    if (!opt_padding)
-//        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-//
-//    // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
-//    // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
-//    // all active windows docked into it will lose their parent and become undocked.
-//    // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
-//    // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
-//    ImGui::Begin("DockSpace Demo", p_open, window_flags);
-//
-//    // Remove the padding configuration - we pushed it, now we pop it:
-//    if (!opt_padding)
-//        ImGui::PopStyleVar();
-//
-//    // Pop the two style rules set in Fullscreen mode - the corner rounding and the border size.
-//    if (opt_fullscreen)
-//        ImGui::PopStyleVar(2);
-//
-//    // Check if Docking is enabled:
-//    ImGuiIO& io = ImGui::GetIO();
-//    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-//    {
-//        // If it is, draw the Dockspace with the DockSpace() function.
-//        // The GetID() function is to give a unique identifier to the Dockspace - here, it's "MyDockSpace".
-//        ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-//        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-//    }
-//    else
-//    {
-//        // Docking is DISABLED - Show a warning message
-//        //ShowDockingDisabledMessage();
-//    }
-//
-//    // This is to show the menu bar that will change the config settings at runtime.
-//    // If you copied this demo function into your own code and removed ImGuiWindowFlags_MenuBar at the top of the function,
-//    // you should remove the below if-statement as well.
-//    if (ImGui::BeginMenuBar())
-//    {
-//        if (ImGui::BeginMenu("Options"))
-//        {
-//            // Disabling fullscreen would allow the window to be moved to the front of other windows,
-//            // which we can't undo at the moment without finer window depth/z control.
-//            ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen);
-//            ImGui::MenuItem("Padding", NULL, &opt_padding);
-//            ImGui::Separator();
-//
-//            // Display a menu item for each Dockspace flag, clicking on one will toggle its assigned flag.
-//            if (ImGui::MenuItem("Flag: NoSplit", "", (dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_NoSplit; }
-//            if (ImGui::MenuItem("Flag: NoResize", "", (dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_NoResize; }
-//            if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode; }
-//            if (ImGui::MenuItem("Flag: AutoHideTabBar", "", (dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar; }
-//            if (ImGui::MenuItem("Flag: PassthruCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0, opt_fullscreen)) { dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode; }
-//            ImGui::Separator();
-//
-//            // Display a menu item to close this example.
-//            if (ImGui::MenuItem("Close", NULL, false, p_open != NULL))
-//                if (p_open != NULL) // Remove MSVC warning C6011 (NULL dereference) - the `p_open != NULL` in MenuItem() does prevent NULL derefs, but IntelliSense doesn't analyze that deep so we need to add this in ourselves.
-//                    *p_open = false; // Changing this variable to false will close the parent window, therefore closing the Dockspace as well.
-//            ImGui::EndMenu();
-//        }
-//
-//        // Show a help marker that gives an overview of what this example is and does.
-//        //HelpMarker(
-//        //    "When docking is enabled, you can ALWAYS dock MOST window into another! Try it now!" "\n"
-//        //    "- Drag from window title bar or their tab to dock/undock." "\n"
-//        //    "- Drag from window menu button (upper-left button) to undock an entire node (all windows)." "\n"
-//        //    "- Hold SHIFT to disable docking." "\n"
-//        //    "This demo app has nothing to do with it!" "\n\n"
-//        //    "This demo app only demonstrates the use of ImGui::DockSpace() which allows you to manually create a docking node _within_ another window." "\n\n"
-//        //    "Read comments in ShowExampleAppDockSpace() for more details.");
-//
-//        ImGui::EndMenuBar();
-//    }
-//
-//    // End the parent window that contains the Dockspace:
-//    ImGui::End();
-//}

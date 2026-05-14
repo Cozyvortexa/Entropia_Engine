@@ -35,6 +35,11 @@ namespace Engine::Render {
         UInt4
     };
 
+    enum class BufferClearTarget {
+        Color,
+        Depth
+    };
+
     struct VertexAttribute
     {
         uint32_t location;
@@ -46,5 +51,46 @@ namespace Engine::Render {
     {
         uint32_t stride;
         std::vector<VertexAttribute> attributes;
+    };
+
+    struct Buffer {
+
+        virtual void Bind() = 0;
+        virtual void UnBind() = 0;
+        virtual void ClearBuffer(BufferClearTarget target) = 0;
+    };
+
+    struct OpenGlBuffer : public Buffer {
+
+        void ClearBuffer(BufferClearTarget target) override {
+            if (target == Engine::Render::BufferClearTarget::Color) {
+                glClear(GL_COLOR_BUFFER_BIT);
+            }
+            else if (target == Engine::Render::BufferClearTarget::Depth){
+                glClear(GL_DEPTH_BUFFER_BIT);
+            }
+
+        }
+    };
+
+    enum class Filter
+    {
+        Nearest,
+        Linear
+    };
+
+    enum class WrapMode
+    {
+        Repeat,
+        ClampEdge
+    };
+
+    struct SamplerDesc
+    {
+        Filter minFilter;
+        Filter magFilter;
+
+        WrapMode wrapU;
+        WrapMode wrapV;
     };
 }

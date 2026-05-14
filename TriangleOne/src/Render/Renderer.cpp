@@ -174,3 +174,8 @@ void OpenGL_Renderer::LoadDefaultCube() {
 
 	glBindVertexArray(0);
 }
+
+
+void OpenGL_Renderer::SetViewport_Size(glm::vec2 newSize) {
+	glViewport(0, 0, newSize.x, newSize.y);
+}

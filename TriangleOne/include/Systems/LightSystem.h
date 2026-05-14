@@ -80,7 +80,7 @@ namespace Engine::Systems {
 
 		void ConvulateEnvCube(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer, glm::mat4 captureProjection, glm::mat4 captureViews[]);
 		void Equirenctangular_To_CubeMap(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer, std::string equirectangularMap_Path);
-		void Prefilter_EnvCub(World& world, Engine::Resource::RenderResource* renderData, Engine::Resource::WindowResource* windowData, glm::mat4 captureProjection, glm::mat4 captureViews[]);
+		void Prefilter_EnvCub(World& world, Engine::Resource::RenderResource* renderData, glm::mat4 captureProjection, glm::mat4 captureViews[]);
 
 #pragma region Draw
 
@@ -100,14 +100,14 @@ namespace Engine::Systems {
 #pragma endregion
 
 #pragma region Shadow
-		void DrawShadowForDirLight(World* world, Engine::Resource::RenderResource& renderResource, Engine::Resource::WindowResource& windowData, All_Light& currentLight);
-		void DrawShadowForPointLight(World* world, Engine::Resource::RenderResource& renderResource, Engine::Resource::WindowResource& windowData, All_Light& lights, int index);
-		void DrawShadowForSpotLight(World* world, Engine::Resource::RenderResource& renderResource, Engine::Resource::WindowResource& windowData, All_Light& lights, int index);
-		void ShadowPass(World* world, Engine::Resource::RenderResource* renderResource, Engine::Resource::WindowResource* windowResource, All_Light* lights);
+		void DrawShadowForDirLight(World* world, Engine::Resource::RenderResource& renderResource, All_Light& currentLight);
+		void DrawShadowForPointLight(World* world, Engine::Resource::RenderResource& renderResource, All_Light& lights, int index);
+		void DrawShadowForSpotLight(World* world, Engine::Resource::RenderResource& renderResource, All_Light& lights, int index);
+		void ShadowPass(World* world, Engine::Resource::RenderResource* renderResource, All_Light* lights);
 #pragma endregion
 
 	private:
-		All_Light* DataCollector(World* world, Engine::Resource::WindowResource* windowResource, Engine::Component::CameraComponent* mainCamera, Engine::Resource::RenderResource* renderRessource);
+		All_Light* DataCollector(World* world, Engine::Component::CameraComponent* mainCamera, Engine::Resource::RenderResource* renderRessource);
 
 		void UpdateLight(World* world, Engine::Resource::RenderResource* renderResource, All_Light& lights);
 

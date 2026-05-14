@@ -166,6 +166,7 @@
     <ClCompile Include="src\Render\Texture.cpp" />
     <ClCompile Include="src\Systems\TimeSystem.cpp" />
     <ClCompile Include="src\Systems\window.cpp" />
+    <ClCompile Include="src\Utilities\Font_awesome.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Render\Renderer.h" />
@@ -190,6 +191,7 @@
     <ClInclude Include="include\Systems\TimeSystem.hpp" />
     <ClInclude Include="include\Systems\windowSystem.h" />
     <ClInclude Include="include\ECS\World.h" />
+    <ClInclude Include="include\Utilities\Font_awesome.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\BloomShader\FragmentBloom.glsl" />

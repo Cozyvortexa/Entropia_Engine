@@ -41,15 +41,20 @@ void GLAPIENTRY Debug_Critical_MessageCallback(GLenum source, GLenum type, GLuin
 
 void Systems::WindowSystem::Framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-	glViewport(0, 0, width, height);
+	//glViewport(0, 0, width, height);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	World* world = static_cast<World*>(glfwGetWindowUserPointer(window));
 	Resource::RenderResource* renderResource = world->get_ressource<Resource::RenderResource>();
+	Resource::InterfaceRessource* interfaceResource = world->get_ressource<Resource::InterfaceRessource>();
 	Resource::WindowResource* windowData = world->get_ressource<Resource::WindowResource>();
 	windowData->HEIGHT = height;
 	windowData->WIDTH = width;
 
-	RenderSystem::ResizeText(windowData, renderResource);
+
+	//FallBack
+	if (!interfaceResource->OnEditorView) {
+		RenderSystem::ResizeFrameBufferText(renderResource);
+	}
 }
 
 void Systems::WindowSystem::ProcessInput(GLFWwindow* window)
@@ -60,12 +65,13 @@ void Systems::WindowSystem::ProcessInput(GLFWwindow* window)
 
 void Systems::WindowSystem::Init(World& world, const Resource::ResourceBuffer* resourceBuffer) {
 	Resource::WindowResource* windowData = resourceBuffer->windowResource;
+	Resource::RenderResource* renderData = resourceBuffer->renderResource;
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//MSAA
-	glfwWindowHint(GLFW_SAMPLES, windowData->sample);
+	glfwWindowHint(GLFW_SAMPLES, 0);
 
 	windowData->window = glfwCreateWindow(windowData->WIDTH, windowData->HEIGHT, "Entropia Engine", NULL, NULL);
 	if (windowData->window == NULL)
@@ -92,7 +98,12 @@ void Systems::WindowSystem::Init(World& world, const Resource::ResourceBuffer* r
 #endif
 
 	glfwSetFramebufferSizeCallback(windowData->window, Framebuffer_size_callback); // Pour adapter le viewport si la fenetre est resize pendant le court du programme 
-	glViewport(0, 0, windowData->WIDTH, windowData->HEIGHT);
+	//world.renderer->SetViewport_Size(glm::vec2(windowData->WIDTH, windowData->HEIGHT));
+
+	//Default windows size
+	renderData->renderWIDTH = windowData->WIDTH;
+	renderData->renderHEIGHT = windowData->HEIGHT;
+	glViewport(0, 0, renderData->renderWIDTH, renderData->renderHEIGHT);
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
@@ -109,7 +120,7 @@ void Systems::WindowSystem::Init(World& world, const Resource::ResourceBuffer* r
 	glCullFace(GL_BACK);
 	//glFrontFace(GL_CCW);
 	//MSAA
-	glEnable(GL_MULTISAMPLE);
+	//glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
 
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);

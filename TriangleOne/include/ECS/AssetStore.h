@@ -24,6 +24,8 @@ public:
 	Material& Get_Material(std::string name);
 	Material* Get_Material(unsigned int index);
 
+	Texture* Get_Texture(unsigned int index);
+
 private:
 	//Assets
 	std::vector<Mesh> meshs;
@@ -38,7 +40,7 @@ private:
 
 	//Misc
 	int CheckExistingMat(std::string name);
-	Texture* Get_Texture(unsigned int index);
+
 
 	//Mesh creation
 	Mesh LoadMesh(std::string path);
@@ -48,5 +50,4 @@ private:
 
 	//friend
 	friend class LightSystem;  // WARNING, temp
-	friend class OpenGL_Renderer;
 };

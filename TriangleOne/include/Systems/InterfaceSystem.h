@@ -1,6 +1,9 @@
 #pragma once
 #include "ECS/System.h"
 
+#include <filesystem>
+#include <stack>
+
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_internal.h"
 #include "ImGui/backends/imgui_impl_glfw.h"
@@ -9,10 +12,24 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+#include "ECS/World.h"
+#include "ECS/Components/Component.h"
+
+#include "ImGui/imgui_stdlib.h"
+#include "Systems/RenderSystem.h"
+
+#include "Utilities/Font_awesome.h"
+
 namespace Engine::Systems {
 	class InterfaceSystem : public System {
 		void Init(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;
 		void Update(World& world, const Engine::Resource::ResourceBuffer* ressourceBuffer) override;
 		void Shutdown(World& world) override;
+
+		std::unique_ptr<Resource::Node> BuildTree(const std::filesystem::path& rootPath, Resource::Node* parent = nullptr);
+
+	private:
+		Resource::FileType GetType(const std::filesystem::path& path);
+		void Display_ArboMenu(Resource::InterfaceRessource* interfaceData);
 	};
 }

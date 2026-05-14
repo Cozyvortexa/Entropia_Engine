@@ -28,27 +28,27 @@
 namespace Engine::Systems {
 	class RenderSystem : public System {
 	public:
-		void SSAO_Pass(World& world, Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData, Engine::Component::CameraComponent* mainCamera);
+		void SSAO_Pass(World& world, Engine::Resource::RenderResource* renderData, Engine::Component::CameraComponent* mainCamera);
 
-		void InitQuadVao(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
-		void InitMainFrameBuffer(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
-		void InitBloomFBO(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
-		void InitGBuffer(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
-		void InitSSAO(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
-		void InitSSAO_Blur(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
-		void InitToImGui_FBO(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
+		void InitQuadVao(Engine::Resource::RenderResource* renderData);
+		void InitMainFrameBuffer(Engine::Resource::RenderResource* renderData);
+		void InitBloomFBO(Engine::Resource::RenderResource* renderData);
+		void InitGBuffer(Engine::Resource::RenderResource* renderData);
+		void InitSSAO(Engine::Resource::RenderResource* renderData);
+		void InitSSAO_Blur(Engine::Resource::RenderResource* renderData);
+		void InitToImGui_FBO(Engine::Resource::RenderResource* renderData);
 
-		void Init_AllBuffer(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderData);
+		void Init_AllBuffer(Engine::Resource::RenderResource* renderData);
 
 		std::pair<unsigned int, unsigned int> CreateDummyShadowTextures();
 
-		static void ResizeText(Engine::Resource::WindowResource* windowData, Engine::Resource::RenderResource* renderResource);
+		static void ResizeFrameBufferText(Engine::Resource::RenderResource* renderResource);
 
 		void Init(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;
 		void Update(World& world, const Engine::Resource::ResourceBuffer* ressourceBuffer) override;
 		void Shutdown(World& world) override;
 
-		void RenderScene(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer, Engine::Resource::WindowResource* windowData, Engine::Component::CameraComponent* mainCamera);
+		void RenderScene(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer, Engine::Component::CameraComponent* mainCamera);
 
 	};
 }

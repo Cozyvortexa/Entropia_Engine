@@ -14,6 +14,7 @@
 
 class All_Light;
 namespace Engine::Component {
+	static const uint32_t INVALIDE_uint32_t = static_cast<uint32_t>(-1);
 	struct Component {
 		virtual ~Component() = default;
 	};
@@ -81,7 +82,10 @@ namespace Engine::Component {
 	};
 
 	struct SceneTag : public Component {
-		uint32_t scene_id = 0;  // Zero correspond to the main scene 
+		SceneTag() = default;
+		SceneTag(std::string name) { this->name = name; }
+		uint16_t scene_id = 0;  // Zero correspond to the main scene 
+		std::string name = "Default";
 	};
 
 	struct MeshHandle : public Component {
@@ -127,10 +131,9 @@ namespace Engine::Resource {
 	struct WindowResource : public Resource {
 		WindowResource() = default;
 
-		inline static int WIDTH = 1000;
-		inline static int HEIGHT = 800;
+		inline static int WIDTH = 1920;
+		inline static int HEIGHT = 1000;
 
-		int sample = 4;
 
 		GLFWwindow* window = nullptr;
 	};
@@ -181,6 +184,8 @@ namespace Engine::Resource {
 
 
 	struct RenderResource : public Resource {
+		int renderWIDTH;
+		int renderHEIGHT;
 		unsigned int mainMaterialHandle;
 
 		R_Shader r_Shader;
@@ -261,10 +266,40 @@ namespace Engine::Resource {
 		Irradiance_Map
 	};
 
+	enum class FileType {
+		Directory,
+		Audio,
+		Video,
+		Image,
+		Model,
+		Other
+	};
+
+	struct Node {
+		std::string name;
+		std::string path;
+		FileType type;
+
+		Node* parent = nullptr;
+		std::vector<std::unique_ptr<Node>> children;
+	};
+
 	struct InterfaceRessource : public Resource {
 		bool mainInterfaceOpen = true;
+		bool hierarchy_menu = true;
+		bool renderWindowsToggle = true;
+		bool inspecteur_Toogle = true;
+		bool arbo_Toogle = true;
 		RenderTarget renderTarget = RenderTarget::Default;
-		ImVec2 renderWindows_Size;
+		glm::vec2 renderWindows_Size;
+
+		ImVec2 previousSize;
+		bool OnEditorView = false;
+
+		uint32_t focusGameObject = Component::INVALIDE_uint32_t;
+
+		std::unique_ptr<Node> mainDirectory = nullptr;
+		Node* focusDirectory = nullptr;
 	};
 
 	struct InputResource : public Resource {

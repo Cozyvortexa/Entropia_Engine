@@ -145,8 +145,8 @@ void Systems::LightSystem::InitShadowBuffer(World& world) {
 
 #pragma region Shadow
 
-void Systems::LightSystem::DrawShadowForDirLight(World* world, Resource::RenderResource& renderResource, Resource::WindowResource& windowData, All_Light& lights) {  // Bug sur la window si resize
-	glViewport(0, 0, lights.dirLight_Shadow_Size.first, lights.dirLight_Shadow_Size.second);
+void Systems::LightSystem::DrawShadowForDirLight(World* world, Resource::RenderResource& renderResource, All_Light& lights) {  // Bug sur la window si resize
+	world->renderer->SetViewport_Size(glm::vec2(lights.dirLight_Shadow_Size.first, lights.dirLight_Shadow_Size.second));
 	glBindFramebuffer(GL_FRAMEBUFFER, lights.dirLight_DepthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -167,10 +167,10 @@ void Systems::LightSystem::DrawShadowForDirLight(World* world, Resource::RenderR
 	});
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, windowData.WIDTH, windowData.HEIGHT);
+	world->renderer->SetViewport_Size(glm::vec2(renderResource.renderWIDTH, renderResource.renderHEIGHT));
 }
 
-void Systems::LightSystem::DrawShadowForPointLight(World* world, Resource::RenderResource& renderResource, Resource::WindowResource& windowData, All_Light& lights, int index) {
+void Systems::LightSystem::DrawShadowForPointLight(World* world, Resource::RenderResource& renderResource, All_Light& lights, int index) {
 	std::pair<unsigned int, unsigned int> shadowSize = lights.pointLights_Shadow_Size[index];
 	glm::vec3 position = lights.pointLights[index].position;
 	Shader* depthShader = renderResource.r_Shader.depthShaderCubeMap.get();
@@ -180,7 +180,7 @@ void Systems::LightSystem::DrawShadowForPointLight(World* world, Resource::Rende
 	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, 0.1f, range);
 
 
-	glViewport(0, 0, shadowSize.first, shadowSize.second);
+	world->renderer->SetViewport_Size(glm::vec2(shadowSize.first, shadowSize.second));
 	glBindFramebuffer(GL_FRAMEBUFFER, lights.pointLights_DepthMapFBO[index]);  // Fbo unique par point light
 	glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -215,10 +215,10 @@ void Systems::LightSystem::DrawShadowForPointLight(World* world, Resource::Rende
 	});
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, windowData.WIDTH, windowData.HEIGHT);
+	world->renderer->SetViewport_Size(glm::vec2(renderResource.renderWIDTH, renderResource.renderHEIGHT));
 }
 
-void Systems::LightSystem::DrawShadowForSpotLight(World* world, Resource::RenderResource& renderResource, Resource::WindowResource& windowData, All_Light& lights, int index) {
+void Systems::LightSystem::DrawShadowForSpotLight(World* world, Resource::RenderResource& renderResource, All_Light& lights, int index) {
 	std::pair<unsigned int, unsigned int> shadowSize = lights.spotLights_Shadow_Size[index];
 	glm::vec3 position = lights.spotLights[index].position;
 	glm::vec3 direction = lights.spotLights[index].direction;
@@ -234,7 +234,7 @@ void Systems::LightSystem::DrawShadowForSpotLight(World* world, Resource::Render
 
 	glm::mat4 lightSpaceMatrix = shadowProj * shadowView;
 
-	glViewport(0, 0, shadowSize.first, shadowSize.second);
+	world->renderer->SetViewport_Size(glm::vec2(shadowSize.first, shadowSize.second));
 	glBindFramebuffer(GL_FRAMEBUFFER, lights.spotLights_DepthMapFBO[index]);  // Fbo unique par spot light
 	glClear(GL_DEPTH_BUFFER_BIT );
 
@@ -255,19 +255,19 @@ void Systems::LightSystem::DrawShadowForSpotLight(World* world, Resource::Render
 
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, windowData.WIDTH, windowData.HEIGHT);
+	world->renderer->SetViewport_Size(glm::vec2(renderResource.renderWIDTH, renderResource.renderHEIGHT));
 }
 
-void Systems::LightSystem::ShadowPass(World* world, Resource::RenderResource* renderResource, Resource::WindowResource* windowResource, All_Light* lights) {
+void Systems::LightSystem::ShadowPass(World* world, Resource::RenderResource* renderResource, All_Light* lights) {
 	glCullFace(GL_BACK);
-	DrawShadowForDirLight(world, *renderResource, *windowResource, *lights);
+	DrawShadowForDirLight(world, *renderResource, *lights);
 
 	for (int i = 0; i < lights->pointLights.size(); i++) {
-		DrawShadowForPointLight(world, *renderResource, *windowResource, *lights, i);
+		DrawShadowForPointLight(world, *renderResource, *lights, i);
 	}
 
 	for (int i = 0; i < lights->spotLights.size(); i++) {
-		DrawShadowForSpotLight(world, *renderResource, *windowResource, *lights, i);
+		DrawShadowForSpotLight(world, *renderResource, *lights, i);
 	}
 }
 
@@ -473,7 +473,7 @@ void Systems::LightSystem::ConvulateEnvCube(World& world, const Resource::Resour
 	shader->setInt("environmentMap", 0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
 	shader->setMatrix("projection", captureProjection);
-	glViewport(0, 0, 64, 64);
+	world.renderer->SetViewport_Size(glm::vec2(64, 64));
 
 
 	for (unsigned int i = 0; i < 6; ++i)
@@ -483,14 +483,14 @@ void Systems::LightSystem::ConvulateEnvCube(World& world, const Resource::Resour
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		world.renderer->DrawCube();
 	}
-	glViewport(0, 0, windowData->WIDTH, windowData->HEIGHT);
+	world.renderer->SetViewport_Size(glm::vec2(renderData->renderWIDTH, renderData->renderHEIGHT));
 
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
-void Systems::LightSystem::Prefilter_EnvCub(World& world, Resource::RenderResource* renderData, Resource::WindowResource* windowData, glm::mat4 captureProjection, glm::mat4 captureViews[]) {
+void Systems::LightSystem::Prefilter_EnvCub(World& world, Resource::RenderResource* renderData, glm::mat4 captureProjection, glm::mat4 captureViews[]) {
 	InitPrefilter_IBL(world, renderData);
 
 	Shader* prefilter_Shader = renderData->r_Shader.prefilter_Shader.get();
@@ -513,7 +513,7 @@ void Systems::LightSystem::Prefilter_EnvCub(World& world, Resource::RenderResour
 		glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
 
-		glViewport(0, 0, mipWidth, mipHeight);
+		world.renderer->SetViewport_Size(glm::vec2(mipWidth, mipHeight));
 		float roughness = (float)mip / (float)(renderData->maxMipLevels - 1);
 		prefilter_Shader->setFloat("roughness", roughness);
 		for (unsigned int i = 0; i < 6; ++i)
@@ -524,7 +524,7 @@ void Systems::LightSystem::Prefilter_EnvCub(World& world, Resource::RenderResour
 			world.renderer->DrawCube();
 		}
 	}
-	glViewport(0, 0, windowData->WIDTH, windowData->HEIGHT);
+	world.renderer->SetViewport_Size(glm::vec2(renderData->renderWIDTH, renderData->renderHEIGHT));
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
@@ -537,7 +537,7 @@ void Systems::LightSystem::Equirenctangular_To_CubeMap(World& world, const Resou
 	glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderData->captureRBO);
-	glViewport(0, 0, 512, 512);
+	world.renderer->SetViewport_Size(glm::vec2(512, 512));
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "FBO not complete before equirect render!" << std::endl;
@@ -574,7 +574,7 @@ void Systems::LightSystem::Equirenctangular_To_CubeMap(World& world, const Resou
 		world.renderer->DrawCube();
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, windowData->WIDTH, windowData->HEIGHT);
+	world.renderer->SetViewport_Size(glm::vec2(renderData->renderWIDTH, renderData->renderHEIGHT));
 	glDeleteTextures(1, &equiRec_Map);
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
@@ -582,7 +582,7 @@ void Systems::LightSystem::Equirenctangular_To_CubeMap(World& world, const Resou
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
 	ConvulateEnvCube(world, resourceBuffer, captureProjection, captureViews);
-	Prefilter_EnvCub(world, renderData, windowData, captureProjection, captureViews);
+	Prefilter_EnvCub(world, renderData, captureProjection, captureViews);
 
 	//////brdfLUt
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
@@ -638,7 +638,7 @@ void Systems::LightSystem::UpdateLight(World* world, Resource::RenderResource* r
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-All_Light* Systems::LightSystem::DataCollector(World* world, Resource::WindowResource* windowResource, Component::CameraComponent* mainCamera, Resource::RenderResource* renderRessource) {
+All_Light* Systems::LightSystem::DataCollector(World* world, Component::CameraComponent* mainCamera, Resource::RenderResource* renderRessource) {
 	All_Light* lights = new All_Light();
 	View viewDirLight = world->view<Component::DirLight>();
 
@@ -803,7 +803,7 @@ void Systems::LightSystem::Draw_FinalPass(Resource::RenderResource* renderData) 
 
 	//glBindFramebuffer(GL_FRAMEBUFFER, renderData->toImGui_FBO);
 	//glClear(GL_COLOR_BUFFER_BIT);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderData->toImGui_FBO);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//Post process
@@ -830,6 +830,7 @@ void Systems::LightSystem::Draw_FinalPass(Resource::RenderResource* renderData) 
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
 }
 
 //Lightning Pass
@@ -920,9 +921,9 @@ void Systems::LightSystem::Update(World& world, const Resource::ResourceBuffer* 
 	}
 	/////////////////
 
-	renderResource->lights = DataCollector(&world, windowResource, mainCamera, renderResource);
+	renderResource->lights = DataCollector(&world, mainCamera, renderResource);
 
-	ShadowPass(&world, renderResource, windowResource, renderResource->lights);
+	ShadowPass(&world, renderResource, renderResource->lights);
 	UpdateLight(&world, renderResource, *renderResource->lights);
 	SendDepthMapToLightningShader(&world, renderResource, resourceBuffer, renderResource->lights);
 	glDisable(GL_CULL_FACE);
