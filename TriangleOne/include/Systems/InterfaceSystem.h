@@ -19,6 +19,9 @@
 #include "Systems/RenderSystem.h"
 
 #include "Utilities/Font_awesome.h"
+#include "Utilities/EditorComponent.h"
+
+#include <windows.h>  // TEMP
 
 namespace Engine::Systems {
 	class InterfaceSystem : public System {
@@ -26,10 +29,18 @@ namespace Engine::Systems {
 		void Update(World& world, const Engine::Resource::ResourceBuffer* ressourceBuffer) override;
 		void Shutdown(World& world) override;
 
-		std::unique_ptr<Resource::Node> BuildTree(const std::filesystem::path& rootPath, Resource::Node* parent = nullptr);
+		std::unique_ptr<Resource::Node> BuildTree(const std::filesystem::path& rootPath, Engine::Resource::Node* parent = nullptr);
 
 	private:
 		Resource::FileType GetType(const std::filesystem::path& path);
 		void Display_ArboMenu(Resource::InterfaceRessource* interfaceData);
+		void inline Arbo_RefreshButton(Resource::InterfaceRessource* interfaceData);
+
+		Entity CreateNewEntity(World* world);
+		void Add_Entity_Button(World* world, Engine::Resource::RenderResource* renderData, std::string label, int entity);
+		void Display_Hierarchy_Menu(World* world, Resource::InterfaceRessource* interfaceData, Engine::Resource::RenderResource* renderData);
+
+
+		void Display_Inspecteur_Menu(World* world, Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData);
 	};
 }

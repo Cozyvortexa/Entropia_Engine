@@ -2,7 +2,6 @@
 
 namespace Component = Engine::Component;
 #pragma region Init
-
 Component::Light::Light(glm::vec3 color, float intensity) {
 	this->color = color;
 	this->intensity = intensity;
@@ -19,10 +18,10 @@ Component::SpotLight::SpotLight(glm::vec3 color, float intensity, glm::vec3 _dir
 	this->range = range;
 	this->depthShader = depthShaderSpotMap;
 }
+
 #pragma endregion SpotLight
 
 #pragma region DirLight
-
 Component::DirLight::DirLight(glm::vec3 color, float intensity, glm::vec3 _direction, Shader* depthShader ) : Light(color, intensity) {
 	direction = _direction;
 
@@ -38,6 +37,7 @@ Component::DirLight::DirLight(glm::vec3 color, float intensity, glm::vec3 _direc
 	ndcCubePoint.push_back(glm::vec3(-1, 1, 1));
 	ndcCubePoint.push_back(glm::vec3(1, 1, 1));
 }
+
 std::vector<glm::vec3> Component::DirLight::CalcWorldCorner(const glm::mat4 projection, glm::mat4 viewMatrice) {
 	glm::mat4 invProjectionViewMatrice = glm::inverse(projection * viewMatrice);
 	std::vector<glm::vec3> result;
@@ -59,7 +59,6 @@ glm::vec3 Component::DirLight::FrustumCenter(std::vector<glm::vec3> corners)
 
 	return center / 8.0f;
 }
-
 
 AABB Component::DirLight::CalcBoundingBox(const std::vector<glm::vec3> worldCorner) {
 	glm::vec3 minPoint(std::numeric_limits<float>::infinity());
@@ -115,8 +114,8 @@ glm::mat4 Component::DirLight::UpdateMatrix(const glm::mat4 viewMatrice, const g
 
 #pragma endregion DirLight
 
-#pragma region PointLight
 
+#pragma region PointLight
 Component::PointLight::PointLight(glm::vec3 color, float intensity, float _range, Shader* depthShaderCubeMap) : Light(color, intensity) {
 	range = _range;
 	near_plane = 0.01f;

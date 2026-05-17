@@ -25,19 +25,22 @@ public:
 namespace Engine::Component {
 	struct Light : Component {
 	public:
-		//Light() {};
 		~Light() = default;
+		Light(Shader* newDepthShader) { this->depthShader = newDepthShader; }
 		Light(glm::vec3 color, float intensity);
 
-		glm::vec3 color;
-		float intensity = 1.0f;
+		glm::vec3 color = glm::vec3(1.0f);
+		float intensity = 150.0f;
 		unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 		Shader* depthShader = nullptr;
+
+
 	};
 
 	struct DirLight : public Light {
 		using Light::Light;
 		~DirLight() = default;
+		DirLight() = default;
 		DirLight(glm::vec3 color, float intensity, glm::vec3 direction, Shader* _depthShader);
 		glm::vec3 direction = glm::vec3(0.0f, -0.80f, 0.0f);
 		unsigned int depthMap = 0;
@@ -52,6 +55,13 @@ namespace Engine::Component {
 		glm::mat4 lightViewMatrice = glm::mat4(1);
 		glm::mat4 lightMatrice = glm::mat4(1);
 
+		template<typename F>
+		void Reflect(F&& f)
+		{
+			f("Color", color);
+			f("Intensity", intensity);
+			f("Direction", direction);
+		}
 
 		glm::mat4 UpdateMatrix(const glm::mat4 viewMatrice, const glm::mat4 projectionCamera);
 
@@ -77,6 +87,14 @@ namespace Engine::Component {
 		//Shadow purpose
 		float aspect = 1.0f;
 		float near_plane = 0.1f;
+
+		template<typename F>
+		void Reflect(F&& f)
+		{
+			f("Color", color);
+			f("Intensity", intensity);
+			f("Range", range);
+		}
 	};
 
 	struct SpotLight : public Light {
@@ -86,11 +104,18 @@ namespace Engine::Component {
 		SpotLight(glm::vec3 color, float intensity, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Shader* depthShaderSpotMap);
 		float range = 1.0f;
 
-		glm::vec3 direction = glm::vec3(0);
-		float cutOff = 0.0f;
-		float outerCutOff = 1.0f;
+		glm::vec3 direction = glm::vec3(1.0f, 0.0f, 0.0f);
+		float cutOff = 5.5f;
+		float outerCutOff = 15.5f;
 
 		float aspect = 1.0f;
+
+		template<typename F>
+		void Reflect(F&& f)
+		{
+			f("Color", color);
+			f("Intensity", intensity);
+		}
 
 		unsigned int depthMapFBO = 0;
 		unsigned int depthMap = 0;

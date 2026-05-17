@@ -10,7 +10,7 @@ const Entity NULL_ENTITY = static_cast<Entity>(-1);
 class ISparseSet {
 public:
     virtual ~ISparseSet() = default;
-    //virtual void remove(int entity_id) = 0;
+    virtual bool Remove(Entity entity_id) = 0;
 };
 
 template <typename T>
@@ -31,7 +31,7 @@ public:
         if (!contains(e)) {
             // Redimensionner le tableau sparse si l'ID de l'entité est plus grand que la taille interne du tableau
             if (e >= sparse.size()) {
-                sparse.resize(e + 2000, static_cast<size_t>(-1));
+                sparse.resize(e + 2000, static_cast<size_t>(NULL_ENTITY));
             }
 
             sparse[e] = dense_entities.size();
@@ -46,11 +46,11 @@ public:
         }
     }
     bool has(int entity_id) const {
-        return entity_id < sparse.size() && sparse[entity_id] != -1;
+        return entity_id < sparse.size() && sparse[entity_id] != NULL_ENTITY;
     }
 
     // Swap and Pop
-    bool remove(Entity e) {
+    bool Remove(Entity e) override {
         if (!contains(e)) return false;
 
         size_t deleted_idx = sparse[e];
@@ -66,7 +66,7 @@ public:
         sparse[last_entity] = deleted_idx;
 
         // Invalide l'entité supprimée
-        sparse[e] = static_cast<size_t>(-1);
+        sparse[e] = static_cast<size_t>(NULL_ENTITY);
 
         // Retire le dernier élément
         dense_entities.pop_back();

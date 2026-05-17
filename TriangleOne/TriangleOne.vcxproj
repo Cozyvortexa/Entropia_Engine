@@ -191,6 +191,7 @@
     <ClInclude Include="include\Systems\TimeSystem.hpp" />
     <ClInclude Include="include\Systems\windowSystem.h" />
     <ClInclude Include="include\ECS\World.h" />
+    <ClInclude Include="include\Utilities\EditorComponent.h" />
     <ClInclude Include="include\Utilities\Font_awesome.h" />
   </ItemGroup>
   <ItemGroup>

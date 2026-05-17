@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <vector>
+#include <deque>
 #include "ECS/SpareSet.h"
 #include "ECS/Components/Component.h"
 #include "ECS/AssetStore.h"
@@ -51,8 +52,20 @@ public:
     }
 
     Entity Register() {
-        Entity newEntity(entity_Register++);
+        Entity newEntity;
+        if (entity_emptySlot.size() != 0 ) {
+            newEntity = entity_emptySlot.back();
+            entity_emptySlot.pop_back();
+            return newEntity;
+        }
+        newEntity = entity_Register++;
         return newEntity;
+    }
+    void Delete_Entity(Entity entity) {
+        for (auto& currrentPool : pools) {
+            currrentPool.second.get()->Remove(entity);
+        }
+        entity_emptySlot.push_back(entity);
     }
 
     template<typename... Components>
@@ -79,6 +92,14 @@ public:
         return static_cast<SparseSet<T>*>(it->second.get())->try_Get(entity);
     }
     template<typename T>
+    bool Has_component(Entity entity) {
+        static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
+        auto it = pools.find(std::type_index(typeid(T)));
+        if (it == pools.end()) return false;
+
+        return static_cast<SparseSet<T>*>(it->second.get())->has(entity);
+    }
+    template<typename T>
     bool remove_component(Entity entity) {
         static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
         auto it = pools.find(std::type_index(typeid(T)));
@@ -86,7 +107,7 @@ public:
             assert(true, "La supression d'un composant sur l'entité numéro: " + entity + " à échouer");
             return false;
         }
-        return static_cast<SparseSet<T>*>(it->second.get())->remove(entity);
+        return it->second.get()->Remove(entity);
     }
 
     template<typename T>
@@ -108,6 +129,7 @@ public:
 private:
     std::unordered_map<std::type_index, std::unique_ptr<ISparseSet>> pools;
     std::unordered_map<std::type_index, std::unique_ptr<Engine::Resource::Resource>> ressources;
+    std::deque<Entity> entity_emptySlot;
     uint32_t entity_Register = 0;
 
     // Recupére/crée un pool spécifique

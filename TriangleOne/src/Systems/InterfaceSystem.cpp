@@ -3,13 +3,47 @@
 namespace Resource = Engine::Resource;
 namespace Component = Engine::Component;
 namespace Systems = Engine::Systems;
+namespace Editor = Engine::Editor;
 
 static bool opt_fullscreen = true;
 
+#pragma region Common function & Other
 static void glfw_error_callback(int error, const char* description)
 {
 	fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
+
+Entity Systems::InterfaceSystem::CreateNewEntity(World* world) {
+    Entity entity = world->Register();
+    Component::Transform transform(glm::vec3(0.0f));
+    Component::SceneTag scene_Tag("New entity");
+    world->add_components(entity, transform, scene_Tag);
+
+    return entity;
+}
+
+// Filters the list of EntityComponentEntry objects based on a search string.
+//The search is case-insensitive.
+std::vector<const Editor::EntityComponentEntry*> SearchBar_GetFilter_Component(char* s_searchBuffer) {
+    std::vector<const Editor::EntityComponentEntry*> filtered;
+    for (const auto& entry : Editor::s_entityList) {
+        if (s_searchBuffer[0] == '\0') {
+            filtered.push_back(&entry);
+        }
+        else {
+            std::string haystack = entry.name;
+            std::string needle = s_searchBuffer;
+            std::transform(haystack.begin(), haystack.end(), haystack.begin(), ::tolower);
+            std::transform(needle.begin(), needle.end(), needle.begin(), ::tolower);
+            if (haystack.find(needle) != std::string::npos)
+                filtered.push_back(&entry);
+        }
+    }
+
+    return filtered;
+}
+
+#pragma endregion
 
 #pragma region Theme
 static void SetTwilightPurpleTheme()
@@ -119,9 +153,95 @@ void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRess
 
 #pragma endregion
 
-#pragma region  Hierarchy
-void Display_Hierarchy_Menu(World* world, Resource::InterfaceRessource* interfaceData) {
+#pragma region Hierarchy
+//Create a new entity according to the user input
+//If a valid entity is provided, a component will be created for that entity
+void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderResource* renderData, std::string label, int entity = -1) {
+    static char s_searchBuffer[128] = "";
+
+    if (ImGui::Button(label.c_str()))
+        ImGui::OpenPopup("##AddEntityPopup");
+
+    if (ImGui::BeginPopup("##AddEntityPopup")) {
+
+        // Search bar
+        ImGui::SetNextItemWidth(220.0f);
+        std::string hint = Editor::MAGNIFYING_GLASS_ICON + " Search...";
+        ImGui::InputTextWithHint("##search", hint.c_str(), s_searchBuffer, sizeof(s_searchBuffer));
+
+        ImGui::Separator();
+
+        std::vector<const Editor::EntityComponentEntry*> filtered = SearchBar_GetFilter_Component(s_searchBuffer);
+
+
+        const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
+        const float listHeight = itemHeight * 10.0f;  // Set the max nbr item to be display
+        ImGui::BeginChild("##entityList", ImVec2(220.0f, listHeight), false, ImGuiWindowFlags_None);
+
+        for (const auto* entry : filtered) {
+            std::string label = entry->icon + "  " + entry->name;
+            if (ImGui::Selectable(label.c_str())) {
+                if (entity < 0) {
+                    entity = (int)CreateNewEntity(world);
+                }
+
+                if (entry->type == Editor::ObjectType::EmptyObject) {
+
+                }
+                else if (entry->type == Editor::ObjectType::PointLight && !world->Has_component<Component::PointLight>(entity)) {
+
+                    Component::PointLight pointLight(renderData->r_Shader.depthShaderCubeMap.get());
+                    Component::LightToInitTag pointTag(Component::LightTag::PointLight_Tag);
+                    world->add_components(entity, pointLight, pointTag);
+                }
+                else if (entry->type == Editor::ObjectType::DirectionalLight && !world->Has_component<Component::DirLight>(entity)) {
+
+                    Component::DirLight dirLight(renderData->r_Shader.depthShader.get());
+                    Component::LightToInitTag dirTag(Component::LightTag::Directional_Tag);
+                    world->add_components(entity, dirLight, dirTag);
+                }
+                else if (entry->type == Editor::ObjectType::SpotLight && !world->Has_component<Component::SpotLight>(entity)) {
+
+                    Component::SpotLight spotLight(renderData->r_Shader.depthShader.get());
+                    Component::LightToInitTag spotTag(Component::LightTag::SpotLight_Tag);
+                    world->add_components(entity, spotLight, spotTag);
+                }
+                else if (entry->type == Editor::ObjectType::Camera) {
+                    // TODO
+                }
+                else if (entry->type == Editor::ObjectType::Mesh) {
+                    // TODO
+                }
+                else if (entry->type == Editor::ObjectType::AudioSource) {
+                    // TODO
+                }
+                //else if (entry->type == Editor::ObjectType::ParticuleSystem) {
+                // 
+                //}
+                //else if (entry->type == Editor::ObjectType::Script) {
+
+                //}
+                //else if (entry->type == Editor::ObjectType::Rigidbody) {
+
+                //}
+                //else if (entry->type == Editor::ObjectType::Collider) {
+
+                //}
+
+                ImGui::CloseCurrentPopup();
+            }
+        }
+
+        ImGui::EndChild();
+        ImGui::EndPopup();
+    }
+}
+
+void Systems::InterfaceSystem::Display_Hierarchy_Menu(World* world, Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData) {
     ImGui::Begin("Hierarchy", &interfaceData->hierarchy_menu);
+
+    Add_Entity_Button(world, renderData, Editor::ADD_ICON);
+    ImGui::Separator();
 
     View view = world->view<Component::SceneTag>();
     view.each([&](int entity, Component::SceneTag& currentSceneTag) {
@@ -130,10 +250,18 @@ void Display_Hierarchy_Menu(World* world, Resource::InterfaceRessource* interfac
             if (ImGui::Selectable(currentSceneTag.name.c_str(), interfaceData->focusGameObject == entity)) {
                 interfaceData->focusGameObject = entity;
             }
+            if (ImGui::BeginPopupContextItem("ElementPopup"))
+            {
+                if (ImGui::MenuItem("Delete Entity"))
+                {
+                    world->Delete_Entity(interfaceData->focusGameObject);
+                    interfaceData->focusGameObject = Engine::Component::INVALIDE_uint32_t;
+                }
+                ImGui::EndPopup();
+            }
             ImGui::PopID();
         }
     });
-
 
     ImGui::End();
 }
@@ -165,17 +293,9 @@ void NavBar(Resource::RenderResource* renderData, Resource::InterfaceRessource* 
 
 #pragma endregion 
 
-#pragma region Inpecteur
-void Inspecteur_Light(Component::Light* light) {
-    ImGui::Text("Color");
-    ImGui::SameLine();
-    ImGui::InputFloat3("##Color", &light->color.x);
-    ImGui::Text("Intensity");
-    ImGui::SameLine();
-    ImGui::InputFloat("##Intensity", &light->intensity);
-}
+#pragma region Inspecteur
 
-void Display_Inspecteur_Menu(World* world, Resource::InterfaceRessource* interfaceData) {
+void Systems::InterfaceSystem::Display_Inspecteur_Menu(World* world, Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData) {
     ImGui::Begin("Inspecteur", &interfaceData->inspecteur_Toogle);
     if (interfaceData->focusGameObject != Engine::Component::INVALIDE_uint32_t) {
 
@@ -188,38 +308,25 @@ void Display_Inspecteur_Menu(World* world, Resource::InterfaceRessource* interfa
         //Transform
         Component::Transform* currentTransform = world->get_component<Component::Transform>(interfaceData->focusGameObject);
         if (currentTransform != nullptr && ImGui::CollapsingHeader("Transform")) {
-            ImGui::Text("Position");
-            ImGui::SameLine(100);
-            ImGui::InputFloat3("##Position", &currentTransform->position.x);
-            ImGui::Text("Rotation");
-            ImGui::SameLine(100);
-            ImGui::InputFloat3("##Rotation", &currentTransform->rotation.x);
-            ImGui::Text("Scale");
-            ImGui::SameLine(100);
-            ImGui::InputFloat3("##Scale", &currentTransform->scale.x);
+
+
+            ImGui::PushID(interfaceData->focusGameObject + "Transform");
+            Editor::DrawComponentUI(*currentTransform);
+            ImGui::PopID();
         }
 
         ////Light
         //PointLight
-        Component::PointLight* current_PointLight = world->get_component<Component::PointLight>(interfaceData->focusGameObject);
-        if (current_PointLight != nullptr && ImGui::CollapsingHeader("Point light")) {
-            Inspecteur_Light(current_PointLight);
-            ImGui::InputFloat("Range ", &current_PointLight->range);
-        }
-        //DirLight
-        Component::DirLight* current_DirLight = world->get_component<Component::DirLight>(interfaceData->focusGameObject);
-        if (current_DirLight != nullptr && ImGui::CollapsingHeader("Directionnal Light ")) {
-            Inspecteur_Light(current_DirLight);
-            ImGui::InputFloat3("Direction ", &current_DirLight->direction.x);
-        }
-        //SpotLight
-        Component::SpotLight* current_SpotLight = world->get_component<Component::SpotLight>(interfaceData->focusGameObject);
-        if (current_SpotLight != nullptr && ImGui::CollapsingHeader("Spot light")) {
-            Inspecteur_Light(current_SpotLight);
-            ImGui::InputFloat("cutOFF ", &current_SpotLight->cutOff);
-            ImGui::InputFloat("outerCutOff ", &current_SpotLight->outerCutOff);
-        }
+        Editor::DrawComponentSection<Component::PointLight>(world, interfaceData->focusGameObject, "Point light");
 
+        //DirLight
+        Editor::DrawComponentSection<Component::DirLight>(world, interfaceData->focusGameObject, "Directional Light");
+
+        //SpotLight
+        Editor::DrawComponentSection<Component::SpotLight>(world, interfaceData->focusGameObject, "Spot light");
+
+        std::string label = "Add new Component";
+        Add_Entity_Button(world, renderData, label, (int)interfaceData->focusGameObject);
     }
     ImGui::End();
 }
@@ -268,24 +375,21 @@ std::unique_ptr<Resource::Node> Systems::InterfaceSystem::BuildTree(const std::f
     return node;
 }
 
-void Systems::InterfaceSystem::Display_ArboMenu(Resource::InterfaceRessource* interfaceData) {
-    ImGui::Begin("Arbo", &interfaceData->arbo_Toogle);
-    ImGui::SetWindowFontScale(1.5f);
-
-    // Navigation bar (breadcrumb) 
-    // Reconstructs the path from the root to the current folder
+// Navigation bar (breadcrumb) 
+// Reconstructs the path from the root to the current folder and display it
+void inline Arbo_Breadcrum(Resource::InterfaceRessource* interfaceData) {
     std::vector<Resource::Node*> breadcrumb;
-    {
-        Resource::Node* cursor = interfaceData->focusDirectory;
-        while (cursor != nullptr && cursor != cursor->parent) {
-            breadcrumb.push_back(cursor);
-            cursor = cursor->parent;
-        }
-        // Add the root if it is not already included
-        if (cursor != nullptr && (breadcrumb.empty() || breadcrumb.back() != cursor))
-            breadcrumb.push_back(cursor);
-        std::reverse(breadcrumb.begin(), breadcrumb.end());
+
+    Resource::Node* cursor = interfaceData->focusDirectory;
+    while (cursor != nullptr && cursor != cursor->parent) {
+        breadcrumb.push_back(cursor);
+        cursor = cursor->parent;
     }
+    // Add the root if it is not already included
+    if (cursor != nullptr && (breadcrumb.empty() || breadcrumb.back() != cursor))
+        breadcrumb.push_back(cursor);
+    std::reverse(breadcrumb.begin(), breadcrumb.end());
+
 
     // Displays the breadcrumb buttons on a single line
     for (size_t i = 0; i < breadcrumb.size(); ++i) {
@@ -306,16 +410,46 @@ void Systems::InterfaceSystem::Display_ArboMenu(Resource::InterfaceRessource* in
         }
         ImGui::PopID();
     }
+}
 
-    // Refresh button
-    std::string refreshLabel = std::string(ICON_FA_SYNC_ALT) + " ";
+// Refresh button
+void inline Systems::InterfaceSystem::Arbo_RefreshButton(Resource::InterfaceRessource* interfaceData) {
+    std::string refreshLabel = std::string(ICON_FA_ARROWS_ROTATE) + " ";
     float buttonWidth = ImGui::CalcTextSize(refreshLabel.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f;
     float available = ImGui::GetContentRegionAvail().x;
+
     ImGui::SameLine(available - buttonWidth + ImGui::GetStyle().WindowPadding.x);
     if (ImGui::Button(refreshLabel.c_str())) {
         interfaceData->mainDirectory = BuildTree("Assets");
         interfaceData->focusDirectory = interfaceData->mainDirectory.get();
     }
+}
+
+std::string inline FileTypeToIcon(Resource::FileType type) {
+    std::string icon;
+    if (type== Resource::FileType::Directory)
+        icon = Editor::FOLDER_ICON;
+    else if (type== Resource::FileType::Image)
+        icon = ICON_FA_IMAGE;
+    else if (type== Resource::FileType::Audio)
+        icon = Editor::MUSIC_ICON;
+    else if (type== Resource::FileType::Model)
+        icon = Editor::DICE_D6_ICON;
+    else if (type== Resource::FileType::Video)
+        icon = ICON_FA_FILM;
+    else
+        icon = ICON_FA_FILE;
+
+    return icon;
+}
+
+void Systems::InterfaceSystem::Display_ArboMenu(Resource::InterfaceRessource* interfaceData) {
+    ImGui::Begin("Arbo", &interfaceData->arbo_Toogle);
+    ImGui::SetWindowFontScale(1.5f);
+
+    Arbo_Breadcrum(interfaceData);
+
+    Arbo_RefreshButton(interfaceData);
 
     ImGui::Separator();
 
@@ -336,24 +470,12 @@ void Systems::InterfaceSystem::Display_ArboMenu(Resource::InterfaceRessource* in
         ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(60, 120, 255, 0));
 
 
-        std::string icon;
-        if (currentNode->type == Resource::FileType::Directory)
-            icon = ICON_FA_FOLDER;
-        else if (currentNode->type == Resource::FileType::Image)
-            icon = ICON_FA_IMAGE;
-        else if (currentNode->type == Resource::FileType::Audio)
-            icon = ICON_FA_MUSIC;
-        else if (currentNode->type == Resource::FileType::Model)
-            icon = ICON_FA_DICE_D6;
-        else if (currentNode->type == Resource::FileType::Video)
-            icon = ICON_FA_FILM;
-        else
-            icon = ICON_FA_FILE;
+        std::string icon = FileTypeToIcon(currentNode->type);
 
         // Truncate the name if it is too long to fit in the button
         std::string displayName = currentNode->name;
-        if (displayName.size() > 9)
-            displayName = displayName.substr(0, 8) + "..";
+        if (displayName.size() > 12)
+            displayName = displayName.substr(0, 12) + "..";
 
         std::string label = icon + "\n" + displayName;
 
@@ -362,7 +484,16 @@ void Systems::InterfaceSystem::Display_ArboMenu(Resource::InterfaceRessource* in
                 interfaceData->focusDirectory = currentNode;
             }
             else if (currentNode->type == Resource::FileType::Image) {
-                // TODO
+                //TEMP
+                ShellExecuteA(
+                    NULL,
+                    "open",
+                    currentNode->path.c_str(),
+                    NULL,
+                    NULL,
+                    SW_SHOWNORMAL
+                );
+
             }
             else if (currentNode->type == Resource::FileType::Audio) {
                 // TODO
@@ -456,8 +587,8 @@ void Systems::InterfaceSystem::Update(World& world, const Resource::ResourceBuff
 
     RenderWindows(renderData, interfaceData, windowsData);
     Display_RenderMenu(interfaceData, renderData);
-    Display_Hierarchy_Menu(&world, interfaceData);
-    Display_Inspecteur_Menu(&world, interfaceData);
+    Display_Hierarchy_Menu(&world, interfaceData, renderData);
+    Display_Inspecteur_Menu(&world, interfaceData, renderData);
     Display_ArboMenu(interfaceData);
 
 

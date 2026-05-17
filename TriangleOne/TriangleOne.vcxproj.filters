@@ -164,6 +164,9 @@
     <ClInclude Include="include\Utilities\Font_awesome.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\Utilities\EditorComponent.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\Geometry_Pass\Vertex_GeometryPass.glsl" />

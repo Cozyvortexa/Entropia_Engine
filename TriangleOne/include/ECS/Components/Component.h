@@ -29,6 +29,15 @@ namespace Engine::Component {
 		glm::vec3 rotation = glm::vec3(1.0f);
 		glm::vec3 scale = glm::vec3(1.0f);
 
+
+		template<typename F>
+		void Reflect(F&& f)
+		{
+			f("position", position);
+			f("rotation", rotation);
+			f("scale", scale);
+		}
+
 		glm::mat4 GetTransformModel() const {
 			glm::mat4 model(1.0f);
 
