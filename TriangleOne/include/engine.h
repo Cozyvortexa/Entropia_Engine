@@ -15,11 +15,12 @@
 #include "ECS/Scheduler.h"
 #include "ECS/AssetStore.h"
 #include "Render/Renderer.h"
+#include "Audio/AudioManager.h"
 
 class EntropiaZero {
 public:
-	EntropiaZero();
-	~EntropiaZero();
+	EntropiaZero() = default;
+	~EntropiaZero() = default;
 
 	int Run();
 	void Shutdown();
@@ -29,12 +30,11 @@ private:
 	void RendererFactory();
 	int WIDTH = 800;
 	int HEIGHT = 600;
-	static EntropiaZero* instance;
 	std::unique_ptr<Engine::Systems::WindowSystem> window;
-
 
 	std::unique_ptr<World> world;
 	std::unique_ptr<Scheduler> scheduler;
 	std::unique_ptr<AssetStore> assetStore;
 	std::unique_ptr<Renderer> renderer;
+	std::unique_ptr<Engine::Audio::AudioManager> audioManager;
 };

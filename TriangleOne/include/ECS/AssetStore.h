@@ -13,6 +13,8 @@
 
 #include "Render/Material.h"
 
+#include "ECS/Components/AudioStruct.h"
+
 class AssetStore {
 public:
 	AssetStore() { meshs.reserve(2000); textures.reserve(2000); }
@@ -25,6 +27,9 @@ public:
 	Material* Get_Material(unsigned int index);
 
 	Texture* Get_Texture(unsigned int index);
+
+
+	Engine::Audio::Audio* Load_Sound(ma_engine& audioEngine, const std::string& name, const char* path, Engine::Audio::SoundFlags flags);
 
 private:
 	//Assets

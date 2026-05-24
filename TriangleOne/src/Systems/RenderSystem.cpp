@@ -445,7 +445,8 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	Entity camEntity = world.Register();
 	Component::CameraComponent cameraComponent(windowData->WIDTH, windowData->HEIGHT);
 	Component::Transform transform;
-	world.add_components(camEntity, cameraComponent, transform);
+	Component::AudioListener audioListener;
+	world.add_components(camEntity, cameraComponent, transform, audioListener);
 
 	world.get_ressource<Resource::ActiveCamera>()->cameraID = camEntity;
 

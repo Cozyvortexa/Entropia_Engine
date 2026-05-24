@@ -26,7 +26,7 @@ public:
             sparse[e] < dense_entities.size() &&
             dense_entities[sparse[e]] == e;
     }
-
+    //for Lvalue
     void insert(Entity e, const T& component) {
         if (!contains(e)) {
             // Redimensionner le tableau sparse si l'ID de l'entité est plus grand que la taille interne du tableau
@@ -45,6 +45,24 @@ public:
             dense_components[sparse[e]] = component;
         }
     }
+    //for Rvalue
+    void insert(Entity e, T&& component) {
+        if (!contains(e)) {
+            if (e >= sparse.size()) {
+                sparse.resize(e + 2000, static_cast<size_t>(NULL_ENTITY));
+            }
+            sparse[e] = dense_entities.size();
+            dense_entities.push_back(e);
+
+            // std::move fonctionne enfin car 'component' n'est pas const !
+            dense_components.push_back(std::move(component));
+        }
+        else {
+            // Met à jour en déplaçant proprement
+            dense_components[sparse[e]] = std::move(component);
+        }
+    }
+
     bool has(int entity_id) const {
         return entity_id < sparse.size() && sparse[entity_id] != NULL_ENTITY;
     }
@@ -59,8 +77,8 @@ public:
         // Remplace l'élément supprimé par le dernier élément du tableau dense
         Entity last_entity = dense_entities[last_idx];
 
-        dense_entities[deleted_idx] = dense_entities[last_idx];
-        dense_components[deleted_idx] = dense_components[last_idx];
+        dense_entities[deleted_idx] = std::move(dense_entities[last_idx]);
+        dense_components[deleted_idx] = std::move(dense_components[last_idx]);
 
         // Met à jour l'index de la dernière entité dans le tableau sparse
         sparse[last_entity] = deleted_idx;

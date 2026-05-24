@@ -12,6 +12,11 @@
 
 #include "ImGui/imgui.h"
 
+#include <ECS/Components/AudioStruct.h>
+#include "Audio/AudioManager.h"
+
+#include "Utilities/Observer.h"
+
 class All_Light;
 namespace Engine::Component {
 	static const uint32_t INVALIDE_uint32_t = static_cast<uint32_t>(-1);
@@ -123,6 +128,92 @@ namespace Engine::Component {
 		LightToInitTag() {};
 		LightToInitTag(LightTag tag) { this->tag = tag; }
 		LightTag tag = LightTag::None;
+	};
+
+	struct AudioSource : public Component{
+	public:
+		~AudioSource() {
+			Engine::Audio::AudioManager::DeleteSound(audio);
+		}
+
+		AudioSource(std::string name, std::string path, Engine::Audio::Audio* audio) {
+			this->name = name;
+			this->path = path;
+			this->audio = audio;
+
+			SetupConnections();
+		}
+
+		AudioSource(AudioSource&& other) noexcept: name(std::move(other.name)), path(std::move(other.path)), audio(std::exchange(other.audio, nullptr)) {
+			volume.Set(other.volume.Get());
+			range.Set(other.range.Get());
+
+			other.audio = nullptr;
+
+			SetupConnections();
+		}
+		AudioSource& operator=(AudioSource&& other) noexcept {
+			if (this != &other) {
+
+				if (this->audio) {
+					Engine::Audio::AudioManager::DeleteSound(this->audio);
+				}
+				//Clear current connection
+				volumeConnection = ScopedConnection();
+				rangeConnection = ScopedConnection();
+
+				//Transfers the master data
+				name = std::move(other.name);
+				path = std::move(other.path);
+				audio = (std::exchange(other.audio, nullptr));
+
+				//Synchronises the values of the observers
+				volume.Set(other.volume.Get());
+				range.Set(other.range.Get());
+
+				SetupConnections();
+				}
+			return *this;
+			}
+
+		// Copy is prohibidden
+		AudioSource(const AudioSource&) = delete;
+		AudioSource& operator=(const AudioSource&) = delete;
+
+
+		std::string path = "";
+		std::string name = "";
+		Engine::Audio::Audio* audio;
+
+		Observer<float> volume;
+		Observer<float> range;
+
+		template<typename F>
+		void Reflect(F&& f)
+		{
+			f("Name", name);
+			f("Looping", audio->lopping);
+			f("Spatialisation", audio->spatialisation);
+			f("Volume", volume);
+			f("range", range);
+		}
+
+	private:
+		void SetupConnections() {
+			volumeConnection = volume.Subscribe([this](const float& v) {
+				if (this->audio) Audio::AudioManager::SetVolume(*(this->audio), v);
+				});
+			rangeConnection = range.Subscribe([this](const float& v) {
+				if (this->audio) Audio::AudioManager::SetMaxDistance(*(this->audio), v);
+				});
+		}
+
+		ScopedConnection volumeConnection;
+		ScopedConnection rangeConnection;
+	};
+
+	struct AudioListener : public Component{
+		ma_uint32 index = 0;
 	};
 }
 
@@ -319,6 +410,11 @@ namespace Engine::Resource {
 		Entity cameraID;
 	};
 
+	struct AudioResource : public Resource {
+		ma_engine audioEngine{};
+		ma_resource_manager resourceManager;
+	};
+
 	struct ResourceBuffer {
 		WindowResource* windowResource;
 		TimeResource* timeResource;
@@ -326,5 +422,6 @@ namespace Engine::Resource {
 		ActiveCamera* activeCamera;
 		InputResource* inputResource;
 		InterfaceRessource* interfaceRessource;
+		AudioResource* audioResource;
 	};
 }

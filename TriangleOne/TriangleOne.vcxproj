@@ -146,7 +146,9 @@
     <ClCompile Include="..\include\ImGui\imgui_stdlib.cpp" />
     <ClCompile Include="..\include\ImGui\imgui_tables.cpp" />
     <ClCompile Include="..\include\ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="src\Audio\AudioManager.cpp" />
     <ClCompile Include="src\Render\Renderer.cpp" />
+    <ClCompile Include="src\Systems\AudioSystem.cpp" />
     <ClCompile Include="src\Systems\CameraSystem.cpp" />
     <ClCompile Include="src\ECS\AssetStore.cpp" />
     <ClCompile Include="src\ECS\Scheduler.cpp" />
@@ -169,8 +171,11 @@
     <ClCompile Include="src\Utilities\Font_awesome.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Audio\AudioManager.h" />
+    <ClInclude Include="include\ECS\Components\AudioStruct.h" />
     <ClInclude Include="include\Render\Renderer.h" />
     <ClInclude Include="include\Render\RenderObject.h" />
+    <ClInclude Include="include\Systems\AudioSystem.h" />
     <ClInclude Include="include\Systems\CameraSystem.h" />
     <ClInclude Include="include\Systems\InputSystem.h" />
     <ClInclude Include="include\ECS\Components\Component.h" />
@@ -193,6 +198,8 @@
     <ClInclude Include="include\ECS\World.h" />
     <ClInclude Include="include\Utilities\EditorComponent.h" />
     <ClInclude Include="include\Utilities\Font_awesome.h" />
+    <ClInclude Include="include\Utilities\miniaudio.h" />
+    <ClInclude Include="include\Utilities\Observer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\BloomShader\FragmentBloom.glsl" />

@@ -9,6 +9,9 @@
 
 #include "ECS/Components/Component.h"
 
+#include "ECS/World.h"
+#include "Utilities/Observer.h"
+
 namespace Component = Engine::Component;
 
 namespace Engine::Editor {
@@ -33,7 +36,9 @@ namespace Engine::Editor {
     };
 
     template<typename T>
-    inline void DrawWidget(const char* label, T& value) {};  // Fallback
+    inline void DrawWidget(const char* label, T& value) {
+        std::cout << "The method for displaying the label: " << label << " is unknown" << std::endl; // Fallback
+    };  
 
     template<>
     inline void DrawWidget<int>(const char* label, int& value) {
@@ -63,6 +68,30 @@ namespace Engine::Editor {
     template<>
     inline void DrawWidget<glm::vec4>(const char* label, glm::vec4& value) {
         ImGui::InputFloat4(label, &value.x);
+    }
+    template<>
+    inline void DrawWidget<std::string>(const char* label, std::string& value) {
+        ImGui::InputText(label, &value);
+    }
+
+    //Observer
+    template<>
+    inline void DrawWidget<Observer<int>>(const char* label, Observer<int>& value) {
+        int temp = value.Get();
+
+        if (ImGui::InputInt(label, &temp))
+        {
+            value.Set(temp);
+        }
+    }
+    template<>
+    inline void DrawWidget<Observer<float>>(const char* label, Observer<float>& value) {
+        float temp = value.Get();
+
+        if (ImGui::InputFloat(label, &temp))
+        {
+            value.Set(temp);
+        }
     }
 
 

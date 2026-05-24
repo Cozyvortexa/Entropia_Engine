@@ -1,25 +1,16 @@
 #include "engine.h"
 
-EntropiaZero* EntropiaZero::instance = nullptr;
-
-EntropiaZero::EntropiaZero() {
-	if (instance != nullptr) { throw std::runtime_error("EntropiaZero instance already exists!"); }
-
-	instance = this;
-}
-
-EntropiaZero::~EntropiaZero() {};
-
 void EntropiaZero::InitEngine() {
 	window = std::make_unique<Engine::Systems::WindowSystem>();
 
 	assetStore = std::make_unique<AssetStore>();
 
 	world = std::make_unique<World>(assetStore.get());
-
+	audioManager = std::make_unique<Engine::Audio::AudioManager>();
 
 
 	scheduler = std::make_unique<Scheduler>(world.get(), window.get());
+
 
 	RendererFactory();
 	world->renderer = renderer.get();

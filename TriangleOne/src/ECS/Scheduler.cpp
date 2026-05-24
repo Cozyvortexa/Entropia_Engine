@@ -12,6 +12,7 @@ Scheduler::Scheduler(World* world, Engine::Systems::WindowSystem* window) {
 	world->add_ressource<Engine::Resource::InterfaceRessource>();
 	world->add_ressource<Engine::Resource::InputResource>();
 	world->add_ressource<Engine::Resource::InterfaceRessource>();
+	world->add_ressource<Engine::Resource::AudioResource>();
 	FillResourceBuffer();
 	window->Init(*world, resourceBuffer.get()); // Systeme a part
 }
@@ -26,6 +27,7 @@ void Scheduler::CreateSystemes() {
 	systemes.push_back(std::make_unique<Engine::Systems::RenderSystem>());
 	systemes.push_back(std::make_unique<Engine::Systems::LightSystem>());
 	systemes.push_back(std::make_unique<Engine::Systems::InterfaceSystem>());
+	systemes.push_back(std::make_unique<Engine::Systems::AudioSystem>());
 
 	std::cout << "CreateSystemes done" << std::endl;;
 }
@@ -70,4 +72,5 @@ void Scheduler::FillResourceBuffer() {
 	resourceBuffer->renderResource = world->get_ressource<Engine::Resource::RenderResource>();
 	resourceBuffer->inputResource = world->get_ressource<Engine::Resource::InputResource>();
 	resourceBuffer->interfaceRessource = world->get_ressource<Engine::Resource::InterfaceRessource>();
+	resourceBuffer->audioResource = world->get_ressource<Engine::Resource::AudioResource>();
 }

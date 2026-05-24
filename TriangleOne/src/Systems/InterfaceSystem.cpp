@@ -23,7 +23,7 @@ Entity Systems::InterfaceSystem::CreateNewEntity(World* world) {
 }
 
 // Filters the list of EntityComponentEntry objects based on a search string.
-//The search is case-insensitive.
+// The search is case-insensitive.
 std::vector<const Editor::EntityComponentEntry*> SearchBar_GetFilter_Component(char* s_searchBuffer) {
     std::vector<const Editor::EntityComponentEntry*> filtered;
     for (const auto& entry : Editor::s_entityList) {
@@ -156,7 +156,7 @@ void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRess
 #pragma region Hierarchy
 //Create a new entity according to the user input
 //If a valid entity is provided, a component will be created for that entity
-void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderResource* renderData, std::string label, int entity = -1) {
+void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderResource* renderData, Resource::AudioResource* audioData, std::string label, int entity = -1) {
     static char s_searchBuffer[128] = "";
 
     if (ImGui::Button(label.c_str()))
@@ -213,7 +213,11 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
                     // TODO
                 }
                 else if (entry->type == Editor::ObjectType::AudioSource) {
-                    // TODO
+                    
+                    //std::string name = "Mario64";
+                    //std::string path = "Assets/Sound/Dire_Dire_Docks.mp3";
+                    //Component::AudioSource audioSource(name, path, world->assetStore->Load_Sound(audioData->audioEngine, name, path.c_str(), Audio::SoundFlags::None));
+                    //world->add_components(entity, std::move(audioSource));
                 }
                 //else if (entry->type == Editor::ObjectType::ParticuleSystem) {
                 // 
@@ -237,10 +241,15 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
     }
 }
 
-void Systems::InterfaceSystem::Display_Hierarchy_Menu(World* world, Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData) {
+void Systems::InterfaceSystem::Display_Hierarchy_Menu(World* world, const Resource::ResourceBuffer* resourceBuffer) {
+    Resource::InterfaceRessource* interfaceData = resourceBuffer->interfaceRessource;
+    Resource::RenderResource* renderData = resourceBuffer->renderResource;
+    Resource::AudioResource* audioData = resourceBuffer->audioResource;
+
+
     ImGui::Begin("Hierarchy", &interfaceData->hierarchy_menu);
 
-    Add_Entity_Button(world, renderData, Editor::ADD_ICON);
+    Add_Entity_Button(world, renderData, audioData, Editor::ADD_ICON);
     ImGui::Separator();
 
     View view = world->view<Component::SceneTag>();
@@ -295,7 +304,12 @@ void NavBar(Resource::RenderResource* renderData, Resource::InterfaceRessource* 
 
 #pragma region Inspecteur
 
-void Systems::InterfaceSystem::Display_Inspecteur_Menu(World* world, Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData) {
+void Systems::InterfaceSystem::Display_Inspecteur_Menu(World* world, const Resource::ResourceBuffer* resourceBuffer) {
+    Resource::InterfaceRessource* interfaceData = resourceBuffer->interfaceRessource;
+    Resource::AudioResource* audioData = resourceBuffer->audioResource;
+    Resource::RenderResource* renderData = resourceBuffer->renderResource;
+
+
     ImGui::Begin("Inspecteur", &interfaceData->inspecteur_Toogle);
     if (interfaceData->focusGameObject != Engine::Component::INVALIDE_uint32_t) {
 
@@ -325,8 +339,12 @@ void Systems::InterfaceSystem::Display_Inspecteur_Menu(World* world, Resource::I
         //SpotLight
         Editor::DrawComponentSection<Component::SpotLight>(world, interfaceData->focusGameObject, "Spot light");
 
+        //Audio Source
+        Editor::DrawComponentSection<Component::AudioSource>(world, interfaceData->focusGameObject, "Audio source");
+
+        ImGui::Separator();
         std::string label = "Add new Component";
-        Add_Entity_Button(world, renderData, label, (int)interfaceData->focusGameObject);
+        Add_Entity_Button(world, renderData, audioData, label, (int)interfaceData->focusGameObject);
     }
     ImGui::End();
 }
@@ -456,7 +474,7 @@ void Systems::InterfaceSystem::Display_ArboMenu(Resource::InterfaceRessource* in
     // File/folder grid 
     const float iconButtonSize = 80.0f;
     float windowWidth = ImGui::GetContentRegionAvail().x;
-    int   columns = std::max(1, static_cast<int>(windowWidth / iconButtonSize));
+    int columns = std::max(1, static_cast<int>(windowWidth / iconButtonSize));
 
     int itemIndex = 0;
     for (const auto& currentNode_unique_ptr : interfaceData->focusDirectory->children) {
@@ -587,8 +605,8 @@ void Systems::InterfaceSystem::Update(World& world, const Resource::ResourceBuff
 
     RenderWindows(renderData, interfaceData, windowsData);
     Display_RenderMenu(interfaceData, renderData);
-    Display_Hierarchy_Menu(&world, interfaceData, renderData);
-    Display_Inspecteur_Menu(&world, interfaceData, renderData);
+    Display_Hierarchy_Menu(&world, resourceBuffer);
+    Display_Inspecteur_Menu(&world, resourceBuffer);
     Display_ArboMenu(interfaceData);
 
 

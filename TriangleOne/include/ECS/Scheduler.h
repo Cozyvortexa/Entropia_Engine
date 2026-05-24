@@ -8,11 +8,11 @@
 #include <utility>
 
 #include "Systems/TimeSystem.hpp"
-//#include <Systemes/RenderModule/RenderModule.h>
 #include <vector>
 
 #include <iostream>
 #include "Systems/InterfaceSystem.h"
+#include "Systems/AudioSystem.h"
 
 class Scheduler {
 public:

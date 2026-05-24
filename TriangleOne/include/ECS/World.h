@@ -14,13 +14,14 @@
 #include "ECS/AssetStore.h"
 
 #include "Render/Renderer.h"
+#include "Audio/AudioManager.h"
 
 #include <unordered_map>
 #include <typeindex>
 #include <cassert>
 #include <algorithm>
 #include <memory>
-
+#include <type_traits>
 
 
 template<typename... Components>
@@ -74,14 +75,16 @@ public:
     }
 
     template<typename T>
-    void add_component(int entity, T component) {  // WARNING, component is a copy 
-        static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
-        get_pool<T>()->insert(entity, component);
+    void add_component(int entity, T&& component) {
+        static_assert(std::is_base_of_v<Engine::Component::Component, std::decay_t<T>>, "T must inherit from Engine::Component::Component");
+
+        get_pool<std::decay_t<T>>()->insert(entity, std::forward<T>(component));
     }
     template<typename... Args>
-    void add_components(int entity, Args ... args) {
-        static_assert((std::is_base_of_v<Engine::Component::Component, Args>&& ...), "T must inherit from Engine::Component::Component");
-        (add_component(entity, args), ...);
+    void add_components(int entity, Args&&... args) {
+        static_assert((std::is_base_of_v<Engine::Component::Component, std::decay_t<Args>> && ...), "T must inherit from Engine::Component::Component");
+
+        (add_component(entity, std::forward<Args>(args)), ...);
     }
     template<typename T>
     T* get_component(Entity entity) {
@@ -126,6 +129,7 @@ public:
 
     AssetStore* assetStore;
     Renderer* renderer;
+    Engine::Audio::AudioManager* audioManager;
 private:
     std::unordered_map<std::type_index, std::unique_ptr<ISparseSet>> pools;
     std::unordered_map<std::type_index, std::unique_ptr<Engine::Resource::Resource>> ressources;

@@ -1,9 +1,128 @@
 #include "ECS/AssetStore.h"
 
+namespace Resource = Engine::Resource;
+namespace Audio = Engine::Audio;
+
+#pragma region Texture
+
+unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh)
+{
+	unsigned int texture_Handle = 0;
+	aiString str;
+	aiReturn succes = mat->GetTexture(type, 0, &str);  // Only take the first texture
+	if (succes == aiReturn_FAILURE) { return -1; }
+
+	auto result = pathToIndexMap_Texture.try_emplace(str.C_Str());
+	auto it = result.first;
+	auto is_Inserted = result.second;
+
+	if (is_Inserted) { // Create a new texture if the key don't exist
+		Texture texture;
+		const aiTexture* embeddedTex = scene->GetEmbeddedTexture(str.C_Str());
+		if (embeddedTex) {  // texture embarquer detecter
+			texture.id = TextureClass::LoadEmbeddedTexture(embeddedTex);
+		}
+		else
+			texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), currentMesh.directory);
+
+		texture.path = str.C_Str();
+
+		switch (type) {  // la texture est charger meme si elle ne serra pas utiliser
+		case aiTextureType_DIFFUSE:
+			texture.textureType = Texture::Diffuse;
+			break;
+		case aiTextureType_BASE_COLOR:
+			texture.textureType = Texture::Albedo;
+			break;
+		case aiTextureType_SPECULAR:
+			texture.textureType = Texture::Specular;
+			break;
+		case aiTextureType_NORMALS:
+			texture.textureType = Texture::Normal;
+			break;
+		case aiTextureType_HEIGHT:
+			texture.textureType = Texture::Normal;
+			break;
+		case aiTextureType_METALNESS:
+			texture.textureType = Texture::Metalness;
+			break;
+		case aiTextureType_GLTF_METALLIC_ROUGHNESS:
+			texture.textureType = Texture::MetalicRoughness;
+			break;
+		case aiTextureType_AMBIENT_OCCLUSION:
+			texture.textureType = Texture::Ambient_Occlusion;
+			break;
+		}
+
+		textures.push_back(texture);
+		texture_Handle = textures.size() - 1;
+		it->second = texture_Handle;
+	}
+	else { // or return the existing texture one
+		texture_Handle = it->second;
+	}
+	return texture_Handle;
+}
+
+Texture* AssetStore::Get_Texture(unsigned int index) {  // Dedicate to the Systemes
+	if (index >= textures.size()) { return nullptr; } // "Index out of range in Get_textures(int index)"
+	return &textures[index];
+}
+
+
+#pragma endregion
+
+#pragma region Material
+
+int AssetStore::CheckExistingMat(std::string name) {
+	uint32_t hashName = std::hash<std::string>{}(name);
+	auto it = pathToIndexMapMaterial.find(hashName);
+
+	if (it == pathToIndexMapMaterial.end()) {
+		return -1;
+	}
+	return it->second;
+}
+
+std::pair<Material&, int> AssetStore::CreateMaterial(std::string name, const char* vertexPath, const char* fragmentPath) {
+	int index = CheckExistingMat(name);
+	if (index != -1) {  // Material already exist
+		return std::make_pair(std::ref(materials[index]), index);
+	}
+	Material material(name, vertexPath, fragmentPath);
+	materials.push_back(material);
+	int lastElementIndex = materials.size() - 1;
+	pathToIndexMapMaterial[std::hash<std::string>{}(name)] = lastElementIndex;
+
+	return std::make_pair(std::ref(materials[lastElementIndex]), lastElementIndex);
+}
+
+Material& AssetStore::Get_Material(std::string name) {
+	int index = CheckExistingMat(name);
+
+	if (index == -1) {
+		std::cout << "Material with the name: " << name << " do not exist in Get_Material(std::string name)" << std::endl;
+	}
+
+	return materials[index];
+}
+
+Material* AssetStore::Get_Material(unsigned int index) {  // Dedicate to the Systemes
+	if (index >= materials.size()) {  // Index out of range in Get_Material(int index)
+		return &materials[0];
+	}
+
+	return &materials[index];
+}
+
+#pragma endregion
+
+#pragma region Mesh
+
 Mesh AssetStore::LoadMesh(std::string path) {
 	Mesh mesh = Mesh();
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | 
+	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices |
 		aiProcess_CalcTangentSpace | aiProcess_GlobalScale | aiProcess_PreTransformVertices | aiProcess_GenSmoothNormals);  // WARNING, the flag aiProcess_PreTransformVertices removes the node hierarchy, thereby preventing animations from working 
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -102,7 +221,7 @@ void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& c
 		unsigned int ambientOcclusion_handle = LoadMaterialTextures(assimp_material, aiTextureType_AMBIENT_OCCLUSION, scene, currentMesh);
 		unsigned int metalness_handle = LoadMaterialTextures(assimp_material, aiTextureType_METALNESS, scene, currentMesh);
 		unsigned int roughness_handle = LoadMaterialTextures(assimp_material, aiTextureType_DIFFUSE_ROUGHNESS, scene, currentMesh);
-		
+
 		if (normalMap_handle == -1) {
 			normalMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_HEIGHT, scene, currentMesh);
 			if (normalMap_handle == -1) currentMesh.hasNormalMap = false;
@@ -148,65 +267,6 @@ void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& c
 	currentMesh.Create_SubMesh(vertices, indices, material_Handle);
 }
 
-unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh)
-{
-	unsigned int texture_Handle = 0;
-	aiString str;
-	aiReturn succes = mat->GetTexture(type, 0, &str);  // Only take the first texture
-	if (succes == aiReturn_FAILURE) {return -1;}
-
-	auto result = pathToIndexMap_Texture.try_emplace(str.C_Str());
-	auto it = result.first;
-	auto is_Inserted = result.second;
-
-	if (is_Inserted) { // Create a new texture if the key don't exist
-		Texture texture;
-		const aiTexture* embeddedTex = scene->GetEmbeddedTexture(str.C_Str());
-		if (embeddedTex) {  // texture embarquer detecter
-			texture.id = TextureClass::LoadEmbeddedTexture(embeddedTex);
-		}
-		else
-			texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), currentMesh.directory);
-
-		texture.path = str.C_Str();
-
-		switch (type) {  // la texture est charger meme si elle ne serra pas utiliser
-		case aiTextureType_DIFFUSE:
-			texture.textureType = Texture::Diffuse;
-			break;
-		case aiTextureType_BASE_COLOR:
-			texture.textureType = Texture::Albedo;
-			break;
-		case aiTextureType_SPECULAR:
-			texture.textureType = Texture::Specular;
-			break;
-		case aiTextureType_NORMALS:
-			texture.textureType = Texture::Normal;
-			break;
-		case aiTextureType_HEIGHT:
-			texture.textureType = Texture::Normal;
-			break;
-		case aiTextureType_METALNESS:
-			texture.textureType = Texture::Metalness;
-			break;
-		case aiTextureType_GLTF_METALLIC_ROUGHNESS:
-			texture.textureType = Texture::MetalicRoughness;
-			break;
-		case aiTextureType_AMBIENT_OCCLUSION:
-			texture.textureType = Texture::Ambient_Occlusion;
-			break;
-		}
-
-		textures.push_back(texture);
-		texture_Handle = textures.size() - 1;
-		it->second = texture_Handle;
-	}
-	else { // or return the existing texture one
-		texture_Handle = it->second;
-	}
-	return texture_Handle;
-}
-
 Mesh& AssetStore::Get_Mesh(int index) {
 	assert(index <= meshs.size() - 1, "Index out of range in Get_Mesh, AssetStore");
 	return meshs[index];
@@ -214,7 +274,7 @@ Mesh& AssetStore::Get_Mesh(int index) {
 
 std::pair<Mesh&, int> AssetStore::Get_Mesh(std::string path) {
 	auto it = pathToIndexMapMesh.find(path);
-	
+
 	if (it == pathToIndexMapMesh.end()) {
 		meshs.push_back(LoadMesh(path));
 
@@ -225,49 +285,43 @@ std::pair<Mesh&, int> AssetStore::Get_Mesh(std::string path) {
 	return std::make_pair(std::ref(meshs[it->second]), it->second);
 }
 
-int AssetStore::CheckExistingMat(std::string name) {
-	uint32_t hashName = std::hash<std::string>{}(name);
-	auto it = pathToIndexMapMaterial.find(hashName);
+#pragma endregion
 
-	if (it == pathToIndexMapMaterial.end()) {
-		return -1;
-	}
-	return it->second;
-}
+#pragma region Sound
+
+/*
+*@brief Creates a sound and adds it to the sound Bank
+*
+* @param name : name of the Audio
+*
+* @param path : path to the audio file
+*
+* @param loadMethod : define the load method (SYNCHRONE, ASYNCHRONE)
+*
+* @param readerMethode : defines how the audio file is played (STREAMING, PRELOADING)
+*
+*/
+Audio::Audio* AssetStore::Load_Sound(ma_engine& audioEngine, const std::string& name, const char* path, Audio::SoundFlags flags) {
+
+	ma_sound_flags readMethod = Audio::HasFlag(flags, Audio::SoundFlags::Preload) ? MA_SOUND_FLAG_DECODE : MA_SOUND_FLAG_STREAM;
+	ma_sound_flags loadMethod = Audio::HasFlag(flags, Audio::SoundFlags::Async) ? MA_SOUND_FLAG_ASYNC : MA_SOUND_FLAG_WAIT_INIT;
+
+	ma_sound* sound = new ma_sound;
 
 
-std::pair<Material&, int> AssetStore::CreateMaterial(std::string name, const char* vertexPath, const char* fragmentPath) {
-	int index = CheckExistingMat(name);
-	if (index != -1) {  // Material already exist
-		return std::make_pair(std::ref(materials[index]), index);
-	}
-	Material material(name, vertexPath, fragmentPath);
-	materials.push_back(material);
-	int lastElementIndex = materials.size() - 1;
-	pathToIndexMapMaterial[std::hash<std::string>{}(name)] = lastElementIndex;
+	ma_result result = ma_sound_init_from_file(
+		&audioEngine,
+		path,
+		loadMethod | readMethod,
+		nullptr, nullptr, sound
+	);
 
-	return std::make_pair(std::ref(materials[lastElementIndex]), lastElementIndex);
-}
-
-
-Material& AssetStore::Get_Material(std::string name) {
-	int index = CheckExistingMat(name);
-
-	if (index == -1) {
-		std::cout << "Material with the name: " << name << " do not exist in Get_Material(std::string name)" << std::endl;
-	}
-
-	return materials[index];
-}
-
-Material* AssetStore::Get_Material(unsigned int index) {  // Dedicate to the Systemes
-	if (index >= materials.size()) {  // Index out of range in Get_Material(int index)
-		return &materials[0];
+	if (result != MA_SUCCESS) {
+		delete sound;
+		return nullptr;
 	}
 
-	return &materials[index];
+	return new Audio::Audio(name, path, sound, flags);
 }
-Texture* AssetStore::Get_Texture(unsigned int index) {  // Dedicate to the Systemes
-	if (index >= textures.size()) {return nullptr;} // "Index out of range in Get_textures(int index)"
-	return &textures[index];
-}
+
+#pragma endregion

@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX
 #include "ECS/System.h"
 
 #include <filesystem>
@@ -37,10 +38,10 @@ namespace Engine::Systems {
 		void inline Arbo_RefreshButton(Resource::InterfaceRessource* interfaceData);
 
 		Entity CreateNewEntity(World* world);
-		void Add_Entity_Button(World* world, Engine::Resource::RenderResource* renderData, std::string label, int entity);
-		void Display_Hierarchy_Menu(World* world, Resource::InterfaceRessource* interfaceData, Engine::Resource::RenderResource* renderData);
+		void Add_Entity_Button(World* world, Engine::Resource::RenderResource* renderData, Engine::Resource::AudioResource* audioData, std::string label, int entity);
+		void Display_Hierarchy_Menu(World* world, const Resource::ResourceBuffer* resourceBuffer);
 
 
-		void Display_Inspecteur_Menu(World* world, Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData);
+		void Display_Inspecteur_Menu(World* world, const Engine::Resource::ResourceBuffer* resourceBuffer);
 	};
 }
