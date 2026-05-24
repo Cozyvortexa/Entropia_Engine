@@ -70,6 +70,8 @@ namespace Engine::Component {
 		glm::mat4 model = glm::mat4(1.0f);
 		glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
 
+		float cameraSpeed = 9.0f;
+
 		float yoffset = 0.0f;
 
 		glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
@@ -138,6 +140,8 @@ namespace Engine::Component {
 		AudioSource() { 
 			audio = new Engine::Audio::Audio();
 			SetupConnections();
+			volume.Set(1.0f);
+			range.Set(10.0f);
 		};
 		AudioSource(std::string name, std::string path, Engine::Audio::Audio* audio) {
 			this->name = name;
@@ -146,7 +150,7 @@ namespace Engine::Component {
 
 			SetupConnections();
 			volume.Set(1.0f);
-
+			range.Set(10.0f);
 		}
 
 		AudioSource(AudioSource&& other) noexcept: name(std::move(other.name)), path(std::move(other.path)), audio(std::exchange(other.audio, nullptr)) {

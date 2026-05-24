@@ -45,56 +45,6 @@ std::vector<const Editor::EntityComponentEntry*> SearchBar_GetFilter_Component(c
 
 #pragma endregion
 
-#pragma region Theme
-static void SetTwilightPurpleTheme()
-{
-    ImGuiStyle& style = ImGui::GetStyle();
-    ImVec4* colors = style.Colors;
-
-    // Fonds
-    colors[ImGuiCol_WindowBg] = ImVec4(0.09f, 0.07f, 0.12f, 1.00f);
-    colors[ImGuiCol_ChildBg] = ImVec4(0.11f, 0.08f, 0.14f, 1.00f);
-    colors[ImGuiCol_PopupBg] = ImVec4(0.12f, 0.09f, 0.16f, 1.00f);
-
-    // Bordures
-    colors[ImGuiCol_Border] = ImVec4(0.35f, 0.25f, 0.45f, 0.50f);
-
-    // Headers
-    colors[ImGuiCol_Header] = ImVec4(0.40f, 0.20f, 0.60f, 0.80f);
-    colors[ImGuiCol_HeaderHovered] = ImVec4(0.55f, 0.30f, 0.80f, 0.80f);
-    colors[ImGuiCol_HeaderActive] = ImVec4(0.65f, 0.35f, 0.90f, 1.00f);
-
-    // Boutons
-    colors[ImGuiCol_Button] = ImVec4(0.38f, 0.18f, 0.55f, 0.85f);
-    colors[ImGuiCol_ButtonHovered] = ImVec4(0.55f, 0.28f, 0.78f, 1.00f);
-    colors[ImGuiCol_ButtonActive] = ImVec4(0.68f, 0.35f, 0.92f, 1.00f);
-
-    // Tabs
-    colors[ImGuiCol_Tab] = ImVec4(0.25f, 0.12f, 0.38f, 1.00f);
-    colors[ImGuiCol_TabHovered] = ImVec4(0.50f, 0.25f, 0.75f, 1.00f);
-    colors[ImGuiCol_TabActive] = ImVec4(0.42f, 0.20f, 0.65f, 1.00f);
-
-    // Titres
-    colors[ImGuiCol_TitleBg] = ImVec4(0.12f, 0.08f, 0.18f, 1.00f);
-    colors[ImGuiCol_TitleBgActive] = ImVec4(0.30f, 0.15f, 0.45f, 1.00f);
-
-    // Frame
-    colors[ImGuiCol_FrameBg] = ImVec4(0.16f, 0.11f, 0.22f, 1.00f);
-    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.30f, 0.18f, 0.42f, 1.00f);
-    colors[ImGuiCol_FrameBgActive] = ImVec4(0.40f, 0.24f, 0.55f, 1.00f);
-
-    // Texte
-    colors[ImGuiCol_Text] = ImVec4(0.92f, 0.88f, 1.00f, 1.00f);
-
-    // Arrondis
-    style.WindowRounding = 10.0f;
-    style.FrameRounding = 6.0f;
-    style.GrabRounding = 6.0f;
-    style.TabRounding = 8.0f;
-}
-
-#pragma endregion
-
 #pragma region Render
 void RenderTarget_Menu(Resource::InterfaceRessource* interfaceData) {
 	if (ImGui::CollapsingHeader("RenderTarget"))
@@ -111,7 +61,7 @@ void RenderTarget_Menu(Resource::InterfaceRessource* interfaceData) {
 	}
 }
 
-void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData) {
+void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData, Component::CameraComponent* cameraComponent) {
     ImGui::Begin("Render settings", &interfaceData->mainInterfaceOpen, ImGuiWindowFlags_MenuBar);
     ImGuiIO& io = ImGui::GetIO();
     ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "FPS: %.1f", io.Framerate);
@@ -126,6 +76,7 @@ void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::R
     {
         ImGui::Checkbox("bloomEnable", &renderData->bloomEnable);
         ImGui::InputFloat("Exposure", &renderData->exposure);
+        ImGui::InputFloat("Camera speed", &cameraComponent->cameraSpeed);
     }
     ImGui::End();
 }
@@ -291,6 +242,15 @@ void NavBar(Resource::RenderResource* renderData, Resource::InterfaceRessource* 
             ImGui::Checkbox("renderWindowsToggle", &interfaceData->renderWindowsToggle);
             ImGui::Checkbox("inspecteur_Toogle", &interfaceData->inspecteur_Toogle);
             ImGui::Checkbox("arbo_Toogle", &interfaceData->arbo_Toogle);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Theme")) {
+            if (ImGui::MenuItem("TwilightPurple")) Editor::SetTwilightPurpleTheme();
+            if (ImGui::MenuItem("MidnightCarbon")) Editor::SetMidnightCarbonTheme();
+            if (ImGui::MenuItem("EmberForge")) Editor::SetEmberForgeTheme();
+            if (ImGui::MenuItem("ArcticSlate")) Editor::SetArcticSlateTheme();
+            if (ImGui::MenuItem("DeepForest")) Editor::SetDeepForestTheme();
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
@@ -574,7 +534,7 @@ void Systems::InterfaceSystem::Init(World& world, const Resource::ResourceBuffer
     ImGui_ImplOpenGL3_Init();
     ImGui_ImplGlfw_InitForOpenGL(resourceBuffer->windowResource->window, true);
 
-    SetTwilightPurpleTheme();
+    Editor::SetTwilightPurpleTheme();
 
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) abort();
@@ -589,6 +549,9 @@ void Systems::InterfaceSystem::Update(World& world, const Resource::ResourceBuff
 	Resource::RenderResource* renderData = resourceBuffer->renderResource;
 	Resource::InterfaceRessource* interfaceData = resourceBuffer->interfaceRessource;
 	Resource::WindowResource* windowsData = resourceBuffer->windowResource;
+
+    Entity entityCam = resourceBuffer->activeCamera->cameraID;
+    Component::CameraComponent* mainCamera = world.get_component<Component::CameraComponent>(entityCam);
 
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -615,7 +578,7 @@ void Systems::InterfaceSystem::Update(World& world, const Resource::ResourceBuff
 
 
     RenderWindows(renderData, interfaceData, windowsData);
-    Display_RenderMenu(interfaceData, renderData);
+    Display_RenderMenu(interfaceData, renderData, mainCamera);
     Display_Hierarchy_Menu(&world, resourceBuffer);
     Display_Inspecteur_Menu(&world, resourceBuffer);
     Display_ArboMenu(interfaceData);

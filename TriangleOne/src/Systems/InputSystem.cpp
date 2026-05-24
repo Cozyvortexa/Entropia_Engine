@@ -90,21 +90,21 @@ void Engine::Systems::InputSystem::Update(World& world, const Resource::Resource
 
 void Engine::Systems::InputSystem::ProcessInput(GLFWwindow* window, Component::CameraComponent* mainCamera, Component::Transform* transformMainCamera, float deltaTime, Resource::InputResource* inputData)
 {
-	const float cameraSpeed = 9.0f * deltaTime;
+	const float speed = mainCamera->cameraSpeed * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		transformMainCamera->position += cameraSpeed * mainCamera->cameraFront;
+		transformMainCamera->position += speed * mainCamera->cameraFront;
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		transformMainCamera->position -= cameraSpeed * mainCamera->cameraFront;
+		transformMainCamera->position -= speed * mainCamera->cameraFront;
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		transformMainCamera->position -= glm::normalize(glm::cross(mainCamera->cameraFront, mainCamera->cameraUp)) * cameraSpeed;
+		transformMainCamera->position -= glm::normalize(glm::cross(mainCamera->cameraFront, mainCamera->cameraUp)) * speed;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		transformMainCamera->position += glm::normalize(glm::cross(mainCamera->cameraFront, mainCamera->cameraUp)) * cameraSpeed;
+		transformMainCamera->position += glm::normalize(glm::cross(mainCamera->cameraFront, mainCamera->cameraUp)) * speed;
 
 	//Mouvement supp
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-		transformMainCamera->position += glm::vec3(0.0f, -1.0f, 0.0f) * cameraSpeed;
+		transformMainCamera->position += glm::vec3(0.0f, -1.0f, 0.0f) * speed;
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-		transformMainCamera->position += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+		transformMainCamera->position += glm::vec3(0.0f, 1.0f, 0.0f) * speed;
 
 	//Mouse
 	int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
