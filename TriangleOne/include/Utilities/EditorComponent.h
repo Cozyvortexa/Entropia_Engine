@@ -35,48 +35,62 @@ namespace Engine::Editor {
         ObjectType type;
     };
 
+    struct EditorContext {
+        World* world;
+        const Resource::ResourceBuffer* resourceBuffer;
+    };
+
+#pragma region PrimitiveType
     template<typename T>
-    inline void DrawWidget(const char* label, T& value) {
+    inline void DrawWidget(EditorContext ctx, const char* label, T& value) {
         std::cout << "The method for displaying the label: " << label << " is unknown" << std::endl; // Fallback
     };  
 
     template<>
-    inline void DrawWidget<int>(const char* label, int& value) {
+    inline void DrawWidget<int>(EditorContext ctx, const char* label, int& value) {
         ImGui::InputInt(label, &value);
     }
 
     template<>
-    inline void DrawWidget<float>(const char* label, float& value) {
+    inline void DrawWidget<float>(EditorContext ctx, const char* label, float& value) {
         ImGui::InputFloat(label, &value);
     }
 
     template<>
-    inline void DrawWidget<bool>(const char* label, bool& value) {
-        ImGui::Checkbox(label, &value);
+    inline void DrawWidget<double>(EditorContext ctx, const char* label, double& value) {
+        ImGui::InputDouble(label, &value);
     }
 
     template<>
-    inline void DrawWidget<glm::vec2>(const char* label, glm::vec2& value) {
+    inline void DrawWidget<bool>(EditorContext ctx, const char* label, bool& value) {
+        ImGui::Checkbox(label, &value);
+    }
+
+    // Not a primitive type but its here
+    template<>
+    inline void DrawWidget<glm::vec2>(EditorContext ctx, const char* label, glm::vec2& value) {
         ImGui::InputFloat2(label, &value.x);
     }
 
     template<>
-    inline void DrawWidget<glm::vec3>(const char* label, glm::vec3& value) {
+    inline void DrawWidget<glm::vec3>(EditorContext ctx, const char* label, glm::vec3& value) {
         ImGui::InputFloat3(label, &value.x);
     }
 
     template<>
-    inline void DrawWidget<glm::vec4>(const char* label, glm::vec4& value) {
+    inline void DrawWidget<glm::vec4>(EditorContext ctx, const char* label, glm::vec4& value) {
         ImGui::InputFloat4(label, &value.x);
     }
     template<>
-    inline void DrawWidget<std::string>(const char* label, std::string& value) {
+    inline void DrawWidget<std::string>(EditorContext ctx, const char* label, std::string& value) {
         ImGui::InputText(label, &value);
     }
 
-    //Observer
+#pragma endregion
+
+#pragma region Observer
     template<>
-    inline void DrawWidget<Observer<int>>(const char* label, Observer<int>& value) {
+    inline void DrawWidget<Observer<int>>(EditorContext ctx, const char* label, Observer<int>& value) {
         int temp = value.Get();
 
         if (ImGui::InputInt(label, &temp))
@@ -85,7 +99,7 @@ namespace Engine::Editor {
         }
     }
     template<>
-    inline void DrawWidget<Observer<float>>(const char* label, Observer<float>& value) {
+    inline void DrawWidget<Observer<float>>(EditorContext ctx, const char* label, Observer<float>& value) {
         float temp = value.Get();
 
         if (ImGui::InputFloat(label, &temp))
@@ -94,20 +108,50 @@ namespace Engine::Editor {
         }
     }
 
+#pragma endregion 
+
+#pragma region CustomClass
+    template<>
+    inline void DrawWidget<Engine::Audio::Audio*>(EditorContext ctx, const char* label, Engine::Audio::Audio*& value) {
+        DrawWidget<std::string>(ctx, "Name: ", value->name);
+
+        DrawWidget<bool>(ctx, "Looping", value->looping);
+        DrawWidget<bool>(ctx, "Spatialisation", value->spatialisation);
+
+        if (ImGui::Button(ICON_FA_PLAY)) {ctx.world->audioManager->Start(*value);}
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_PAUSE)) {ctx.world->audioManager->Pause(*value);}
+
+        ImGui::Button("Drag and Drop new song here");
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MY_ITEM"))
+            {
+                Engine::Resource::Node* node = *static_cast<Engine::Resource::Node**>(payload->Data);
+                Engine::Audio::SoundFlags flags = value->flags;
+                Engine::Audio::AudioManager::DeleteSound(value);
+
+                value = ctx.world->assetStore->Load_Sound(ctx.resourceBuffer->audioResource->audioEngine, node->name, node->path.c_str(), flags);
+            }
+
+            ImGui::EndDragDropTarget();
+        }
+    }
+
+#pragma endregion
 
     template<typename T>
-    inline void DrawComponentUI(T& component)
+    inline void DrawComponentUI(T& component, EditorContext ctx)
     {
-        component.Reflect([&](const char* name, auto& value)
-            {
-                Engine::Editor::DrawWidget(name, value);
+        component.Reflect([&](const char* name, auto& value){
+                Engine::Editor::DrawWidget(ctx, name, value);
             });
     }
 
     template<typename T>
-    bool DrawComponentSection(World* world, Entity entity, const char* label)
+    bool DrawComponentSection(EditorContext ctx, Entity entity, const char* label)
     {
-        T* component = world->get_component<T>(entity);
+        T* component = ctx.world->get_component<T>(entity);
 
         if (!component)
             return false;
@@ -120,7 +164,7 @@ namespace Engine::Editor {
         {
             if (ImGui::MenuItem("Delete Component"))
             {
-                world->remove_component<T>(entity);
+                ctx.world->remove_component<T>(entity);
 
                 ImGui::EndPopup();
                 ImGui::PopID();
@@ -132,7 +176,7 @@ namespace Engine::Editor {
 
         if (open)
         {
-            Editor::DrawComponentUI(*component);
+            Editor::DrawComponentUI(*component, ctx);
         }
 
         ImGui::PopID();

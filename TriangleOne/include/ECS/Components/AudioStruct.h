@@ -12,9 +12,9 @@ namespace Engine::Audio {
 	};
 	enum class AudioLifetime
 	{
+		Both,
 		Runtime,
-		Editor,
-		Both
+		Editor
 	};
 	inline static SoundFlags operator|(SoundFlags a, SoundFlags b){
 		return static_cast<SoundFlags>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
@@ -35,10 +35,10 @@ namespace Engine::Audio {
 		}
 		SoundFlags flags = SoundFlags::None;
 
-		std::string name = "";
-		std::string path = "";
+		std::string name = "None";
+		std::string path = "None";
 
-		bool lopping = false;
+		bool looping = false;
 		bool spatialisation = true;
 
 		ma_sound* sound = nullptr;

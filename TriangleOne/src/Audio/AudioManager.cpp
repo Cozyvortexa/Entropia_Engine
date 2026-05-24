@@ -1,18 +1,31 @@
 #include "Audio/AudioManager.h"
+#include <iostream>
 namespace Audio = Engine::Audio;
 
 void Audio::AudioManager::SetEngineVolume(ma_engine& engine, const float value) {
     ma_engine_set_volume(&engine, value);
 }
 
+// Return True when the sound is not a null ptr otherwise, false
+bool const inline ChekSoundValidity(ma_sound* sound) {
+    if (sound == nullptr) {
+        std::cout << "Null sound detected" << std::endl;
+        return false;
+    }
+    return true;
+}
 
 #pragma region Basic Method
 
 void Audio::AudioManager::Start(Audio& audio) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     ma_sound_start(audio.sound);
 }
 
 void Audio::AudioManager::Pause(Audio& audio) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     if (ma_sound_is_playing(audio.sound)) {
         ma_sound_stop(audio.sound);
     }
@@ -21,15 +34,21 @@ void Audio::AudioManager::Pause(Audio& audio) {
     }
 }
 void Audio::AudioManager::Stop(Audio& audio) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     ma_sound_stop(audio.sound);
 }
 
 void Audio::AudioManager::Restart(Audio& audio) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     ma_sound_seek_to_pcm_frame(audio.sound, 0);
     ma_sound_start(audio.sound);
 }
 
 void Audio::AudioManager::SetVolume(Audio& audio, const float newValue) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     if (newValue < 0.0f) {
         ma_sound_set_volume(audio.sound, 0.0f);
         return;
@@ -43,10 +62,14 @@ void Audio::AudioManager::SetVolume(Audio& audio, const float newValue) {
 #pragma region Advance Methode
 
 void Audio::AudioManager::SetLooping(Audio& audio, const bool newValue) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     ma_sound_set_looping(audio.sound, newValue);
 }
 
 void Audio::AudioManager::SetPanning(Audio& audio, float newPanningValue) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     if (newPanningValue > 1.0f) { newPanningValue = 1.0f; }
     else if (newPanningValue < -1.0f) { newPanningValue = -1.0; }
 
@@ -54,10 +77,14 @@ void Audio::AudioManager::SetPanning(Audio& audio, float newPanningValue) {
 }
 
 void Audio::AudioManager::SetPitch(Audio& audio, const float newPitchValue) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     ma_sound_set_pitch(audio.sound, newPitchValue);
 }
 
 void Audio::AudioManager::SetDopplerEffect(Audio& audio, const float newValue) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     ma_sound_set_doppler_factor(audio.sound, newValue);
 }
 
@@ -73,6 +100,8 @@ void Audio::AudioManager::SetDopplerEffect(Audio& audio, const float newValue) {
 //}
 
 void Audio::AudioManager::PlayerSeekTo(Audio& audio, const int timeInMs) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     ma_uint32 sampleRate;
     ma_sound_get_data_format(audio.sound, nullptr, nullptr, &sampleRate, nullptr, 0);
 
@@ -92,10 +121,14 @@ void Audio::AudioManager::PlayerSeekTo(Audio& audio, const int timeInMs) {
 //}
 
 void Audio::AudioManager::SetFadeIn(Audio& audio, float fadeInValue) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     ma_sound_set_fade_in_milliseconds(audio.sound, 0, -1, (ma_uint64)fadeInValue);
 }
 
 void Audio::AudioManager::SetMinDistance(Audio& audio, const float minValue) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     if (minValue < 0.0f) {
         ma_sound_set_min_distance(audio.sound, 0);
         return;
@@ -104,10 +137,14 @@ void Audio::AudioManager::SetMinDistance(Audio& audio, const float minValue) {
 }
 
 void Audio::AudioManager::SetMaxDistance(Audio& audio, const float maxValue) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     ma_sound_set_max_distance(audio.sound, maxValue);
 }
 
 void Audio::AudioManager::SetVelocity(Audio& audio, float velocityX, float velocityY, float velocityZ) {
+    if (!ChekSoundValidity(audio.sound)) return;
+
     ma_sound_set_velocity(audio.sound, velocityX, velocityY, velocityZ);
 }
 
@@ -119,7 +156,7 @@ void Audio::AudioManager::DeleteSound(Audio* audio) {
     if (audio == nullptr || audio->sound == nullptr) return;
 
     ma_sound_stop(audio->sound);
-    //ma_sound_uninit(audio->sound);
+    ma_sound_uninit(audio->sound);  // Causes an error when the app is closed while playing an audio file
 
     delete audio->sound;
 }

@@ -34,7 +34,7 @@ void OpenGL_Renderer::DrawMesh(Mesh& currentMesh) {
 			last_Shader_Use = &last_Material_Use->shader;
 			last_Shader_Use->Use();
 		}
-		OpenGL_SubMesh& subMesh = dynamic_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[current_Material_Handle.second]));
+		OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[current_Material_Handle.second]));
 
 
 		assert(glIsVertexArray(subMesh.VAO));

@@ -213,11 +213,8 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
                     // TODO
                 }
                 else if (entry->type == Editor::ObjectType::AudioSource) {
-                    
-                    //std::string name = "Mario64";
-                    //std::string path = "Assets/Sound/Dire_Dire_Docks.mp3";
-                    //Component::AudioSource audioSource(name, path, world->assetStore->Load_Sound(audioData->audioEngine, name, path.c_str(), Audio::SoundFlags::None));
-                    //world->add_components(entity, std::move(audioSource));
+                    Component::AudioSource audioSource;
+                    world->add_components(entity, std::move(audioSource));
                 }
                 //else if (entry->type == Editor::ObjectType::ParticuleSystem) {
                 // 
@@ -319,28 +316,30 @@ void Systems::InterfaceSystem::Display_Inspecteur_Menu(World* world, const Resou
         ImGui::SameLine();
         ImGui::InputText("##name", name);
 
+        Editor::EditorContext editorContext{ world, resourceBuffer };
+
         //Transform
         Component::Transform* currentTransform = world->get_component<Component::Transform>(interfaceData->focusGameObject);
         if (currentTransform != nullptr && ImGui::CollapsingHeader("Transform")) {
 
 
             ImGui::PushID(interfaceData->focusGameObject + "Transform");
-            Editor::DrawComponentUI(*currentTransform);
+            Editor::DrawComponentUI(*currentTransform, editorContext);
             ImGui::PopID();
         }
 
         ////Light
         //PointLight
-        Editor::DrawComponentSection<Component::PointLight>(world, interfaceData->focusGameObject, "Point light");
+        Editor::DrawComponentSection<Component::PointLight>(editorContext, interfaceData->focusGameObject, "Point light");
 
         //DirLight
-        Editor::DrawComponentSection<Component::DirLight>(world, interfaceData->focusGameObject, "Directional Light");
+        Editor::DrawComponentSection<Component::DirLight>(editorContext, interfaceData->focusGameObject, "Directional Light");
 
         //SpotLight
-        Editor::DrawComponentSection<Component::SpotLight>(world, interfaceData->focusGameObject, "Spot light");
+        Editor::DrawComponentSection<Component::SpotLight>(editorContext, interfaceData->focusGameObject, "Spot light");
 
         //Audio Source
-        Editor::DrawComponentSection<Component::AudioSource>(world, interfaceData->focusGameObject, "Audio source");
+        Editor::DrawComponentSection<Component::AudioSource>(editorContext, interfaceData->focusGameObject, "Audio source");
 
         ImGui::Separator();
         std::string label = "Add new Component";
@@ -524,6 +523,18 @@ void Systems::InterfaceSystem::Display_ArboMenu(Resource::InterfaceRessource* in
         // Dispaly item name on Hover
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("%s", currentNode->name.c_str());
+
+        //Drag Object
+        if (ImGui::BeginDragDropSource())
+        {
+            ImGui::SetDragDropPayload( "MY_ITEM", &currentNode, sizeof(Engine::Resource::Node));
+
+            ImGui::Text(label.c_str());
+
+            ImGui::EndDragDropSource();
+        }
+
+
 
         ImGui::PopStyleColor(1);
         ImGui::PopID();

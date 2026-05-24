@@ -12,7 +12,7 @@ void Systems::AudioSystem::UpdatePositionAudio(World* world, Resource::AudioReso
     View audio_Listener_view = world->view<Component::Transform, Component::AudioListener, Component::CameraComponent>();
 
     audio_Source_view.each([&](int entity, Component::Transform& transform, Component::AudioSource& audioSource) {
-        if (audioSource.audio->spatialisation) {
+        if (audioSource.audio != nullptr && audioSource.audio->spatialisation) {
             ma_sound_set_position(audioSource.audio->sound, transform.position.x, transform.position.y, transform.position.z);
         }
     });

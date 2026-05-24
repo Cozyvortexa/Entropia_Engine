@@ -135,13 +135,18 @@ namespace Engine::Component {
 		~AudioSource() {
 			Engine::Audio::AudioManager::DeleteSound(audio);
 		}
-
+		AudioSource() { 
+			audio = new Engine::Audio::Audio();
+			SetupConnections();
+		};
 		AudioSource(std::string name, std::string path, Engine::Audio::Audio* audio) {
 			this->name = name;
 			this->path = path;
 			this->audio = audio;
 
 			SetupConnections();
+			volume.Set(1.0f);
+
 		}
 
 		AudioSource(AudioSource&& other) noexcept: name(std::move(other.name)), path(std::move(other.path)), audio(std::exchange(other.audio, nullptr)) {
@@ -165,6 +170,7 @@ namespace Engine::Component {
 				//Transfers the master data
 				name = std::move(other.name);
 				path = std::move(other.path);
+
 				audio = (std::exchange(other.audio, nullptr));
 
 				//Synchronises the values of the observers
@@ -172,7 +178,7 @@ namespace Engine::Component {
 				range.Set(other.range.Get());
 
 				SetupConnections();
-				}
+			}
 			return *this;
 			}
 
@@ -182,7 +188,7 @@ namespace Engine::Component {
 
 
 		std::string path = "";
-		std::string name = "";
+		std::string name = "None";
 		Engine::Audio::Audio* audio;
 
 		Observer<float> volume;
@@ -191,11 +197,9 @@ namespace Engine::Component {
 		template<typename F>
 		void Reflect(F&& f)
 		{
-			f("Name", name);
-			f("Looping", audio->lopping);
-			f("Spatialisation", audio->spatialisation);
 			f("Volume", volume);
 			f("range", range);
+			f("Audio", audio);
 		}
 
 	private:
