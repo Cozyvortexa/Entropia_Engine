@@ -34,11 +34,19 @@ public:
 
     template<typename Func>
     void each(Func callback) {
-        auto* lead_pool = std::get<0>(pools);  // WARNING: Recupére le premier pool donné en paramètre
+        size_t min_size = SIZE_MAX;
+        std::vector<Entity>* lead_entities = nullptr;
 
-        for (size_t i = 0; i < lead_pool->dense_entities.size(); ++i) {
-            Entity entity = lead_pool->dense_entities[i];
+        //Determine the lead_pool
+        ([&](auto* pool) {
+            if (pool->dense_entities.size() < min_size) {
+                min_size = pool->dense_entities.size();
+                lead_entities = &pool->dense_entities;
+            }
+        }(std::get<SparseSet<Components>*>(pools)), ...);
 
+        //Call the callback func if the entity have all the components 
+        for (Entity entity : *lead_entities) {
             if ((std::get<SparseSet<Components>*>(pools)->has(entity) && ...)) {
                 callback(entity, std::get<SparseSet<Components>*>(pools)->get(entity)...);
             }
@@ -107,7 +115,7 @@ public:
         static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
         auto it = pools.find(std::type_index(typeid(T)));
         if (it == pools.end()) {
-            assert(true, "La supression d'un composant sur l'entité numéro: " + entity + " à échouer");
+            assert(true, "Deleting a component from entity number: " + entity + " have fail");
             return false;
         }
         return it->second.get()->Remove(entity);
@@ -119,7 +127,7 @@ public:
         auto type_id = std::type_index(typeid(T));
 
         if (ressources.find(type_id) == ressources.end()) {
-            std::cout << "La ressource: " << typeid(T).name() << " n'existe pas" << std::endl;
+            std::cout << "The resource: " << typeid(T).name() << " does not exist" << std::endl;
             return nullptr;
         }
 
