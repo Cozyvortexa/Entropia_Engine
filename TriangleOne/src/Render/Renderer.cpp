@@ -1,6 +1,7 @@
 #include "Render/Renderer.h"
 
 void OpenGL_Renderer::DrawMesh(Mesh& currentMesh) {
+	if (currentMesh.isValid == false) return;
 	if (currentMesh.subMeshs.size() == 0) {
 		std::cout << "The mesh: " << currentMesh.directory << " have no submesh, drawCall cancel" << std::endl;
 		return;
@@ -136,6 +137,7 @@ void OpenGL_Renderer::DrawMesh(Mesh& currentMesh) {
 }
 
 void OpenGL_Renderer::DrawMesh_Without_Texture(Mesh& currentMesh) {
+	if (currentMesh.isValid == false) return;
 	for (auto& subMesh : currentMesh.subMeshs) {
 		OpenGL_SubMesh& openGL_subMesh = std::get<OpenGL_SubMesh>(subMesh); 
 
@@ -177,5 +179,6 @@ void OpenGL_Renderer::LoadDefaultCube() {
 
 
 void OpenGL_Renderer::SetViewport_Size(glm::vec2 newSize) {
+	if (newSize.x < 0 || newSize.y < 0) return;
 	glViewport(0, 0, newSize.x, newSize.y);
 }

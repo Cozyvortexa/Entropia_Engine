@@ -18,6 +18,7 @@ namespace Engine::Systems {
 		static void Framebuffer_size_callback(GLFWwindow* window, int width, int height);
 		void ProcessInput(GLFWwindow* window);
 		bool ShouldClose(World& world);
+		void Window_iconify_callback(GLFWwindow* window, int iconified);
 
 		void Init(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;
 		void Update(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;

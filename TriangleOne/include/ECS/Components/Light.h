@@ -58,9 +58,9 @@ namespace Engine::Component {
 		template<typename F>
 		void Reflect(F&& f)
 		{
-			f("Color", color);
-			f("Intensity", intensity);
-			f("Direction", direction);
+			f("Color:", color);
+			f("Intensity:", intensity);
+			f("Direction:", direction);
 		}
 
 		glm::mat4 UpdateMatrix(const glm::mat4 viewMatrice, const glm::mat4 projectionCamera);
@@ -91,9 +91,9 @@ namespace Engine::Component {
 		template<typename F>
 		void Reflect(F&& f)
 		{
-			f("Color", color);
-			f("Intensity", intensity);
-			f("Range", range);
+			f("Color:", color);
+			f("Intensity:", intensity);
+			f("Range:", range);
 		}
 	};
 
@@ -113,8 +113,8 @@ namespace Engine::Component {
 		template<typename F>
 		void Reflect(F&& f)
 		{
-			f("Color", color);
-			f("Intensity", intensity);
+			f("Color:", color);
+			f("Intensity:", intensity);
 		}
 
 		unsigned int depthMapFBO = 0;

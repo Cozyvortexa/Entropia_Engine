@@ -141,17 +141,57 @@ namespace Engine::Editor {
         ImGui::Button("Drag and Drop new song here");
         if (ImGui::BeginDragDropTarget())
         {
-            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MY_ITEM"))
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ARBO_ITEM"))
             {
                 Engine::Resource::Node* node = *static_cast<Engine::Resource::Node**>(payload->Data);
-                Engine::Audio::SoundFlags flags = value->flags;
-                Engine::Audio::AudioManager::DeleteSound(value);
+                if (node->type == Engine::Resource::FileType::Audio) {
+                    Engine::Audio::SoundFlags flags = value->flags;
+                    Engine::Audio::AudioManager::DeleteSound(value);
 
-                value = ctx.world->assetStore->Load_Sound(ctx.resourceBuffer->audioResource->audioEngine, node->name, node->path.c_str(), flags);
+                    value = ctx.world->assetStore->Load_Sound(ctx.resourceBuffer->audioResource->audioEngine, node->name, node->path.c_str(), flags);
+                }
+
             }
 
             ImGui::EndDragDropTarget();
         }
+    }
+    template<>
+    inline void DrawWidget<Engine::Component::MeshIndex>(EditorContext ctx, const char* label, Engine::Component::MeshIndex& value) {
+        Mesh mesh;
+        if (value == -1) {
+            std::string emptypath = "None";
+            DrawWidget<std::string>(ctx, "Directory", emptypath);
+        }
+        else {
+            Mesh mesh = ctx.world->assetStore->Get_Mesh(value);
+            DrawWidget<std::string>(ctx, "Directory", mesh.directory);
+        }
+
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ARBO_ITEM"))
+            {
+                Engine::Resource::Node* node = *static_cast<Engine::Resource::Node**>(payload->Data);
+                if (node->type == Engine::Resource::FileType::Model) {
+
+                    std::pair<Mesh&, int> newMesh = ctx.world->assetStore->Get_Mesh(node->path);
+                    value = newMesh.second;
+                }
+            }
+
+            ImGui::EndDragDropTarget();
+        }
+
+
+        ImGui::BeginDisabled();
+        ImGui::AlignTextToFramePadding();
+        DrawWidget<bool>(ctx, "Have Normal map:", mesh.hasNormalMap);
+        ImGui::SameLine();
+        DrawWidget<bool>(ctx, "Have TangentBitangent:", mesh.hasTBN);
+        ImGui::SameLine();
+        DrawWidget<bool>(ctx, "Have UV map:", mesh.hasUV);
+        ImGui::EndDisabled();
     }
 
 #pragma endregion

@@ -38,9 +38,9 @@ namespace Engine::Component {
 		template<typename F>
 		void Reflect(F&& f)
 		{
-			f("position", position);
-			f("rotation", rotation);
-			f("scale", scale);
+			f("Position:", position);
+			f("Rotation:", rotation);
+			f("Scale:", scale);
 		}
 
 		glm::mat4 GetTransformModel() const {
@@ -81,7 +81,7 @@ namespace Engine::Component {
 		float nearPlane = 0.1f;
 		float farPlane = 200.0f;
 
-		float zoom = 45.0f;  // valeur de zoom par default 
+		float zoom = 45.0f;  // Default zoom value 
 		//Rotation
 		float yaw = -90.0f;
 		float pitch = 0.0f;
@@ -94,7 +94,7 @@ namespace Engine::Component {
 		float lastX = 1.0f;
 		float lastY = 1.0f;
 
-		glm::mat4 viewMatrice = glm::mat4(1.0f);  // Juste pour pas qu'il soit init a zero
+		glm::mat4 viewMatrice = glm::mat4(1.0f);
 	};
 
 	struct SceneTag : public Component {
@@ -104,13 +104,23 @@ namespace Engine::Component {
 		std::string name = "Default";
 	};
 
+	using MeshIndex = uint32_t;  // Named integer
+
 	struct MeshHandle : public Component {
 		MeshHandle() {};
 		MeshHandle(uint32_t index) { this->index = index; }
 		MeshHandle(uint32_t index, bool castShadow, bool haveToBeDraw = true) { this->index = index; this->castShadow = castShadow; this->haveToBeDraw = haveToBeDraw; }
-		uint32_t index = 0;
+		MeshIndex index = 0;
 		bool castShadow = true;
 		bool haveToBeDraw = true;
+
+		template<typename F>
+		void Reflect(F&& f)
+		{
+			f("HaveToBeDraw", haveToBeDraw);
+			f("CastShadow", castShadow);
+			f("Mesh", index);
+		}
 	};
 
 	struct MaterialHandle : Component {
@@ -242,6 +252,7 @@ namespace Engine::Resource {
 		inline static int WIDTH = 1920;
 		inline static int HEIGHT = 1000;
 
+		inline static bool isIconified = false;
 
 		GLFWwindow* window = nullptr;
 	};

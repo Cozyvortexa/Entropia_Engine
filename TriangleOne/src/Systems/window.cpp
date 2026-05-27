@@ -10,6 +10,9 @@ namespace Systems = Engine::Systems;
 
 Systems::WindowSystem::WindowSystem() {}
 
+#pragma region CallBack func
+
+#pragma region OpenGl_Error
 void GLAPIENTRY DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 	GLsizei length, const GLchar* message, const void* userParam) {
 
@@ -39,6 +42,9 @@ void GLAPIENTRY Debug_Critical_MessageCallback(GLenum source, GLenum type, GLuin
 	}
 }
 
+#pragma endregion
+
+
 void Systems::WindowSystem::Framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	//glViewport(0, 0, width, height);
@@ -56,6 +62,20 @@ void Systems::WindowSystem::Framebuffer_size_callback(GLFWwindow* window, int wi
 		RenderSystem::ResizeFrameBufferText(renderResource);
 	}
 }
+
+void Systems::WindowSystem::Window_iconify_callback(GLFWwindow* window, int iconified) {
+	World* world = static_cast<World*>(glfwGetWindowUserPointer(window));
+	Resource::WindowResource* windowData = world->get_ressource<Resource::WindowResource>();
+
+	if (iconified) {
+		windowData->isIconified = true;
+	}
+	else {
+		windowData->isIconified = false;
+	}
+}
+
+#pragma endregion
 
 void Systems::WindowSystem::ProcessInput(GLFWwindow* window)
 {

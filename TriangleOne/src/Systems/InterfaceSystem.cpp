@@ -81,7 +81,7 @@ void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::R
     ImGui::End();
 }
 
-void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRessource* interfaceData, Resource::WindowResource* windowsData) {
+void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRessource* interfaceData, Resource::WindowResource* windowData) {
     ImGui::Begin("Render", &interfaceData->renderWindowsToggle);
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     ImGui::Image(
@@ -94,7 +94,7 @@ void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRess
 
         renderData->renderWIDTH = (int)viewportPanelSize.x;
         renderData->renderHEIGHT = (int)viewportPanelSize.y;
-        Systems::RenderSystem::ResizeFrameBufferText(renderData);
+        if (!windowData->isIconified) Systems::RenderSystem::ResizeFrameBufferText(renderData);
     }
     interfaceData->previousSize = viewportPanelSize;
     renderData->renderWIDTH;
@@ -161,7 +161,9 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
                     // TODO
                 }
                 else if (entry->type == Editor::ObjectType::Mesh) {
-                    // TODO
+                    Component::MeshHandle meshHandle(-1);
+                    Component::MaterialHandle materialHandle(renderData->mainMaterialHandle);
+                    world->add_components(entity, meshHandle, materialHandle);
                 }
                 else if (entry->type == Editor::ObjectType::AudioSource) {
                     Component::AudioSource audioSource;
@@ -301,6 +303,9 @@ void Systems::InterfaceSystem::Display_Inspecteur_Menu(World* world, const Resou
         //Audio Source
         Editor::DrawComponentSection<Component::AudioSource>(editorContext, interfaceData->focusGameObject, "Audio source");
 
+        //Mesh
+        Editor::DrawComponentSection<Component::MeshHandle>(editorContext, interfaceData->focusGameObject, "Mesh");
+
         ImGui::Separator();
         std::string label = "Add new Component";
         Add_Entity_Button(world, renderData, audioData, label, (int)interfaceData->focusGameObject);
@@ -326,7 +331,7 @@ Resource::FileType Systems::InterfaceSystem::GetType(const std::filesystem::path
     if (ext == ".png" || ext == ".jpg")
         return Resource::FileType::Image;
 
-    if (ext == ".fbx" || ext == ".obj" || ext == "glb")
+    if (ext == ".fbx" || ext == ".obj" || ext == ".glb")
         return Resource::FileType::Model;
 
     return Resource::FileType::Other;
@@ -335,7 +340,7 @@ Resource::FileType Systems::InterfaceSystem::GetType(const std::filesystem::path
 std::unique_ptr<Resource::Node> Systems::InterfaceSystem::BuildTree(const std::filesystem::path& rootPath, Resource::Node* parent) {
     auto node = std::make_unique<Resource::Node>();
     node->name = rootPath.filename().string();
-    node->path = rootPath.string();
+    node->path = rootPath.generic_string();
     node->parent = parent;
 
     if (std::filesystem::is_directory(rootPath)) {
@@ -473,7 +478,6 @@ void Systems::InterfaceSystem::Display_ArboMenu(Resource::InterfaceRessource* in
 
             }
             else if (currentNode->type == Resource::FileType::Audio) {
-                // TODO
             }
             else if (currentNode->type == Resource::FileType::Model) {
                 // TODO
@@ -487,7 +491,7 @@ void Systems::InterfaceSystem::Display_ArboMenu(Resource::InterfaceRessource* in
         //Drag Object
         if (ImGui::BeginDragDropSource())
         {
-            ImGui::SetDragDropPayload( "MY_ITEM", &currentNode, sizeof(Engine::Resource::Node));
+            ImGui::SetDragDropPayload("ARBO_ITEM", &currentNode, sizeof(Engine::Resource::Node));
 
             ImGui::Text(label.c_str());
 

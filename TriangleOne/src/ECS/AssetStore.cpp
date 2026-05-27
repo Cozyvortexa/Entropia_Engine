@@ -136,6 +136,7 @@ Mesh AssetStore::LoadMesh(std::string path) {
 	//std::cout << "Number of materials: " << scene->mNumMaterials << std::endl;
 	mesh.directory = path.substr(0, path.find_last_of("/"));
 	ProcessNode(scene->mRootNode, scene, mesh);
+	mesh.isValid = true;
 	return mesh;
 }
 

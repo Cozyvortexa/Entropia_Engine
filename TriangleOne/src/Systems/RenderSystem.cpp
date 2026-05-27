@@ -339,6 +339,7 @@ void Systems::RenderSystem::Init_AllBuffer(Resource::RenderResource* renderData)
 
 //Call when the viewport is re-scall
 void Systems::RenderSystem::ResizeFrameBufferText(Resource::RenderResource* renderData) {
+	if (renderData->renderWIDTH < 0 || renderData->renderHEIGHT < 0) return;
 	glBindTexture(GL_TEXTURE_2D, renderData->finalDepthOutput);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
@@ -388,7 +389,7 @@ void Systems::RenderSystem::RenderScene(World& world, const Resource::ResourceBu
 
 	View view = world.view<Component::MeshHandle, Component::Transform, Component::MaterialHandle>();
 	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::Transform& transform, Component::MaterialHandle& materialHandle) {
-		if (meshHandle.haveToBeDraw) {
+		if (meshHandle.index != -1 && meshHandle.haveToBeDraw) {
 			Shader currentShader = world.assetStore->Get_Material(materialHandle.index)->shader;
 			Mesh currentMesh = world.assetStore->Get_Mesh(meshHandle.index);
 
@@ -506,8 +507,9 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	//backPackTransform.rotation = glm::vec3(-90, 0, 0);
 	//std::pair<Mesh&, int> backpackValue = world.assetStore->Get_Mesh("Assets/backpack/backpack.obj");
 	//Component::MeshHandle backpackModeleHandle(backpackValue.second);
+	//Component::SceneTag backpackTag("backpack");
 
-	//world.add_components(backpack, backPackTransform, sceneTag, materialHandle, backpackModeleHandle);
+	//world.add_components(backpack, backPackTransform, backpackTag, materialHandle, backpackModeleHandle);
 
 	//world.renderer->SetViewport_Size(glm::vec2(renderData->renderWIDTH, renderData->renderHEIGHT));
 
@@ -519,6 +521,7 @@ void Systems::RenderSystem::Update(World& world, const Resource::ResourceBuffer*
  {
 	Resource::WindowResource* windowData = resourceBuffer->windowResource;
 	Resource::RenderResource* renderData = resourceBuffer->renderResource;
+	if (windowData->isIconified) return;
 
 	/////////////////////Camera
 	Entity entityCam = resourceBuffer->activeCamera->cameraID;

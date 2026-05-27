@@ -20,10 +20,11 @@ class Mesh {
 public:
 	Mesh() {};
 	std::vector<SubMeshStorage> subMeshs;
-	std::string directory;
+	std::string directory = "None";
 	bool hasUV = true;
 	bool hasTBN = true;
 	bool hasNormalMap = true;
+	bool isValid = false;
 
 	//SubMesh factory
 	void Create_SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle) {

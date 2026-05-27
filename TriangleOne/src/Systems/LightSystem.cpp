@@ -157,7 +157,7 @@ void Systems::LightSystem::DrawShadowForDirLight(World* world, Resource::RenderR
 
 	View view = world->view<Component::MeshHandle, Component::SceneTag, Component::Transform>();
 	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::SceneTag& sceneTag, Component::Transform& transform) {
-		if (meshHandle.haveToBeDraw && meshHandle.castShadow && sceneTag.scene_id == 0) {
+		if (meshHandle.index != -1  && meshHandle.haveToBeDraw && meshHandle.castShadow && sceneTag.scene_id == 0) {
 			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
 
 			depthShader->setMatrix("model", transform.GetTransformModel());
@@ -206,7 +206,7 @@ void Systems::LightSystem::DrawShadowForPointLight(World* world, Resource::Rende
 
 	View view = world->view<Component::MeshHandle, Component::SceneTag, Component::Transform>();
 	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::SceneTag& sceneTag, Component::Transform& transform) {
-		if (meshHandle.haveToBeDraw && meshHandle.castShadow && sceneTag.scene_id == 0) {
+		if (meshHandle.index != -1  && meshHandle.haveToBeDraw && meshHandle.castShadow && sceneTag.scene_id == 0) {
 			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
 
 			depthShader->setMatrix("model", transform.GetTransformModel());
@@ -245,7 +245,7 @@ void Systems::LightSystem::DrawShadowForSpotLight(World* world, Resource::Render
 
 	View view = world->view<Component::MeshHandle, Component::SceneTag, Component::Transform>();
 	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::SceneTag& sceneTag, Component::Transform& transform) {
-		if (meshHandle.castShadow && sceneTag.scene_id == 0) {
+		if (meshHandle.index != -1 && meshHandle.haveToBeDraw && meshHandle.castShadow && sceneTag.scene_id == 0) {
 			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
 
 			depthShader->setMatrix("model", transform.GetTransformModel());
@@ -910,6 +910,7 @@ void Systems::LightSystem::Update(World& world, const Resource::ResourceBuffer* 
 
 	Resource::RenderResource* renderResource = world.get_ressource<Resource::RenderResource>();
 	Resource::WindowResource* windowResource = world.get_ressource<Resource::WindowResource>();
+	if (windowResource->isIconified) return;
 
 	/////////////////Camera
 	Entity entityCam = resourceBuffer->activeCamera->cameraID;
