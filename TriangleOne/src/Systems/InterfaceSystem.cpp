@@ -22,89 +22,36 @@ Entity Systems::InterfaceSystem::CreateNewEntity(World* world) {
     return entity;
 }
 
-// Filters the list of EntityComponentEntry objects based on a search string.
-// The search is case-insensitive.
-std::vector<const Editor::EntityComponentEntry*> SearchBar_GetFilter_Component(char* s_searchBuffer) {
-    std::vector<const Editor::EntityComponentEntry*> filtered;
-    for (const auto& entry : Editor::s_entityList) {
-        if (s_searchBuffer[0] == '\0') {
+template<typename T>
+std::vector<const T*> SearchBar_GetFilter(const std::vector<T>& sourceList, const char* s_searchBuffer) {
+    std::vector<const T*> filtered;
+
+    if (s_searchBuffer == nullptr || s_searchBuffer[0] == '\0') {
+        for (const auto& entry : sourceList) {
             filtered.push_back(&entry);
         }
-        else {
-            std::string haystack = entry.name;
-            std::string needle = s_searchBuffer;
-            std::transform(haystack.begin(), haystack.end(), haystack.begin(), ::tolower);
-            std::transform(needle.begin(), needle.end(), needle.begin(), ::tolower);
-            if (haystack.find(needle) != std::string::npos)
-                filtered.push_back(&entry);
+        return filtered;
+    }
+
+    std::string needle = s_searchBuffer;
+    std::transform(needle.begin(), needle.end(), needle.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
+
+    for (const auto& entry : sourceList) {
+        std::string haystack = entry.name;
+        std::transform(haystack.begin(), haystack.end(), haystack.begin(), [](unsigned char c) {
+            return std::tolower(c);
+            });
+
+        if (haystack.find(needle) != std::string::npos) {
+            filtered.push_back(&entry);
         }
     }
 
     return filtered;
 }
 
-#pragma endregion
-
-#pragma region Render
-void RenderTarget_Menu(Resource::InterfaceRessource* interfaceData) {
-	if (ImGui::CollapsingHeader("RenderTarget"))
-	{
-		if (ImGui::RadioButton("Default render", interfaceData->renderTarget == Resource::RenderTarget::Default)) { interfaceData->renderTarget = Resource::RenderTarget::Default; }
-		else if (ImGui::RadioButton("Albedo", interfaceData->renderTarget == Resource::RenderTarget::Albedo)) { interfaceData->renderTarget = Resource::RenderTarget::Albedo; }
-		else if (ImGui::RadioButton("Position", interfaceData->renderTarget == Resource::RenderTarget::Position)) { interfaceData->renderTarget = Resource::RenderTarget::Position; }
-		else if (ImGui::RadioButton("Normal", interfaceData->renderTarget == Resource::RenderTarget::Normal)) { interfaceData->renderTarget = Resource::RenderTarget::Normal; }
-		else if (ImGui::RadioButton("Depth", interfaceData->renderTarget == Resource::RenderTarget::Depth)) { interfaceData->renderTarget = Resource::RenderTarget::Depth; }
-		else if (ImGui::RadioButton("AmbientOcclusion", interfaceData->renderTarget == Resource::RenderTarget::AmbientOcclusion)) { interfaceData->renderTarget = Resource::RenderTarget::AmbientOcclusion; }
-		else if (ImGui::RadioButton("Metallic", interfaceData->renderTarget == Resource::RenderTarget::Metallic)) { interfaceData->renderTarget = Resource::RenderTarget::Metallic; }
-		else if (ImGui::RadioButton("Roughness", interfaceData->renderTarget == Resource::RenderTarget::Roughness)) { interfaceData->renderTarget = Resource::RenderTarget::Roughness; }
-		else if (ImGui::RadioButton("Irradiance_Map", interfaceData->renderTarget == Resource::RenderTarget::Irradiance_Map)) { interfaceData->renderTarget = Resource::RenderTarget::Irradiance_Map; }
-	}
-}
-
-void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData, Component::CameraComponent* cameraComponent) {
-    ImGui::Begin("Render settings", &interfaceData->mainInterfaceOpen, ImGuiWindowFlags_MenuBar);
-    ImGuiIO& io = ImGui::GetIO();
-    ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "FPS: %.1f", io.Framerate);
-    RenderTarget_Menu(interfaceData);
-
-    if (ImGui::CollapsingHeader("SSAO Param"))
-    {
-        ImGui::InputFloat("Radius", &renderData->ssao.SSAO_radius);
-        ImGui::InputInt("Sample Number", &renderData->ssao.kernelSample);
-    }
-    if (ImGui::CollapsingHeader("OtherParam"))
-    {
-        ImGui::Checkbox("bloomEnable", &renderData->bloomEnable);
-        ImGui::InputFloat("Exposure", &renderData->exposure);
-        ImGui::InputFloat("Camera speed", &cameraComponent->cameraSpeed);
-    }
-    ImGui::End();
-}
-
-void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRessource* interfaceData, Resource::WindowResource* windowData) {
-    ImGui::Begin("Render", &interfaceData->renderWindowsToggle);
-    ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-    ImGui::Image(
-        (ImTextureID)(intptr_t)renderData->toImGui_Texture,
-        ImVec2(viewportPanelSize.x, viewportPanelSize.y),
-        ImVec2(0, 1),
-        ImVec2(1, 0)
-    );
-    if (viewportPanelSize.x != interfaceData->previousSize.x || viewportPanelSize.y != interfaceData->previousSize.y) {
-
-        renderData->renderWIDTH = (int)viewportPanelSize.x;
-        renderData->renderHEIGHT = (int)viewportPanelSize.y;
-        if (!windowData->isIconified) Systems::RenderSystem::ResizeFrameBufferText(renderData);
-    }
-    interfaceData->previousSize = viewportPanelSize;
-    renderData->renderWIDTH;
-    renderData->renderHEIGHT;
-    ImGui::End();
-}
-
-#pragma endregion
-
-#pragma region Hierarchy
 //Create a new entity according to the user input
 //If a valid entity is provided, a component will be created for that entity
 void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderResource* renderData, Resource::AudioResource* audioData, std::string label, int entity = -1) {
@@ -122,7 +69,7 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
 
         ImGui::Separator();
 
-        std::vector<const Editor::EntityComponentEntry*> filtered = SearchBar_GetFilter_Component(s_searchBuffer);
+        std::vector<const Editor::EntityComponentEntry*> filtered = SearchBar_GetFilter(Editor::s_entityList, s_searchBuffer);
 
 
         const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
@@ -191,6 +138,69 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
     }
 }
 
+#pragma endregion
+
+#pragma region Render
+void RenderTarget_Menu(Resource::InterfaceRessource* interfaceData) {
+	if (ImGui::CollapsingHeader("RenderTarget"))
+	{
+		if (ImGui::RadioButton("Default render", interfaceData->renderTarget == Resource::RenderTarget::Default)) { interfaceData->renderTarget = Resource::RenderTarget::Default; }
+		else if (ImGui::RadioButton("Albedo", interfaceData->renderTarget == Resource::RenderTarget::Albedo)) { interfaceData->renderTarget = Resource::RenderTarget::Albedo; }
+		else if (ImGui::RadioButton("Position", interfaceData->renderTarget == Resource::RenderTarget::Position)) { interfaceData->renderTarget = Resource::RenderTarget::Position; }
+		else if (ImGui::RadioButton("Normal", interfaceData->renderTarget == Resource::RenderTarget::Normal)) { interfaceData->renderTarget = Resource::RenderTarget::Normal; }
+		else if (ImGui::RadioButton("Depth", interfaceData->renderTarget == Resource::RenderTarget::Depth)) { interfaceData->renderTarget = Resource::RenderTarget::Depth; }
+		else if (ImGui::RadioButton("AmbientOcclusion", interfaceData->renderTarget == Resource::RenderTarget::AmbientOcclusion)) { interfaceData->renderTarget = Resource::RenderTarget::AmbientOcclusion; }
+		else if (ImGui::RadioButton("Metallic", interfaceData->renderTarget == Resource::RenderTarget::Metallic)) { interfaceData->renderTarget = Resource::RenderTarget::Metallic; }
+		else if (ImGui::RadioButton("Roughness", interfaceData->renderTarget == Resource::RenderTarget::Roughness)) { interfaceData->renderTarget = Resource::RenderTarget::Roughness; }
+		else if (ImGui::RadioButton("Irradiance_Map", interfaceData->renderTarget == Resource::RenderTarget::Irradiance_Map)) { interfaceData->renderTarget = Resource::RenderTarget::Irradiance_Map; }
+	}
+}
+
+void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData, Component::CameraComponent* cameraComponent) {
+    ImGui::Begin("Render settings", &interfaceData->mainInterfaceOpen, ImGuiWindowFlags_MenuBar);
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "FPS: %.1f", io.Framerate);
+    RenderTarget_Menu(interfaceData);
+
+    if (ImGui::CollapsingHeader("SSAO Param"))
+    {
+        ImGui::InputFloat("Radius", &renderData->ssao.SSAO_radius);
+        ImGui::InputInt("Sample Number", &renderData->ssao.kernelSample);
+    }
+    if (ImGui::CollapsingHeader("OtherParam"))
+    {
+        ImGui::Checkbox("bloomEnable", &renderData->bloomEnable);
+        ImGui::InputFloat("Exposure", &renderData->exposure);
+        ImGui::InputFloat("Camera speed", &cameraComponent->cameraSpeed);
+    }
+    ImGui::End();
+}
+
+void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRessource* interfaceData, Resource::WindowResource* windowData) {
+    ImGui::Begin("Render", &interfaceData->renderWindowsToggle);
+    ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+    ImGui::Image(
+        (ImTextureID)(intptr_t)renderData->toImGui_Texture,
+        ImVec2(viewportPanelSize.x, viewportPanelSize.y),
+        ImVec2(0, 1),
+        ImVec2(1, 0)
+    );
+    if (viewportPanelSize.x != interfaceData->previousSize.x || viewportPanelSize.y != interfaceData->previousSize.y) {
+
+        renderData->renderWIDTH = (int)viewportPanelSize.x;
+        renderData->renderHEIGHT = (int)viewportPanelSize.y;
+        if (!windowData->isIconified) Systems::RenderSystem::ResizeFrameBufferText(renderData);
+    }
+    interfaceData->previousSize = viewportPanelSize;
+    renderData->renderWIDTH;
+    renderData->renderHEIGHT;
+    ImGui::End();
+}
+
+#pragma endregion
+
+#pragma region Hierarchy
+
 void Systems::InterfaceSystem::Display_Hierarchy_Menu(World* world, const Resource::ResourceBuffer* resourceBuffer) {
     Resource::InterfaceRessource* interfaceData = resourceBuffer->interfaceRessource;
     Resource::RenderResource* renderData = resourceBuffer->renderResource;
@@ -200,27 +210,57 @@ void Systems::InterfaceSystem::Display_Hierarchy_Menu(World* world, const Resour
     ImGui::Begin("Hierarchy", &interfaceData->hierarchy_menu);
 
     Add_Entity_Button(world, renderData, audioData, Editor::ADD_ICON);
+    ImGui::SameLine();
+    
+    // Search bar
+    static char s_searchBuffer[128] = "";
+    ImGui::SetNextItemWidth(120.0f);
+    std::string hint = Editor::MAGNIFYING_GLASS_ICON + " Search...";
+    ImGui::InputTextWithHint("##search_Hierarchy", hint.c_str(), s_searchBuffer, sizeof(s_searchBuffer));
     ImGui::Separator();
 
+    bool hasSearchFilter = (s_searchBuffer != nullptr && s_searchBuffer[0] != '\0');
+    std::string needle = "";
+    if (hasSearchFilter) {
+        needle = s_searchBuffer;
+        std::transform(needle.begin(), needle.end(), needle.begin(), [](unsigned char c) { return std::tolower(c);});
+    }
+
+    bool deleteFocus = false;
     View view = world->view<Component::SceneTag>();
     view.each([&](int entity, Component::SceneTag& currentSceneTag) {
         if (currentSceneTag.scene_id == 0) {
+
+            if (hasSearchFilter) {
+                std::string haystack = currentSceneTag.name;
+                std::transform(haystack.begin(), haystack.end(), haystack.begin(), [](unsigned char c) {
+                    return std::tolower(c);
+                    });
+
+                if (haystack.find(needle) == std::string::npos) {
+                    return;
+                }
+            }
+
             ImGui::PushID(entity); // To avoid to have a id egall to ""
             if (ImGui::Selectable(currentSceneTag.name.c_str(), interfaceData->focusGameObject == entity)) {
                 interfaceData->focusGameObject = entity;
             }
             if (ImGui::BeginPopupContextItem("ElementPopup"))
             {
-                if (ImGui::MenuItem("Delete Entity"))
-                {
-                    world->Delete_Entity(interfaceData->focusGameObject);
-                    interfaceData->focusGameObject = Engine::Component::INVALIDE_uint32_t;
+                if (ImGui::MenuItem("Delete Entity")){
+                    deleteFocus = true;
                 }
                 ImGui::EndPopup();
             }
             ImGui::PopID();
         }
     });
+
+    if (deleteFocus) {
+        world->Delete_Entity(interfaceData->focusGameObject);
+        interfaceData->focusGameObject = Engine::Component::INVALIDE_uint32_t;
+    }
 
     ImGui::End();
 }
