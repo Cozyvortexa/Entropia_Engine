@@ -102,7 +102,7 @@ void Systems::LightSystem::InitShadowBuffer(World& world) {
 		switch (lightTag.tag)
 		{
 		case Component::LightTag::None:
-			assert(true, "Init Tag not define on a light");
+			assert(false && "Init Tag not define on a light");
 			break;
 		case Component::LightTag::PointLight_Tag: {
 			Component::PointLight* currentLight = world.get_component<Component::PointLight>(entity);
@@ -694,7 +694,7 @@ All_Light* Systems::LightSystem::DataCollector(World* world, Component::CameraCo
 	View viewSpotLight = world->view<Component::SpotLight, Component::Transform>();
 	viewSpotLight.each([&](int entity, Component::SpotLight& spotLight, Component::Transform& transform) {
 		spotLight_compteur++;
-		if (spotLight_compteur <= MAX_POINT_LIGHT) {
+		if (spotLight_compteur <= MAX_SPOT_LIGHT) {
 			Padding_SpotLight p_spotLight;
 			//Spot_Light
 			p_spotLight.position = transform.position;
@@ -896,13 +896,15 @@ void Systems::LightSystem::Init(World& world, const Resource::ResourceBuffer* re
 	static_assert(sizeof(Padding_SpotLight) == 64, "Invalide alignement");
 	static_assert(alignof(Padding_SpotLight) == 16);
 
+	resourceBuffer->renderResource->lights = new All_Light();
+
 	InitLightSSBO(world, resourceBuffer);
 
 	InitCaptureCubeMap(world, resourceBuffer);
 	Init_IrradianceMap(world, resourceBuffer);
 	Init_BRDF_LUTTexture(world, resourceBuffer);
 
-	Equirenctangular_To_CubeMap(world, resourceBuffer, "Assets/SkyBox/InTheSky/kloofendal_48d_partly_cloudy_puresky_2k.hdr");  //qwantani_night_puresky_2k
+	Equirenctangular_To_CubeMap(world, resourceBuffer, "Assets/SkyBox/night/rogland_clear_night_2k.hdr");  //qwantani_night_puresky_2k
 }
 
 void Systems::LightSystem::Update(World& world, const Resource::ResourceBuffer* resourceBuffer) {
@@ -934,4 +936,5 @@ void Systems::LightSystem::Update(World& world, const Resource::ResourceBuffer* 
 
 	//glfwSwapBuffers(windowResource->window);
 	glfwPollEvents();
+	delete renderResource->lights;
 }

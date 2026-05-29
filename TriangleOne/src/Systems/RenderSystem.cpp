@@ -483,7 +483,7 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 
 	Entity spotLightEntity = world.Register();
 	Component::Transform spotTransform(glm::vec3(0.0f, 4.0f, -6.0f));
-	Component::SpotLight spotLight(color, 1000.0f, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->r_Shader.depthShader.get());
+	Component::SpotLight spotLight(color, 10000.0f, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->r_Shader.depthShader.get());
 	Component::LightToInitTag spotTag(Component::LightTag::SpotLight_Tag);
 	Component::SceneTag spotLight_scene_Tag("Spot Light");
 
@@ -494,7 +494,7 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 
 	Entity pointLightEntity = world.Register();
 	Component::Transform transformPointLight(glm::vec3(1.0f, 5.0f, 0.0f));
-	Component::PointLight pointLight(color, 150.0f, 8.0f, renderData->r_Shader.depthShaderCubeMap.get());
+	Component::PointLight pointLight(color, 800.0f, 8.0f, renderData->r_Shader.depthShaderCubeMap.get());
 	Component::LightToInitTag pointTag(Component::LightTag::PointLight_Tag);
 	Component::SceneTag pointLight_scene_Tag("Point Light");
 

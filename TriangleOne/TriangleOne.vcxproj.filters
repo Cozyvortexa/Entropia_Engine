@@ -198,8 +198,6 @@
     <None Include="Shader\PostProcessShader\PostProcessFrag.glsl" />
     <None Include="Shader\MiscShader\SkyBoxFrag.glsl" />
     <None Include="Shader\MiscShader\SkyBoxVertex.glsl" />
-    <None Include="Shader\MiscShader\ReflexionVertex.glsl" />
-    <None Include="Shader\MiscShader\ReflexionFrag.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\DepthMapFrag.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\DepthMapVertex.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\ShadowVertex.glsl" />
@@ -220,5 +218,7 @@
     <None Include="Shader\IBLshader\SpecularIBL\Fragment_PreFilter.glsl" />
     <None Include="Shader\IBLshader\BRDF\Fragment_brdf.glsl" />
     <None Include="Shader\IBLshader\BRDF\Vertex_brdf.glsl" />
+    <None Include="Shader\BRDF\Fragment_brdf.glsl" />
+    <None Include="Shader\BRDF\Vertex_brdf.glsl" />
   </ItemGroup>
 </Project>

@@ -354,7 +354,7 @@ namespace Engine::Resource {
 		unsigned int toImGui_Texture;
 
 		////////////////Parameters
-		float exposure = 1.0f; // HDR exposure
+		float exposure = 0.5f; // HDR exposure
 
 		//Bloom
 		bool bloomEnable = false;

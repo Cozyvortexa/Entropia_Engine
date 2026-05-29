@@ -204,6 +204,8 @@
   <ItemGroup>
     <None Include="Shader\BloomShader\FragmentBloom.glsl" />
     <None Include="Shader\BloomShader\VertexBloom.glsl" />
+    <None Include="Shader\BRDF\Fragment_brdf.glsl" />
+    <None Include="Shader\BRDF\Vertex_brdf.glsl" />
     <None Include="Shader\IBLshader\BRDF\Fragment_brdf.glsl" />
     <None Include="Shader\IBLshader\BRDF\Vertex_brdf.glsl" />
     <None Include="Shader\IBLshader\Fragment_Equirectangular_to_Cubemap.glsl" />
@@ -220,8 +222,6 @@
     <None Include="Shader\LightShader\Light\LightVertexShader.glsl" />
     <None Include="Shader\PostProcessShader\PostProcessFrag.glsl" />
     <None Include="Shader\PostProcessShader\PostProcessVertex.glsl" />
-    <None Include="Shader\MiscShader\ReflexionFrag.glsl" />
-    <None Include="Shader\MiscShader\ReflexionVertex.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\ShadowCubeFrag.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\ShadowCubeGeometry.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\ShadowCubeVertex.glsl" />

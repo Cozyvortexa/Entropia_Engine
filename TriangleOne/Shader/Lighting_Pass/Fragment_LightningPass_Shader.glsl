@@ -77,7 +77,7 @@ vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
-vec3 CalcPbrLight(vec3 lightDir, vec3 V, vec3 H, vec3 Normal, vec3 radiance, Material material, vec3 F0, vec3 kD, vec3 kS);
+vec3 CalcPbrLight(vec3 lightDir, vec3 V, vec3 H, vec3 Normal, vec3 radiance, Material material, vec3 F0);
 
 ////////////////
 in vec2 TexCoords;
@@ -224,14 +224,13 @@ vec3 CalcDirLight(DirLight light, vec3 viewDir, vec3 FragPos, vec3 Normal, vec3 
 	vec3 currentSpecular = vec3(0);
 	float diff = max(dot(Normal, lightDir), 0.0);
 	if (diff > 0.0) {
-		vec3 diffuse = light.color * diff * vec3(Albedo);
 		vec3 H = normalize(viewDir + lightDir);
 
-		vec3 radiance = light.color* diff;
-		vec3 Lo = CalcPbrLight(lightDir, viewDir, H, Normal, radiance, material, F0, kD, kS);
+		vec3 radiance = light.color;
+		vec3 Lo = CalcPbrLight(lightDir, viewDir, H, Normal, radiance, material, F0);
 
 	    float shadow = ShadowDirLight(FragPosLightSpace);
-		return Lo * shadow;
+		return Lo * (1.0 - shadow);;
 	}
 	return vec3(0.0);
 }
@@ -256,7 +255,7 @@ vec3 CalcPointLight(PointLight light, int lightIndex, vec3 viewDir, vec3 FragPos
 	float shadow = ShadowPointLight(light, lightIndex, FragPos, Normal);
 	float lightModifier = (1.0 - shadow); 
 
-	vec3 Lo = CalcPbrLight(lightDir, viewDir, H, Normal, radiance, material, F0, kD, kS);
+	vec3 Lo = CalcPbrLight(lightDir, viewDir, H, Normal, radiance, material, F0);
 
 	return Lo * lightModifier;
 }
@@ -275,15 +274,16 @@ vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, 
 	vec3 diffuse = light.color * diff * Albedo.rgb;
 
 	// attenuation
-	float distance = length(light.position - FragPos);
-	float attenuation = clamp(1.0 - (distance / light.range), 0.0, 1.0);
-	diffuse *= attenuation * intensity;
+	float distance    = length(light.position - FragPos);
+    float distFrac    = distance / light.range;
+	float attenuation = clamp(1.0 - distFrac * distFrac * distFrac * distFrac, 0.0, 1.0);
+    attenuation       = (attenuation * attenuation) / (distance * distance + 1.0);
 
 	vec3 H = normalize(viewDir + lightDir);
 
-	vec3 radiance = diffuse * attenuation;
+	vec3 radiance = light.color * attenuation * intensity;
 
-	vec3 Lo = CalcPbrLight(lightDir, viewDir, H, Normal, radiance, material, F0, kD, kS);
+	vec3 Lo = CalcPbrLight(lightDir, viewDir, H, Normal, radiance, material, F0);
 
 	//Shadow
 	float shadow = ShadowSpotLight(light, lightIndex, FragPos);
@@ -321,7 +321,7 @@ float ShadowDirLight(vec4 FragPosLightSpace){
 	}
 	shadow /= 9.0;
 
-	return shadow;
+	return 1.0 - shadow;
 }
 
 float GetShadowMapValue(int index, vec4 dirDepth) {
@@ -350,7 +350,7 @@ float ShadowPointLight(PointLight light, int lightIndex, vec3 FragPos, vec3 Norm
 	float currentDepth = length(fragToLight);
 
 	if(currentDepth >= light.range)
-        return 1.0; // Not in shadow if out of range
+        return 0.0;
 
 	float shadow = 0.0;
 	float samples = 8.0;
@@ -420,7 +420,7 @@ float ShadowSpotLight(SpotLight light, int lightIndex, vec3 FragPos){
 /////////////////////////// PBR
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
-	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
@@ -454,7 +454,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 	return ggx1 * ggx2;
 }
 
-vec3 CalcPbrLight(vec3 lightDir, vec3 V, vec3 H, vec3 Normal, vec3 radiance, Material material, vec3 F0, vec3 kD, vec3 kS){
+vec3 CalcPbrLight(vec3 lightDir, vec3 V, vec3 H, vec3 Normal, vec3 radiance, Material material, vec3 F0){
 	vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
 	float NDF = DistributionGGX(Normal, H, material.roughness);
@@ -464,9 +464,11 @@ vec3 CalcPbrLight(vec3 lightDir, vec3 V, vec3 H, vec3 Normal, vec3 radiance, Mat
 	float denominator = 4.0 * max(dot(Normal, V), 0.0) * max(dot(Normal, lightDir), 0.0);
 	vec3 specular = numerator / max(denominator, 0.001);
 
+	vec3 kS_local = F;
+    vec3 kD_local = (vec3(1.0) - kS_local) * (1.0 - material.metallic);
 
 	float NdotL = max(dot(Normal, lightDir), 0.0);
-	vec3 Lo = (kD * material.albedo / PI + specular) * radiance * NdotL;
+	vec3 Lo = (kD_local  * material.albedo / PI + specular) * radiance * NdotL;
 
 
 	return Lo;

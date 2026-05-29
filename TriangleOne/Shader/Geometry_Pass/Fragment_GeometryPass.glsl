@@ -53,7 +53,7 @@ void main()
 	else {
 		norm = normal;
 	}
-	gNormal = normalize(norm);
+	gNormal = normalize(norm) * 0.5 + 0.5;
 
     gPosition = FragPos;
 
