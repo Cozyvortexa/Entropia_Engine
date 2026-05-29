@@ -445,14 +445,14 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	//Create the main cam  // TEMP / WARNING
 	Entity camEntity = world.Register();
 	Component::CameraComponent cameraComponent(windowData->WIDTH, windowData->HEIGHT);
-	Component::Transform transform;
+	Component::Transform transform(glm::vec3(0, 5, 10));
 	Component::AudioListener audioListener;
 	world.add_components(camEntity, cameraComponent, transform, audioListener);
 
 	world.get_ressource<Resource::ActiveCamera>()->cameraID = camEntity;
 
 	Entity model = world.Register();
-	Component::Transform modelTransform; // ("Assets/main_sponza/main_sponza/NewSponza_Main_Yup_003.fbx");
+	Component::Transform modelTransform(glm::vec3(-2,-1,0)); // ("Assets/main_sponza/main_sponza/NewSponza_Main_Yup_003.fbx");
 	std::pair<Mesh&, int> value = world.assetStore->Get_Mesh("Assets/ImpScene/autumn_house.glb");
 	Component::MeshHandle meshHandle(value.second);
 	Component::SceneTag mesh_scene_Tag("Maison");
