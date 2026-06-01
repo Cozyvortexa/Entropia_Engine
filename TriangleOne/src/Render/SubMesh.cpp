@@ -75,7 +75,6 @@ SubMesh::SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices
 	layout.attributes.push_back(tangentAttribute);
 
 	layout.stride = sizeof(Vertex);
-	//SetupSubMesh();
 }
 
 ///////////////OpenGL

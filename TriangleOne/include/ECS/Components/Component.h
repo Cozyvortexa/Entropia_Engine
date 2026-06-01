@@ -66,7 +66,6 @@ namespace Engine::Component {
 			lastX = SCR_WIDTH / 2.0f;
 			lastY = SCR_HEIGHT / 2.0f;
 		}
-		glm::mat4 projection = glm::mat4(1.0f);
 		glm::mat4 model = glm::mat4(1.0f);
 		glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
 
@@ -277,6 +276,7 @@ namespace Engine::Resource {
 		std::unique_ptr<Shader> irradiance_Shader = nullptr;
 		std::unique_ptr<Shader> prefilter_Shader = nullptr;
 		std::unique_ptr<Shader> brdf_Shader = nullptr;
+		std::unique_ptr<Shader> axisShader = nullptr;
 	};
 
 	struct GBuffer : public Resource {
@@ -404,6 +404,7 @@ namespace Engine::Resource {
 	};
 
 	struct InterfaceRessource : public Resource {
+		bool editorActive = true;
 		bool mainInterfaceOpen = true;
 		bool hierarchy_menu = true;
 		bool renderWindowsToggle = true;

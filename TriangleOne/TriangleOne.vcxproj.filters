@@ -220,5 +220,7 @@
     <None Include="Shader\IBLshader\BRDF\Vertex_brdf.glsl" />
     <None Include="Shader\BRDF\Fragment_brdf.glsl" />
     <None Include="Shader\BRDF\Vertex_brdf.glsl" />
+    <None Include="Shader\MiscShader\AxisShader\AxisFrag.glsl" />
+    <None Include="Shader\MiscShader\AxisShader\AxisVertex.glsl" />
   </ItemGroup>
 </Project>

@@ -220,6 +220,8 @@
     <None Include="Shader\LightShader\ShadowMapping\DepthMapVertex.glsl" />
     <None Include="Shader\LightShader\Light\LightFragShader.glsl" />
     <None Include="Shader\LightShader\Light\LightVertexShader.glsl" />
+    <None Include="Shader\MiscShader\AxisShader\AxisFrag.glsl" />
+    <None Include="Shader\MiscShader\AxisShader\AxisVertex.glsl" />
     <None Include="Shader\PostProcessShader\PostProcessFrag.glsl" />
     <None Include="Shader\PostProcessShader\PostProcessVertex.glsl" />
     <None Include="Shader\LightShader\ShadowMapping\ShadowCubeFrag.glsl" />

@@ -14,6 +14,13 @@ namespace Engine::Render {
 
 namespace Engine::Render {
 
+    enum class BufferUsage {
+        Static,   // GPU_ONLY, upload once
+        Dynamic,  // frequently updated
+        Stream    // every frame
+    };
+
+
     class VertexBuffer {
     public:
         virtual ~VertexBuffer() = default;
@@ -43,7 +50,7 @@ namespace Engine::Render {
     struct VertexAttribute
     {
         uint32_t location;
-        Format format;
+        Format format;  // Value type
         uint32_t offset;
     };
 

@@ -441,6 +441,7 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	renderData->r_Shader.irradiance_Shader = std::make_unique<Shader>("TriangleOne/Shader/IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "TriangleOne/Shader/IBLshader/Irradiance/Fragment_Irradiance_Convulation.glsl");
 	renderData->r_Shader.prefilter_Shader = std::make_unique<Shader>("TriangleOne/Shader/IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "TriangleOne/Shader/IBLshader/SpecularIBL/Fragment_Prefilter.glsl");
 	renderData->r_Shader.brdf_Shader = std::make_unique<Shader>("TriangleOne/Shader/BRDF/Vertex_brdf.glsl", "TriangleOne/Shader/BRDF/Fragment_brdf.glsl");
+	renderData->r_Shader.axisShader = std::make_unique<Shader>("TriangleOne/Shader/MiscShader/AxisShader/AxisVertex.glsl", "TriangleOne/Shader/MiscShader/AxisShader/AxisFrag.glsl");
 
 	//Create the main cam  // TEMP / WARNING
 	Entity camEntity = world.Register();
@@ -499,8 +500,8 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	Component::SceneTag pointLight_scene_Tag("Point Light");
 
 	world.add_components(pointLightEntity, pointLight_scene_Tag, transformPointLight, pointLight, pointTag);
-
 	/////////////////////////////////////
+
 
 	//Entity backpack = world.Register();
 	//Component::Transform backPackTransform(glm::vec3(10.0f, 3.0f, 2.0f));

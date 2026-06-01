@@ -322,8 +322,9 @@ void Systems::InterfaceSystem::Display_Inspecteur_Menu(World* world, const Resou
 
         //Transform
         Component::Transform* currentTransform = world->get_component<Component::Transform>(interfaceData->focusGameObject);
-        if (currentTransform != nullptr && ImGui::CollapsingHeader("Transform")) {
+        assert(currentTransform != nullptr && " Scene object without transform detected in interface system");
 
+        if (ImGui::CollapsingHeader("Transform")) {
 
             ImGui::PushID(interfaceData->focusGameObject + "Transform");
             Editor::DrawComponentUI(*currentTransform, editorContext);
@@ -571,8 +572,6 @@ void Systems::InterfaceSystem::Init(World& world, const Resource::ResourceBuffer
     config.PixelSnapH = true;
     ImFont* font = io.Fonts->AddFontFromFileTTF("Assets/Font/Amarna-VariableFont_wght.ttf");
     io.Fonts->AddFontFromFileTTF("Assets/Font/Font_Awesome_7_Free-Solid-900.otf", 16.0f, &config, icons_ranges);
-
-
     ////
 
     ImGui_ImplOpenGL3_Init();

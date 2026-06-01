@@ -177,6 +177,73 @@ void OpenGL_Renderer::LoadDefaultCube() {
 	glBindVertexArray(0);
 }
 
+void OpenGL_Renderer::SetupAxisArrow() {
+	const float arrowVertices[] = {
+		// Arrows body's
+		0.0f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f,
+		// Tip (left/right)
+		0.0f, 1.0f, 0.0f,  -0.1f, 0.8f, 0.0f,
+		0.0f, 1.0f, 0.0f,   0.1f, 0.8f, 0.0f
+	};
+
+
+	glGenVertexArrays(1, &arrowVAO);
+	glGenBuffers(1, &arrowVBO);
+
+	glBindVertexArray(arrowVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, arrowVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(arrowVertices), arrowVertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindVertexArray(0);
+}
+
+void OpenGL_Renderer::RenderAxisGizmo(glm::vec3 objectPosition, glm::mat4 view, glm::mat4 projection, Shader& gizmoShader){
+	gizmoShader.Use();
+	gizmoShader.setMatrix("view", view);
+	gizmoShader.setMatrix("projection", projection);
+
+
+	glDisable(GL_DEPTH_TEST);
+	glLineWidth(3.0f);
+
+	glBindVertexArray(arrowVAO);
+
+	glm::mat4 model;
+
+	// --- AXIS Y (GREEN) ---
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, objectPosition);
+	model = glm::scale(model, glm::vec3(1.5f));
+	gizmoShader.setMatrix("model", model);
+	gizmoShader.setVec("axisColor", glm::vec3(0.0f, 1.0f, 0.0f));
+	glDrawArrays(GL_LINES, 0, 6);
+
+	// --- AXIS X (RED) ---
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, objectPosition);
+	model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(1.5f));
+	gizmoShader.setMatrix("model", model);
+	gizmoShader.setVec("axisColor", glm::vec3(1.0f, 0.0f, 0.0f));
+	glDrawArrays(GL_LINES, 0, 6);
+
+	// --- AXIS Z (BLUE) ---
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, objectPosition);
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(1.5f));
+	gizmoShader.setMatrix("model", model);
+	gizmoShader.setVec("axisColor", glm::vec3(0.0f, 0.0f, 1.0f));
+	glDrawArrays(GL_LINES, 0, 6);
+
+	glBindVertexArray(0);
+	glLineWidth(1.0f);
+	glEnable(GL_DEPTH_TEST);
+}
+
 
 void OpenGL_Renderer::SetViewport_Size(glm::vec2 newSize) {
 	if (newSize.x < 0 || newSize.y < 0) return;

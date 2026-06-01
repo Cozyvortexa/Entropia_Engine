@@ -19,7 +19,7 @@
 #define SHADOW_BINDING_POINT 2
 
 #pragma region Padding_Structures
-struct Padding_DirLight {  // To be identical to the memory alignment of structs in shaders, SSBO
+struct Padding_DirLight {  // To be identical to the memory alignment of structs in the shaders, SSBO
 	alignas(16) glm::vec3 direction;
 	alignas(16) glm::vec3 color;
 };
