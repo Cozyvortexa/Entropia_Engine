@@ -1,5 +1,5 @@
 #pragma once
-#include "ECS/Components/AudioStruct.h"
+#include "Audio/AudioStruct.h"
 
 namespace Engine::Audio {
 		// Invidual Audio

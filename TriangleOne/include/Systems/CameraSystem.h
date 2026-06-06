@@ -5,7 +5,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "ECS/System.h"
-#include "ECS/Components/Component.h"
 #include "ECS/World.h"
 
 namespace Engine::Systems {

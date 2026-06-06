@@ -13,7 +13,8 @@
 
 #include "Render/Material.h"
 
-#include "ECS/Components/AudioStruct.h"
+#include "Audio/AudioStruct.h"
+#include "ECS/Resources/Resource.h"
 
 class AssetStore {
 public:

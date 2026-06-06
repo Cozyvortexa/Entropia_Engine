@@ -1,4 +1,4 @@
-#include <ECS/Components/Light.h>
+#include <ECS/Components/LightComponent.h>
 
 namespace Component = Engine::Component;
 #pragma region Init

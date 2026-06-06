@@ -249,3 +249,48 @@ void OpenGL_Renderer::SetViewport_Size(glm::vec2 newSize) {
 	if (newSize.x < 0 || newSize.y < 0) return;
 	glViewport(0, 0, newSize.x, newSize.y);
 }
+
+//Call when the viewport is re-scall
+void OpenGL_Renderer::ResizeFrameBufferText(Engine::Resource::RenderResource* renderData) {
+	if (renderData->renderWIDTH < 0 || renderData->renderHEIGHT < 0) return;
+	glBindTexture(GL_TEXTURE_2D, renderData->finalDepthOutput);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	glBindTexture(GL_TEXTURE_2D, renderData->finalTxtColorOutput[0]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->finalTxtColorOutput[1]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	//Gbuffer
+	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gPosition);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gNormal);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gAlbedo);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gARM);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->gBuffer.gDepth);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	//Bloom
+	glBindTexture(GL_TEXTURE_2D, renderData->pingpongBuffers[0]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, renderData->pingpongBuffers[1]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	//SSAO
+	glBindTexture(GL_TEXTURE_2D, renderData->ssao.ssaoText);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RED, GL_FLOAT, NULL);
+	//SSAO-Blur
+	glBindTexture(GL_TEXTURE_2D, renderData->ssao.ssaoBlurText);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RED, GL_FLOAT, NULL);
+
+	//Imgui
+	glBindTexture(GL_TEXTURE_2D, renderData->toImGui_Texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, renderData->renderWIDTH, renderData->renderHEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+}

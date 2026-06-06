@@ -1,5 +1,6 @@
 #pragma once
-#include "ECS/Components/Component.h"
+
+#include "ECS/Resources/Resource.h"
 
 class World;
 

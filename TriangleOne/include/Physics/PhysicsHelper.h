@@ -1,5 +1,5 @@
 #pragma once
-#include "ECS/Components/PhysicsStruct.h"
+#include "Physics/PhysicsStruct.h"
 #include <assert.h>
 
 #include <glm/glm.hpp>

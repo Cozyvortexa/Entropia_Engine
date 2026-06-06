@@ -176,21 +176,25 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Audio\AudioHelper.h" />
-    <ClInclude Include="include\ECS\Components\AudioStruct.h" />
-    <ClInclude Include="include\ECS\Components\PhysicsStruct.h" />
+    <ClInclude Include="include\ECS\Components\AudioComponent.h" />
+    <ClInclude Include="include\Audio\AudioStruct.h" />
+    <ClInclude Include="include\ECS\Components\BasicComponent.h" />
+    <ClInclude Include="include\ECS\Components\PhysicComponent.h" />
+    <ClInclude Include="include\Physics\PhysicsStruct.h" />
+    <ClInclude Include="include\ECS\Resources\Resource.h" />
     <ClInclude Include="include\Physics\PhysicsHelper.h" />
     <ClInclude Include="include\Render\Renderer.h" />
     <ClInclude Include="include\Render\RenderObject.h" />
     <ClInclude Include="include\Systems\AudioSystem.h" />
     <ClInclude Include="include\Systems\CameraSystem.h" />
     <ClInclude Include="include\Systems\InputSystem.h" />
-    <ClInclude Include="include\ECS\Components\Component.h" />
+    <ClInclude Include="include\ECS\Components\ComponentBase.h" />
     <ClInclude Include="include\Render\Material.h" />
     <ClInclude Include="include\ECS\AssetStore.h" />
     <ClInclude Include="include\ECS\Scheduler.h" />
     <ClInclude Include="include\ECS\SpareSet.h" />
     <ClInclude Include="include\engine.h" />
-    <ClInclude Include="include\ECS\Components\Light.h" />
+    <ClInclude Include="include\ECS\Components\LightComponent.h" />
     <ClInclude Include="include\Systems\InterfaceSystem.h" />
     <ClInclude Include="include\Systems\LightSystem.h" />
     <ClInclude Include="include\Render\SubMesh.h" />

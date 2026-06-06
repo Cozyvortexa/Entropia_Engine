@@ -2,9 +2,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "ECS/System.h"
-#include "ECS/Components/Component.h"
 #include "ECS/World.h"
-#include "ECS/Components/Light.h"
+#include "ECS/Components/LightComponent.h"
 
 #include <tuple>
 #include <iostream>

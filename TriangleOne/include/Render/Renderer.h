@@ -9,7 +9,7 @@
 #include "Render/Shader.h"
 #include "Render/Material.h"
 
-#include "ECS/Components/Component.h"
+#include "ECS/Resources/Resource.h"
 #include "ECS/AssetStore.h"
 
 #include <variant>
@@ -33,6 +33,8 @@ public:
     virtual void SetupAxisArrow() = 0;
 
     virtual void RenderAxisGizmo(glm::vec3 objectPosition, glm::mat4 view, glm::mat4 projection, Shader& gizmoShader) = 0;
+
+    virtual void ResizeFrameBufferText(Engine::Resource::RenderResource* renderData) = 0;
 
     const float cubeVertices[108] = {
         // back face
@@ -105,6 +107,8 @@ public:
     void SetupAxisArrow() override;
 
     void RenderAxisGizmo(glm::vec3 objectPosition, glm::mat4 view, glm::mat4 projection, Shader& gizmoShader) override;
+
+    void ResizeFrameBufferText(Engine::Resource::RenderResource* renderData) override;
 
     unsigned int cubeVAO = -1;
     unsigned int cubeVBO = -1;

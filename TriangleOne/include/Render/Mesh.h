@@ -1,6 +1,4 @@
 #pragma once
-
-
 #include <Render/SubMesh.h>
 #include <vector>
 
@@ -9,8 +7,6 @@
 #include <assimp/postprocess.h>
 
 #include "Texture.h"
-
-#include "ECS/Components/Component.h"
 
 #include <variant>
 

@@ -7,7 +7,7 @@ namespace Systems = Engine::Systems;
 namespace Resource = Engine::Resource;
 namespace Audio = Engine::Audio;
 
-void Systems::AudioSystem::UpdatePositionAudio(World* world, Resource::AudioResource* audioData) { // Va update la position des sons
+void Systems::AudioSystem::UpdatePositionAudio(World* world, Resource::AudioResource* audioData) {
     View audio_Source_view = world->view<Component::Transform, Component::AudioSource>();
     View audio_Listener_view = world->view<Component::Transform, Component::AudioListener, Component::CameraComponent>();
 

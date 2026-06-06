@@ -4,7 +4,6 @@
 #include <GLFW/glfw3.h>
 
 #include "ECS/System.h"
-#include "ECS/Components/Component.h"
 #include "ECS/World.h"
 
 #include <iostream>

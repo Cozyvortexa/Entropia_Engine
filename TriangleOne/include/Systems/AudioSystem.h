@@ -3,8 +3,7 @@
 
 #include "ECS/System.h"
 
-#include "ECS/Components/AudioStruct.h"
-#include "ECS/Components/Component.h"
+#include "ECS/Components/AudioComponent.h"
 
 #include <ECS/World.h>
 

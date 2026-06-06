@@ -3,14 +3,14 @@
 #include <glad/glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <Systems/windowSystem.h>
 #include <tuple>
 
 #include <iostream>
 #include <vector>
 #include <deque>
 #include "ECS/SpareSet.h"
-#include "ECS/Components/Component.h"
+#include "ECS/Components/ComponentBase.h"
+#include "ECS/Resources/Resource.h"
 #include "ECS/AssetStore.h"
 
 #include "Render/Renderer.h"

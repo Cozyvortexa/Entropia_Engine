@@ -6,9 +6,8 @@
 
 #include <vector>
 
-#include "Systems/CameraSystem.h"
 #include "Render/Shader.h"
-#include "ECS/Components/Component.h"
+#include "ECS/Components/ComponentBase.h"
 
 struct AABB {
 	AABB() { min = glm::vec3(0);  max = glm::vec3(0);};
@@ -23,6 +22,19 @@ public:
 };
 
 namespace Engine::Component {
+	enum LightTag {
+		None,
+		Directional_Tag,
+		PointLight_Tag,
+		SpotLight_Tag
+	};
+
+	struct LightToInitTag : public Component {
+		LightToInitTag() {};
+		LightToInitTag(LightTag tag) { this->tag = tag; }
+		LightTag tag = LightTag::None;
+	};
+
 	struct Light : Component {
 	public:
 		~Light() = default;

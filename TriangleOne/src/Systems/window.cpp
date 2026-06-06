@@ -59,7 +59,7 @@ void Systems::WindowSystem::Framebuffer_size_callback(GLFWwindow* window, int wi
 
 	//FallBack
 	if (!interfaceResource->OnEditorView) {
-		RenderSystem::ResizeFrameBufferText(renderResource);
+		world->renderer->ResizeFrameBufferText(renderResource);
 	}
 }
 

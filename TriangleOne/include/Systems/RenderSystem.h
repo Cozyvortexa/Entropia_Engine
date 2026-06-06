@@ -22,7 +22,10 @@
 #include "Render/Renderer.h"
 
 #include "ECS/World.h"
-#include "ECS/Components/Light.h"
+#include "ECS/Resources/Resource.h"
+#include "ECS/Components/LightComponent.h"
+#include "ECS/Components/AudioComponent.h"
+#include "ECS/Components/PhysicComponent.h"
 
 #include <random>
 namespace Engine::Systems {
@@ -41,8 +44,6 @@ namespace Engine::Systems {
 		void Init_AllBuffer(Engine::Resource::RenderResource* renderData);
 
 		std::pair<unsigned int, unsigned int> CreateDummyShadowTextures();
-
-		static void ResizeFrameBufferText(Engine::Resource::RenderResource* renderResource);
 
 		void Init(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;
 		void Update(World& world, const Engine::Resource::ResourceBuffer* ressourceBuffer) override;

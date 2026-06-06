@@ -1,6 +1,6 @@
 #pragma once
-#include <ECS/Components/PhysicsStruct.h>
 #include "Physics/PhysicsHelper.h"
+#include "ECS/Components/PhysicComponent.h"
 
 #include "ECS/System.h"
 #include "ECS/World.h"

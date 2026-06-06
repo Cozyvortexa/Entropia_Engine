@@ -178,7 +178,7 @@ void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::R
     ImGui::End();
 }
 
-void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRessource* interfaceData, Resource::WindowResource* windowData) {
+void RenderWindows(World* word, Resource::RenderResource* renderData, Resource::InterfaceRessource* interfaceData, Resource::WindowResource* windowData) {
     ImGui::Begin("Render", &interfaceData->renderWindowsToggle);
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     ImGui::Image(
@@ -191,7 +191,7 @@ void RenderWindows(Resource::RenderResource* renderData, Resource::InterfaceRess
 
         renderData->renderWIDTH = (int)viewportPanelSize.x;
         renderData->renderHEIGHT = (int)viewportPanelSize.y;
-        if (!windowData->isIconified) Systems::RenderSystem::ResizeFrameBufferText(renderData);
+        if (!windowData->isIconified) word->renderer->ResizeFrameBufferText(renderData);
     }
     interfaceData->previousSize = viewportPanelSize;
     renderData->renderWIDTH;
@@ -625,7 +625,7 @@ void Systems::InterfaceSystem::Update(World& world, const Resource::ResourceBuff
     );
 
 
-    RenderWindows(renderData, interfaceData, windowsData);
+    RenderWindows(&world, renderData, interfaceData, windowsData);
     Display_RenderMenu(interfaceData, renderData, mainCamera);
     Display_Hierarchy_Menu(&world, resourceBuffer);
     Display_Inspecteur_Menu(&world, resourceBuffer);

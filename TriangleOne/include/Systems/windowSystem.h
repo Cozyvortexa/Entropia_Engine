@@ -4,11 +4,9 @@
 #include <GLFW/glfw3.h>
 
 #include "ECS/System.h"
-#include "ECS/Components/Component.h"
 #include "iostream"
 
 #include "ECS/World.h"
-#include "Systems/RenderSystem.h"
 
 namespace Engine::Systems {
 	class WindowSystem : public System {

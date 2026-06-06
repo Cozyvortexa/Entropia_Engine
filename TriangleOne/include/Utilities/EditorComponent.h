@@ -7,12 +7,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "ECS/Components/Component.h"
 
 #include "ECS/World.h"
 #include "Utilities/Observer.h"
 
-#include "ECS/Components/PhysicsStruct.h"
+#include "Physics/PhysicsStruct.h"
 
 namespace Component = Engine::Component;
 

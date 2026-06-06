@@ -128,13 +128,13 @@
     <ClInclude Include="include\Systems\CameraSystem.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\ECS\Components\Component.h">
+    <ClInclude Include="include\ECS\Components\ComponentBase.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="include\Render\Material.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\ECS\Components\Light.h">
+    <ClInclude Include="include\ECS\Components\LightComponent.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="include\Systems\LightSystem.h">
@@ -185,7 +185,7 @@
     <ClInclude Include="include\Systems\AudioSystem.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\ECS\Components\AudioStruct.h">
+    <ClInclude Include="include\Audio\AudioStruct.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="include\Audio\AudioHelper.h">
@@ -227,10 +227,22 @@
     <ClInclude Include="include\Utilities\ImGui\backends\imgui_impl_opengl3_loader.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\ECS\Components\PhysicsStruct.h">
+    <ClInclude Include="include\Physics\PhysicsStruct.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="include\Physics\PhysicsHelper.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Resources\Resource.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Components\BasicComponent.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Components\AudioComponent.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Components\PhysicComponent.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>

@@ -6,6 +6,7 @@
 #include <stack>
 
 #include "Utilities/ImGui/imgui.h"
+#include "Utilities/ImGui/imgui_stdlib.h"
 #include "Utilities/ImGui/imgui_internal.h"
 #include "Utilities/ImGui/backends/imgui_impl_glfw.h"
 #include "Utilities/ImGui/backends/imgui_impl_opengl3.h"
@@ -14,10 +15,9 @@
 #include <iostream>
 
 #include "ECS/World.h"
-#include "ECS/Components/Component.h"
-
-#include "Utilities/ImGui/imgui_stdlib.h"
-#include "Systems/RenderSystem.h"
+#include "ECS/Components/LightComponent.h"
+#include "ECS/Components/AudioComponent.h"
+#include "ECS/Components/PhysicComponent.h"
 
 #include "Utilities/Font_awesome.h"
 #include "Utilities/EditorComponent.h"
