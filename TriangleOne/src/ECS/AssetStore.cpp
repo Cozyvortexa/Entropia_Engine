@@ -269,7 +269,7 @@ void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& c
 }
 
 Mesh& AssetStore::Get_Mesh(int index) {
-	assert(index <= meshs.size() - 1, "Index out of range in Get_Mesh, AssetStore");
+	assert(index <= meshs.size() - 1 && "Index out of range in Get_Mesh, AssetStore");
 	return meshs[index];
 }
 

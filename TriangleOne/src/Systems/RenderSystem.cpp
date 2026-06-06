@@ -458,8 +458,10 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	Component::MeshHandle meshHandle(value.second);
 	Component::SceneTag mesh_scene_Tag("Maison");
 	Component::MaterialHandle materialHandle(renderData->mainMaterialHandle);
+	Component::BoxCollider boxCollider(modelTransform.position, glm::vec3(200, 20, 200));
+	boxCollider.motionType.Set(JPH::EMotionType::Static);
 
-	world.add_components(model, mesh_scene_Tag, materialHandle, meshHandle, modelTransform);
+	world.add_components(model, mesh_scene_Tag, materialHandle, meshHandle, modelTransform, std::move(boxCollider));
 
 	glEnable(GL_CULL_FACE);
 	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);

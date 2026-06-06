@@ -12,6 +12,8 @@
 #include "ECS/World.h"
 #include "Utilities/Observer.h"
 
+#include "ECS/Components/PhysicsStruct.h"
+
 namespace Component = Engine::Component;
 
 namespace Engine::Editor {
@@ -23,10 +25,10 @@ namespace Engine::Editor {
         Camera,
         Mesh,
         AudioSource,
+        Collider,
         //ParticuleSystem,
         //Script,
-        //Rigidbody,
-        //Collider,
+        //Rigidbody
     };
 
     struct EntityComponentEntry {
@@ -109,8 +111,7 @@ namespace Engine::Editor {
     inline void DrawWidget<Observer<int>>(EditorContext ctx, const char* label, Observer<int>& value) {
         int temp = value.Get();
 
-        if (ImGui::InputInt(label, &temp))
-        {
+        if (ImGui::InputInt(label, &temp)){
             value.Set(temp);
         }
     }
@@ -118,11 +119,55 @@ namespace Engine::Editor {
     inline void DrawWidget<Observer<float>>(EditorContext ctx, const char* label, Observer<float>& value) {
         float temp = value.Get();
 
-        if (ImGui::InputFloat(label, &temp))
-        {
+        if (ImGui::InputFloat(label, &temp)){
             value.Set(temp);
         }
     }
+    template<>
+    inline void DrawWidget<Observer<bool>>(EditorContext ctx, const char* label, Observer<bool>& value) {
+        bool temp = value.Get();
+
+        if (ImGui::Checkbox(label, &temp)){
+            value.Set(temp);
+        }
+    }
+    template<>
+    inline void DrawWidget<Observer<glm::vec3>>(EditorContext ctx, const char* label, Observer<glm::vec3>& value) {
+        glm::vec3 temp = value.Get();
+
+        if (ImGui::InputFloat3(label, &temp.x)){
+            value.Set(temp);
+        }
+    }
+    template<>
+    inline void DrawWidget<Observer<JPH::EMotionType>>(EditorContext ctx, const char* label, Observer<JPH::EMotionType>& value) {
+        JPH::EMotionType temp = value.Get();
+
+        static const char* motionTypeNames[] =
+        {
+            "Static",
+            "Kinematic",
+            "Dynamic"
+        };
+
+        const char* preview = motionTypeNames[static_cast<int>(value.Get())];
+
+        if (ImGui::BeginCombo("Motion Type", preview)){
+            for (int i = 0; i < IM_ARRAYSIZE(motionTypeNames); ++i){
+                bool selected = (i == static_cast<int>(value.Get()));
+
+                if (ImGui::Selectable(motionTypeNames[i], selected)){
+                    value.Set(static_cast<JPH::EMotionType>(i));
+                }
+
+                if (selected) ImGui::SetItemDefaultFocus();
+            }
+
+            ImGui::EndCombo();
+        }
+
+    }
+
 
 #pragma endregion 
 
@@ -134,19 +179,17 @@ namespace Engine::Editor {
         DrawWidget<bool>(ctx, "Looping", value->looping);
         DrawWidget<bool>(ctx, "Spatialisation", value->spatialisation);
 
-        if (ImGui::Button(ICON_FA_PLAY)) {ctx.world->audioManager->Start(*value);}
+        if (ImGui::Button(ICON_FA_PLAY)) {Engine::Audio::Start(*value);}
         ImGui::SameLine();
-        if (ImGui::Button(ICON_FA_PAUSE)) {ctx.world->audioManager->Pause(*value);}
+        if (ImGui::Button(ICON_FA_PAUSE)) {Engine::Audio::Pause(*value);}
 
         ImGui::Button("Drag and Drop new song here");
-        if (ImGui::BeginDragDropTarget())
-        {
-            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ARBO_ITEM"))
-            {
+        if (ImGui::BeginDragDropTarget()){
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ARBO_ITEM")){
                 Engine::Resource::Node* node = *static_cast<Engine::Resource::Node**>(payload->Data);
                 if (node->type == Engine::Resource::FileType::Audio) {
                     Engine::Audio::SoundFlags flags = value->flags;
-                    Engine::Audio::AudioManager::DeleteSound(value);
+                    Engine::Audio::DeleteSound(value);
 
                     value = ctx.world->assetStore->Load_Sound(ctx.resourceBuffer->audioResource->audioEngine, node->name, node->path.c_str(), flags);
                 }
@@ -168,8 +211,7 @@ namespace Engine::Editor {
             DrawWidget<std::string>(ctx, "Directory", mesh.directory);
         }
 
-        if (ImGui::BeginDragDropTarget())
-        {
+        if (ImGui::BeginDragDropTarget()){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ARBO_ITEM"))
             {
                 Engine::Resource::Node* node = *static_cast<Engine::Resource::Node**>(payload->Data);
@@ -216,10 +258,8 @@ namespace Engine::Editor {
 
         bool open = ImGui::CollapsingHeader(label);
 
-        if (ImGui::BeginPopupContextItem())
-        {
-            if (ImGui::MenuItem("Delete Component"))
-            {
+        if (ImGui::BeginPopupContextItem()){
+            if (ImGui::MenuItem("Delete Component")){
                 ctx.world->remove_component<T>(entity);
 
                 ImGui::EndPopup();
@@ -230,8 +270,7 @@ namespace Engine::Editor {
             ImGui::EndPopup();
         }
 
-        if (open)
-        {
+        if (open){
             Editor::DrawComponentUI(*component, ctx);
         }
 
@@ -247,11 +286,11 @@ namespace Engine::Editor {
         { ICON_FA_CIRCLE_DOT, "Spot Light",        ObjectType::SpotLight        },
         { ICON_FA_VIDEO,      "Camera",            ObjectType::Camera           },
         { ICON_FA_DICE_D6,    "Mesh",              ObjectType::Mesh             },
-        { ICON_FA_VOLUME_HIGH, "Audio Source",     ObjectType::AudioSource      },
+        { ICON_FA_VOLUME_HIGH,"Audio Source",     ObjectType::AudioSource      },
+        { ICON_FA_BORDER_ALL, "Collider",        ObjectType::Collider         },
         /*{ ICON_FA_WIND,       "Particle System", ObjectType::ParticuleSystem  },*/
         /*{ ICON_FA_CODE,       "Script",          ObjectType::Script           },*/
         /*{ ICON_FA_MAGNET,     "Rigidbody",       ObjectType::Rigidbody        },*/
-        /*{ ICON_FA_BORDER_ALL, "Collider",        ObjectType::Collider         },*/
     };
 
 

@@ -37,7 +37,7 @@ void Systems::AudioSystem::Init(World& world, const Resource::ResourceBuffer* re
         abort();  // Critical error
     }
 
-    world.audioManager->SetEngineVolume(audioData->audioEngine, 0.5f);
+    Engine::Audio::SetEngineVolume(audioData->audioEngine, 0.5f);
 }
 
 void Systems::AudioSystem::Update(World& world, const Resource::ResourceBuffer* resourceBuffer) {

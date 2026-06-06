@@ -116,6 +116,10 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
                     Component::AudioSource audioSource;
                     world->add_components(entity, std::move(audioSource));
                 }
+                else if (entry->type == Editor::ObjectType::Collider) {
+                    Component::BoxCollider boxCollider(world->get_component<Component::Transform>(entity)->position);
+                    world->add_components(entity, std::move(boxCollider));
+                }
                 //else if (entry->type == Editor::ObjectType::ParticuleSystem) {
                 // 
                 //}
@@ -125,9 +129,7 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
                 //else if (entry->type == Editor::ObjectType::Rigidbody) {
 
                 //}
-                //else if (entry->type == Editor::ObjectType::Collider) {
 
-                //}
 
                 ImGui::CloseCurrentPopup();
             }
@@ -346,6 +348,9 @@ void Systems::InterfaceSystem::Display_Inspecteur_Menu(World* world, const Resou
 
         //Mesh
         Editor::DrawComponentSection<Component::MeshHandle>(editorContext, interfaceData->focusGameObject, "Mesh");
+
+        //BoxCollider
+        Editor::DrawComponentSection<Component::BoxCollider>(editorContext, interfaceData->focusGameObject, "BoxCollider");
 
         ImGui::Separator();
         std::string label = "Add new Component";

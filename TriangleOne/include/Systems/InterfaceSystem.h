@@ -5,10 +5,10 @@
 #include <filesystem>
 #include <stack>
 
-#include "ImGui/imgui.h"
-#include "ImGui/imgui_internal.h"
-#include "ImGui/backends/imgui_impl_glfw.h"
-#include "ImGui/backends/imgui_impl_opengl3.h"
+#include "Utilities/ImGui/imgui.h"
+#include "Utilities/ImGui/imgui_internal.h"
+#include "Utilities/ImGui/backends/imgui_impl_glfw.h"
+#include "Utilities/ImGui/backends/imgui_impl_opengl3.h"
 
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -16,7 +16,7 @@
 #include "ECS/World.h"
 #include "ECS/Components/Component.h"
 
-#include "ImGui/imgui_stdlib.h"
+#include "Utilities/ImGui/imgui_stdlib.h"
 #include "Systems/RenderSystem.h"
 
 #include "Utilities/Font_awesome.h"

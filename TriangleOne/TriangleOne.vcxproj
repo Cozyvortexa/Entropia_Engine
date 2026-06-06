@@ -103,17 +103,18 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>JPH_DEBUG_RENDERER;JPH_OBJECT_STREAM;JPH_FLOATING_POINT_EXCEPTIONS_ENABLED;JPH_PROFILE_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;user32.lib;gdi32.lib;shell32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Debug/glfw3.lib;opengl32.lib;user32.lib;gdi32.lib;shell32.lib;Debug/jolt.lib;assimp-vc143-mt.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -122,11 +123,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>JPH_DEBUG_RENDERER;JPH_OBJECT_STREAM;JPH_FLOATING_POINT_EXCEPTIONS_ENABLED;JPH_PROFILE_ENABLED;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <Optimization>MaxSpeed</Optimization>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -134,19 +136,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;user32.lib;gdi32.lib;shell32.lib;zlibstatic.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Release/glfw3.lib;user32.lib;gdi32.lib;shell32.lib;Release/jolt.lib;assimp-vc143-mt.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\include\ImGui\backends\imgui_impl_glfw.cpp" />
-    <ClCompile Include="..\include\ImGui\backends\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="..\include\ImGui\imgui.cpp" />
-    <ClCompile Include="..\include\ImGui\imgui_demo.cpp" />
-    <ClCompile Include="..\include\ImGui\imgui_draw.cpp" />
-    <ClCompile Include="..\include\ImGui\imgui_stdlib.cpp" />
-    <ClCompile Include="..\include\ImGui\imgui_tables.cpp" />
-    <ClCompile Include="..\include\ImGui\imgui_widgets.cpp" />
-    <ClCompile Include="src\Audio\AudioManager.cpp" />
+    <ClCompile Include="src\Audio\AudioHelper.cpp" />
+    <ClCompile Include="src\Physics\PhysicsHelper.cpp" />
     <ClCompile Include="src\Render\Renderer.cpp" />
     <ClCompile Include="src\Systems\AudioSystem.cpp" />
     <ClCompile Include="src\Systems\CameraSystem.cpp" />
@@ -163,16 +158,27 @@
     <ClCompile Include="src\ECS\Components\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Render\SubMesh.cpp" />
+    <ClCompile Include="src\Systems\PhysicsSystem.cpp" />
     <ClCompile Include="src\Systems\RenderSystem.cpp" />
     <ClCompile Include="src\Render\Shader.cpp" />
     <ClCompile Include="src\Render\Texture.cpp" />
     <ClCompile Include="src\Systems\TimeSystem.cpp" />
     <ClCompile Include="src\Systems\window.cpp" />
     <ClCompile Include="src\Utilities\Font_awesome.cpp" />
+    <ClCompile Include="src\Utilities\ImGui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="src\Utilities\ImGui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="src\Utilities\ImGui\imgui.cpp" />
+    <ClCompile Include="src\Utilities\ImGui\imgui_demo.cpp" />
+    <ClCompile Include="src\Utilities\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="src\Utilities\ImGui\imgui_stdlib.cpp" />
+    <ClCompile Include="src\Utilities\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="src\Utilities\ImGui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Audio\AudioManager.h" />
+    <ClInclude Include="include\Audio\AudioHelper.h" />
     <ClInclude Include="include\ECS\Components\AudioStruct.h" />
+    <ClInclude Include="include\ECS\Components\PhysicsStruct.h" />
+    <ClInclude Include="include\Physics\PhysicsHelper.h" />
     <ClInclude Include="include\Render\Renderer.h" />
     <ClInclude Include="include\Render\RenderObject.h" />
     <ClInclude Include="include\Systems\AudioSystem.h" />
@@ -190,6 +196,7 @@
     <ClInclude Include="include\Render\SubMesh.h" />
     <ClInclude Include="include\Render\Mesh.h" />
     <ClInclude Include="include\ECS\System.h" />
+    <ClInclude Include="include\Systems\PhysicsSystem.h" />
     <ClInclude Include="include\Systems\RenderSystem.h" />
     <ClInclude Include="include\Render\Shader.h" />
     <ClInclude Include="include\Render\Texture.h" />
@@ -198,10 +205,21 @@
     <ClInclude Include="include\ECS\World.h" />
     <ClInclude Include="include\Utilities\EditorComponent.h" />
     <ClInclude Include="include\Utilities\Font_awesome.h" />
+    <ClInclude Include="include\Utilities\ImGui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="include\Utilities\ImGui\backends\imgui_impl_opengl3.h" />
+    <ClInclude Include="include\Utilities\ImGui\backends\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="include\Utilities\ImGui\imconfig.h" />
+    <ClInclude Include="include\Utilities\ImGui\imgui.h" />
+    <ClInclude Include="include\Utilities\ImGui\imgui_internal.h" />
+    <ClInclude Include="include\Utilities\ImGui\imgui_stdlib.h" />
+    <ClInclude Include="include\Utilities\ImGui\imstb_rectpack.h" />
+    <ClInclude Include="include\Utilities\ImGui\imstb_textedit.h" />
+    <ClInclude Include="include\Utilities\ImGui\imstb_truetype.h" />
     <ClInclude Include="include\Utilities\miniaudio.h" />
     <ClInclude Include="include\Utilities\Observer.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="include\Utilities\ImGui\imgui.natstepfilter" />
     <None Include="Shader\BloomShader\FragmentBloom.glsl" />
     <None Include="Shader\BloomShader\VertexBloom.glsl" />
     <None Include="Shader\BRDF\Fragment_brdf.glsl" />
@@ -234,6 +252,9 @@
     <None Include="Shader\SSAO_Pass\Fragment_Blur_SSAO_Shader.glsl" />
     <None Include="Shader\SSAO_Pass\Fragment_SSAO_Shader.glsl" />
     <None Include="Shader\SSAO_Pass\Vertex_SSAO_Shader.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="include\Utilities\ImGui\imgui.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

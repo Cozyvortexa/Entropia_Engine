@@ -13,6 +13,7 @@
 #include <iostream>
 #include "Systems/InterfaceSystem.h"
 #include "Systems/AudioSystem.h"
+#include "Systems/PhysicsSystem.h"
 
 class Scheduler {
 public:

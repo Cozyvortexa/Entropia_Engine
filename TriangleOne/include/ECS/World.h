@@ -14,7 +14,7 @@
 #include "ECS/AssetStore.h"
 
 #include "Render/Renderer.h"
-#include "Audio/AudioManager.h"
+#include "Audio/AudioHelper.h"
 
 #include <unordered_map>
 #include <typeindex>
@@ -115,7 +115,7 @@ public:
         static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
         auto it = pools.find(std::type_index(typeid(T)));
         if (it == pools.end()) {
-            assert(true, "Deleting a component from entity number: " + entity + " have fail");
+            assert(true && "Deleting a component from an have fail");
             return false;
         }
         return it->second.get()->Remove(entity);
@@ -137,7 +137,6 @@ public:
 
     AssetStore* assetStore;
     Renderer* renderer;
-    Engine::Audio::AudioManager* audioManager;
 private:
     std::unordered_map<std::type_index, std::unique_ptr<ISparseSet>> pools;
     std::unordered_map<std::type_index, std::unique_ptr<Engine::Resource::Resource>> ressources;

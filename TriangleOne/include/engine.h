@@ -15,7 +15,7 @@
 #include "ECS/Scheduler.h"
 #include "ECS/AssetStore.h"
 #include "Render/Renderer.h"
-#include "Audio/AudioManager.h"
+#include "Audio/AudioHelper.h"
 
 class EntropiaZero {
 public:
@@ -36,5 +36,4 @@ private:
 	std::unique_ptr<Scheduler> scheduler;
 	std::unique_ptr<AssetStore> assetStore;
 	std::unique_ptr<Renderer> renderer;
-	std::unique_ptr<Engine::Audio::AudioManager> audioManager;
 };

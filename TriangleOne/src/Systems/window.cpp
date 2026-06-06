@@ -1,9 +1,9 @@
 #include "Systems/windowSystem.h"
 
-#include "ImGui/imgui.h"
-#include "ImGui/imgui_internal.h"
-#include "ImGui/backends/imgui_impl_glfw.h"
-#include "ImGui/backends/imgui_impl_opengl3.h"
+#include "Utilities/ImGui/imgui.h"
+#include "Utilities/ImGui/imgui_internal.h"
+#include "Utilities/ImGui/backends/imgui_impl_glfw.h"
+#include "Utilities/ImGui/backends/imgui_impl_opengl3.h"
 
 namespace Resource = Engine::Resource;
 namespace Systems = Engine::Systems;

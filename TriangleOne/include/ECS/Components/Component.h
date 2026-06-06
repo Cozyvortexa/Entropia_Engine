@@ -10,10 +10,11 @@
 
 #include "ECS/SpareSet.h"
 
-#include "ImGui/imgui.h"
+#include "Utilities/ImGui/imgui.h"
 
 #include <ECS/Components/AudioStruct.h>
-#include "Audio/AudioManager.h"
+#include <Physics/PhysicsHelper.h>
+#include "Audio/AudioHelper.h"
 
 #include "Utilities/Observer.h"
 
@@ -144,7 +145,7 @@ namespace Engine::Component {
 	struct AudioSource : public Component{
 	public:
 		~AudioSource() {
-			Engine::Audio::AudioManager::DeleteSound(audio);
+			Engine::Audio::DeleteSound(audio);
 		}
 		AudioSource() { 
 			audio = new Engine::Audio::Audio();
@@ -174,7 +175,7 @@ namespace Engine::Component {
 			if (this != &other) {
 
 				if (this->audio) {
-					Engine::Audio::AudioManager::DeleteSound(this->audio);
+					Engine::Audio::DeleteSound(this->audio);
 				}
 				//Clear current connection
 				volumeConnection = ScopedConnection();
@@ -218,10 +219,10 @@ namespace Engine::Component {
 	private:
 		void SetupConnections() {
 			volumeConnection = volume.Subscribe([this](const float& v) {
-				if (this->audio) Audio::AudioManager::SetVolume(*(this->audio), v);
+				if (this->audio) Audio::SetVolume(*(this->audio), v);
 				});
 			rangeConnection = range.Subscribe([this](const float& v) {
-				if (this->audio) Audio::AudioManager::SetMaxDistance(*(this->audio), v);
+				if (this->audio) Audio::SetMaxDistance(*(this->audio), v);
 				});
 		}
 
@@ -231,6 +232,105 @@ namespace Engine::Component {
 
 	struct AudioListener : public Component{
 		ma_uint32 index = 0;
+	};
+
+	struct PhysicObject : public Component {
+	public:
+		inline JPH::BodyID& GetBodyID() { return bodyID; }
+	protected:
+		JPH::BodyID bodyID;
+	};
+
+	struct BoxCollider : public PhysicObject {
+		BoxCollider() = delete;
+		BoxCollider(glm::vec3 position) {
+			boxSize.Set(glm::vec3(1.0));
+			motionType.Set(JPH::EMotionType::Dynamic);
+			//gravity.Set(false);
+			bodyID = Engine::Physics::PhysicsHelper::CreateBox(position, boxSize.Get(), JPH::Quat::sIdentity(), motionType.Get());
+
+			//Physics::PhysicsHelper::SetGravity(bodyID, gravity.Get());
+			Physics::PhysicsHelper::AddBody_To_SimulateWorld(bodyID);
+		}
+		BoxCollider(glm::vec3 position, glm::vec3 size) {
+			boxSize.Set(size);
+			motionType.Set(JPH::EMotionType::Dynamic);
+			//gravity.Set(false);
+			bodyID = Engine::Physics::PhysicsHelper::CreateBox(position, boxSize.Get(), JPH::Quat::sIdentity(), motionType.Get());
+
+			//Physics::PhysicsHelper::SetGravity(bodyID, gravity.Get());
+			Physics::PhysicsHelper::AddBody_To_SimulateWorld(bodyID);
+		}
+
+		~BoxCollider() {
+			if (bodyID.IsInvalid()){
+				Engine::Physics::PhysicsHelper::DeleteBody(bodyID);
+			}
+		}
+
+		BoxCollider(BoxCollider&& other) noexcept{
+			boxSize.Set(other.boxSize.Get());
+			motionType.Set(other.motionType.Get());
+			gravity.Set(other.gravity.Get());
+			bodyID = other.bodyID;
+
+			SetupConnections();
+		}
+		BoxCollider& operator=(BoxCollider&& other) noexcept {
+			if (this != &other) {
+				//Clear current connection
+				boxSize_Connection = ScopedConnection();
+				motionType_Connection = ScopedConnection();
+				gravity_Connection = ScopedConnection();
+
+				//Transfers the master data
+				bodyID = other.bodyID;
+				offset = std::move(other.offset);
+
+				//Synchronises the values of the observers
+				boxSize.Set(other.boxSize.Get());
+				motionType.Set(other.motionType.Get());
+				gravity.Set(other.gravity.Get());
+
+				SetupConnections();
+			}
+			return *this;
+		}
+		BoxCollider(const BoxCollider&) = delete;
+		BoxCollider& operator=(const BoxCollider&) = delete;
+
+
+		glm::vec3 offset = glm::vec3(0);
+		Observer<glm::vec3> boxSize;
+
+		Observer<bool> gravity;
+
+		Observer<JPH::EMotionType> motionType;
+
+		template<typename F>
+		void Reflect(F&& f)
+		{
+			f("Gravity", gravity);
+			f("boxSize:", boxSize);
+			f("Offset", offset);
+			f("Motion Type:", motionType);
+		}
+	private:
+		void SetupConnections() {
+			boxSize_Connection = boxSize.Subscribe([this](const glm::vec3& vec) {
+				bodyID = Engine::Physics::PhysicsHelper::ResizeBox(bodyID, vec);
+				});
+			motionType_Connection = motionType.Subscribe([this](const JPH::EMotionType& value) {
+				Engine::Physics::PhysicsHelper::SetMotionType(bodyID, value);
+				});
+			gravity_Connection = gravity.Subscribe([this](const bool& value) {
+				Engine::Physics::PhysicsHelper::SetGravity(bodyID, value);
+				});
+		}
+
+		ScopedConnection boxSize_Connection;
+		ScopedConnection motionType_Connection;
+		ScopedConnection gravity_Connection;
 	};
 }
 
@@ -435,6 +535,44 @@ namespace Engine::Resource {
 		ma_resource_manager resourceManager;
 	};
 
+	struct PhysicsResource : public Resource{
+		// This is the max amount of rigid bodies that you can add to the physics system. If you try to add more you'll get an error.
+		const uint64_t cMaxBodies = 65536;
+
+		// This determines how many mutexes to allocate to protect rigid bodies from concurrent access. Set it to 0 for the default settings.
+		const uint64_t cNumBodyMutexes = 0;
+
+		// This is the max amount of body pairs that can be queued at any time (the broad phase will detect overlapping
+		// body pairs based on their bounding boxes and will insert them into a queue for the narrowphase). If you make this buffer
+		// too small the queue will fill up and the broad phase jobs will start to do narrow phase work. This is slightly less efficient.
+		const uint64_t cMaxBodyPairs = 65536;
+
+		// This is the maximum size of the contact constraint buffer. If more contacts (collisions between bodies) are detected than this
+		// number then these contacts will be ignored and bodies will start interpenetrating / fall through the world.
+		// Note: This value is low because this is a simple test. For a real project use something in the order of 10240.
+		const uint64_t cMaxContactConstraints = 1024;
+
+		Engine::Physics::BPLayerInterfaceImpl broad_phase_layer_interface;
+
+		Engine::Physics::ObjectVsBroadPhaseLayerFilterImpl object_vs_broadphase_layer_filter;
+
+		// Create class that filters object vs object layers
+		// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
+		// Also have a look at ObjectLayerPairFilterTable or ObjectLayerPairFilterMask for a simpler interface.
+		Engine::Physics::ObjectLayerPairFilterImpl object_vs_object_layer_filter;
+
+		// Now we can create the actual physics system.
+		JPH::PhysicsSystem physics_system;
+
+		Engine::Physics::MyBodyActivationListener body_activation_listener;
+		Engine::Physics::MyContactListener contact_listener;
+
+		std::unique_ptr<JPH::JobSystemThreadPool> job_system;
+
+		std::unique_ptr <JPH::TempAllocatorImpl> temp_allocator;
+	};
+
+
 	struct ResourceBuffer {
 		WindowResource* windowResource;
 		TimeResource* timeResource;
@@ -443,5 +581,6 @@ namespace Engine::Resource {
 		InputResource* inputResource;
 		InterfaceRessource* interfaceRessource;
 		AudioResource* audioResource;
+		PhysicsResource* physicsResource;
 	};
 }

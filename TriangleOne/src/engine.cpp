@@ -6,7 +6,6 @@ void EntropiaZero::InitEngine() {
 	assetStore = std::make_unique<AssetStore>();
 
 	world = std::make_unique<World>(assetStore.get());
-	audioManager = std::make_unique<Engine::Audio::AudioManager>();
 
 
 	scheduler = std::make_unique<Scheduler>(world.get(), window.get());

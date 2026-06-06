@@ -4,17 +4,17 @@ Scheduler::Scheduler(World* world, Engine::Systems::WindowSystem* window) {
 	resourceBuffer = std::make_unique<Engine::Resource::ResourceBuffer>();
 	this->world = world;
 
-	this->window = window;  // Window est géré indépendamment du reste
+	this->window = window;  // Window is managed separately from the rest
 	world->add_ressource<Engine::Resource::WindowResource>();
 	world->add_ressource<Engine::Resource::RenderResource>();
 	world->add_ressource<Engine::Resource::TimeResource>();
 	world->add_ressource<Engine::Resource::ActiveCamera>();
 	world->add_ressource<Engine::Resource::InterfaceRessource>();
 	world->add_ressource<Engine::Resource::InputResource>();
-	world->add_ressource<Engine::Resource::InterfaceRessource>();
 	world->add_ressource<Engine::Resource::AudioResource>();
+	world->add_ressource<Engine::Resource::PhysicsResource>();
 	FillResourceBuffer();
-	window->Init(*world, resourceBuffer.get()); // Systeme a part
+	window->Init(*world, resourceBuffer.get()); // Separate system
 }
 
 Scheduler::~Scheduler() {};
@@ -24,6 +24,7 @@ void Scheduler::CreateSystemes() {
 	systemes.push_back(std::make_unique<Engine::Systems::TimeSystem>());
 	systemes.push_back(std::make_unique<Engine::Systems::CameraSystem>());
 	systemes.push_back(std::make_unique<Engine::Systems::InputSystem>());
+	systemes.push_back(std::make_unique<Engine::Systems::PhysicSystem>());
 	systemes.push_back(std::make_unique<Engine::Systems::RenderSystem>());
 	systemes.push_back(std::make_unique<Engine::Systems::LightSystem>());
 	systemes.push_back(std::make_unique<Engine::Systems::InterfaceSystem>());
@@ -73,4 +74,5 @@ void Scheduler::FillResourceBuffer() {
 	resourceBuffer->inputResource = world->get_ressource<Engine::Resource::InputResource>();
 	resourceBuffer->interfaceRessource = world->get_ressource<Engine::Resource::InterfaceRessource>();
 	resourceBuffer->audioResource = world->get_ressource<Engine::Resource::AudioResource>();
+	resourceBuffer->physicsResource = world->get_ressource<Engine::Resource::PhysicsResource>();
 }

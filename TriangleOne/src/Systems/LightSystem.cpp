@@ -132,7 +132,7 @@ void Systems::LightSystem::InitShadowBuffer(World& world) {
 			[[fallthrough]];
 		}
 		default:
-			assert(true, "Unexpected Error in InitShadowBuffer");
+			assert(true && "Unexpected Error in InitShadowBuffer");
 			break;
 		}
 	});
@@ -904,7 +904,7 @@ void Systems::LightSystem::Init(World& world, const Resource::ResourceBuffer* re
 	Init_IrradianceMap(world, resourceBuffer);
 	Init_BRDF_LUTTexture(world, resourceBuffer);
 
-	Equirenctangular_To_CubeMap(world, resourceBuffer, "Assets/SkyBox/night/rogland_clear_night_2k.hdr");  //qwantani_night_puresky_2k
+	Equirenctangular_To_CubeMap(world, resourceBuffer, "Assets/SkyBox/inTheSky/kloofendal_48d_partly_cloudy_puresky_2k.hdr");  //qwantani_night_puresky_2k
 }
 
 void Systems::LightSystem::Update(World& world, const Resource::ResourceBuffer* resourceBuffer) {
