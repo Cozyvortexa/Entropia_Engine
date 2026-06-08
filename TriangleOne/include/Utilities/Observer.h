@@ -22,7 +22,7 @@ struct ScopedConnection {
 
     ScopedConnection& operator=(ScopedConnection&& other) noexcept {
         if (this != &other) {
-            if (disconnectAction) disconnectAction(); // On vire l'ancienne
+            if (disconnectAction) disconnectAction(); // We remove the old one
             disconnectAction = std::move(other.disconnectAction);
             other.disconnectAction = nullptr;
         }

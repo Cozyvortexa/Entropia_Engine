@@ -41,6 +41,12 @@ namespace Engine::Editor {
         const Resource::ResourceBuffer* resourceBuffer;
     };
 
+    inline static void DrawLabel(const char* label) {
+        ImGui::Text("%s", label);
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(-1);
+    }
+
 #pragma region PrimitiveType
     template<typename T>
     inline void DrawWidget(EditorContext ctx, const char* label, T& value) {
@@ -49,23 +55,17 @@ namespace Engine::Editor {
 
     template<>
     inline void DrawWidget<int>(EditorContext ctx, const char* label, int& value) {
-        ImGui::Text("%s", label);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(-1);
+        DrawLabel(label);
         ImGui::InputInt(("##" + std::string(label)).c_str(), &value);
     }
     template<>
     inline void DrawWidget<float>(EditorContext ctx, const char* label, float& value) {
-        ImGui::Text("%s", label);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(-1);
+        DrawLabel(label);
         ImGui::InputFloat(("##" + std::string(label)).c_str(), &value);
     }
     template<>
     inline void DrawWidget<double>(EditorContext ctx, const char* label, double& value) {
-        ImGui::Text("%s", label);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(-1);
+        DrawLabel(label);
         ImGui::InputDouble(("##" + std::string(label)).c_str(), &value);
     }
     template<>
@@ -76,30 +76,22 @@ namespace Engine::Editor {
     }
     template<>
     inline void DrawWidget<glm::vec2>(EditorContext ctx, const char* label, glm::vec2& value) {
-        ImGui::Text("%s", label);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(-1);
+        DrawLabel(label);
         ImGui::InputFloat2(("##" + std::string(label)).c_str(), &value.x);
     }
     template<>
     inline void DrawWidget<glm::vec3>(EditorContext ctx, const char* label, glm::vec3& value) {
-        ImGui::Text("%s", label);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(-1);
+        DrawLabel(label);
         ImGui::InputFloat3(("##" + std::string(label)).c_str(), &value.x);
     }
     template<>
     inline void DrawWidget<glm::vec4>(EditorContext ctx, const char* label, glm::vec4& value) {
-        ImGui::Text("%s", label);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(-1);
+        DrawLabel(label);
         ImGui::InputFloat4(("##" + std::string(label)).c_str(), &value.x);
     }
     template<>
     inline void DrawWidget<std::string>(EditorContext ctx, const char* label, std::string& value) {
-        ImGui::Text("%s", label);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(-1);
+        DrawLabel(label);
         ImGui::InputText(("##" + std::string(label)).c_str(), &value);
     }
 
@@ -110,7 +102,8 @@ namespace Engine::Editor {
     inline void DrawWidget<Observer<int>>(EditorContext ctx, const char* label, Observer<int>& value) {
         int temp = value.Get();
 
-        if (ImGui::InputInt(label, &temp)){
+        DrawLabel(label);
+        if (ImGui::InputInt("##", &temp)){
             value.Set(temp);
         }
     }
@@ -118,7 +111,8 @@ namespace Engine::Editor {
     inline void DrawWidget<Observer<float>>(EditorContext ctx, const char* label, Observer<float>& value) {
         float temp = value.Get();
 
-        if (ImGui::InputFloat(label, &temp)){
+        DrawLabel(label);
+        if (ImGui::InputFloat("##", &temp)){
             value.Set(temp);
         }
     }
@@ -126,7 +120,9 @@ namespace Engine::Editor {
     inline void DrawWidget<Observer<bool>>(EditorContext ctx, const char* label, Observer<bool>& value) {
         bool temp = value.Get();
 
-        if (ImGui::Checkbox(label, &temp)){
+        ImGui::Text("%s", label);
+        ImGui::SameLine();
+        if (ImGui::Checkbox(("##" + std::string(label)).c_str(), &temp)){
             value.Set(temp);
         }
     }
@@ -134,7 +130,8 @@ namespace Engine::Editor {
     inline void DrawWidget<Observer<glm::vec3>>(EditorContext ctx, const char* label, Observer<glm::vec3>& value) {
         glm::vec3 temp = value.Get();
 
-        if (ImGui::InputFloat3(label, &temp.x)){
+        DrawLabel(label);
+        if (ImGui::InputFloat3("##", &temp.x)){
             value.Set(temp);
         }
     }
@@ -151,7 +148,8 @@ namespace Engine::Editor {
 
         const char* preview = motionTypeNames[static_cast<int>(value.Get())];
 
-        if (ImGui::BeginCombo("Motion Type", preview)){
+        DrawLabel("Motion Type");
+        if (ImGui::BeginCombo(("##" + std::string(label)).c_str(), preview)){
             for (int i = 0; i < IM_ARRAYSIZE(motionTypeNames); ++i){
                 bool selected = (i == static_cast<int>(value.Get()));
 

@@ -54,12 +54,15 @@ namespace Engine::Physics {
 
     static void SetLayer(const JPH::BodyID& bodyID, JPH::ObjectLayer newLayers);
 
-    static void SetGravity(const JPH::BodyID& bodyID, bool newValue);
+    static void SetGravity(const JPH::BodyID& bodyID, float newValue);
+
+    static void SetPosition(const JPH::BodyID& bodyID, glm::vec3 position);
 
     #pragma endregion
 
     #pragma region Getter
 
+    static glm::vec3 GetPosition(const JPH::BodyID& bodyID);
     static glm::vec3 GetCenterOfMass(const JPH::BodyID& bodyID);
     static glm::vec3 GetRotation(const JPH::BodyID& bodyID);
 

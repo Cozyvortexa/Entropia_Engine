@@ -78,18 +78,23 @@ void Systems::PhysicSystem::Init(World& world, const Engine::Resource::ResourceB
 void Systems::PhysicSystem::Update(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) {
 	Resource::PhysicsResource* physicData = resourceBuffer->physicsResource;
 	Resource::TimeResource* timeData = resourceBuffer->timeResource;
-	const float cDeltaTime = 1.0f / 60.0f;
-	const int cCollisionSteps = 1;
 
-	physicData->physics_system.Update(timeData->deltaTime, cCollisionSteps, physicData->temp_allocator.get(), physicData->job_system.get());
+	physicData->timeAccumulator += timeData->deltaTime;
+	while (physicData->timeAccumulator >= physicData->physicsDeltaTime) {
+		physicData->physics_system.Update(physicData->physicsDeltaTime, 1, physicData->temp_allocator.get(), physicData->job_system.get());
+		physicData->timeAccumulator -= physicData->physicsDeltaTime;
+	}
 
 	View view = world.view<Component::Transform, Component::BoxCollider>();
 
 	view.each([&](int entity, Component::Transform& transform, Component::BoxCollider& boxCollider) {
 		JPH::BodyID currentBody = boxCollider.GetBodyID();
-		if (boxCollider.motionType.Get() != JPH::EMotionType::Static) {
-			transform.position = Physics::PhysicsHelper::GetCenterOfMass(currentBody);
+		if (boxCollider.motionType.Get() == JPH::EMotionType::Dynamic) {
+			transform.position = Physics::PhysicsHelper::GetPosition(currentBody);
 			transform.rotation = Physics::PhysicsHelper::GetRotation(currentBody);
+		}
+		else if (boxCollider.motionType.Get() == JPH::EMotionType::Kinematic) {
+			Physics::PhysicsHelper::SetPosition(currentBody, transform.position);
 		}
 
 		});

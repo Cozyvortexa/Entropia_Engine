@@ -36,10 +36,8 @@ namespace Engine::Physics {
 
 	class ObjectLayerPairFilterImpl : public JPH::ObjectLayerPairFilter {
 	public:
-		virtual bool ShouldCollide(JPH::ObjectLayer inObject1, JPH::ObjectLayer inObject2) const override
-		{
-			switch (inObject1)
-			{
+		virtual bool ShouldCollide(JPH::ObjectLayer inObject1, JPH::ObjectLayer inObject2) const override{
+			switch (inObject1){
 			case Layers::NON_MOVING:
 				return inObject2 == Layers::MOVING; // Non moving only collides with moving
 			case Layers::MOVING:

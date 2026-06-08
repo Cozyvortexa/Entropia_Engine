@@ -247,6 +247,9 @@ namespace Engine::Resource {
 		std::unique_ptr<JPH::JobSystemThreadPool> job_system;
 
 		std::unique_ptr <JPH::TempAllocatorImpl> temp_allocator;
+
+		const float physicsDeltaTime = 1.0f / 60.0f;
+		float timeAccumulator = 0.0f;
 	};
 
 

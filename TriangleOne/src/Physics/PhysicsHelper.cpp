@@ -157,13 +157,19 @@ void Physics::PhysicsHelper::SetLayer(const JPH::BodyID& bodyID, JPH::ObjectLaye
     body_interface->SetObjectLayer(bodyID, newLayers);
 }
 
-void Physics::PhysicsHelper::SetGravity(const JPH::BodyID& bodyID, bool newValue) {
+void Physics::PhysicsHelper::SetGravity(const JPH::BodyID& bodyID, float newValue) {
     assert(!bodyID.IsInvalid());
     if (bodyID.IsInvalid()) return;
 
-    if (newValue) body_interface->SetGravityFactor(bodyID, 1.0f);
-    else body_interface->SetGravityFactor(bodyID, 0.0f);
+    body_interface->SetGravityFactor(bodyID, newValue);
+}
 
+
+void Physics::PhysicsHelper::SetPosition(const JPH::BodyID& bodyID, glm::vec3 position) {
+    assert(!bodyID.IsInvalid());
+    if (bodyID.IsInvalid()) glm::vec3(-1);
+
+    body_interface->SetPosition(bodyID, To_Vec3_JPH(position), body_interface->IsActive(bodyID) ? JPH::EActivation::Activate : JPH::EActivation::DontActivate);
 }
 
 
@@ -171,12 +177,20 @@ void Physics::PhysicsHelper::SetGravity(const JPH::BodyID& bodyID, bool newValue
 
 #pragma region Getter
 
+glm::vec3 Physics::PhysicsHelper::GetPosition(const JPH::BodyID& bodyID) {
+    assert(!bodyID.IsInvalid());
+    if (bodyID.IsInvalid()) glm::vec3(-1);
+
+    return To_Vec3_GLM(body_interface->GetPosition(bodyID));
+}
+
 glm::vec3 Physics::PhysicsHelper::GetCenterOfMass(const JPH::BodyID& bodyID) {
     assert(!bodyID.IsInvalid());
     if (bodyID.IsInvalid()) glm::vec3(-1);
 
     return To_Vec3_GLM(body_interface->GetCenterOfMassPosition(bodyID));
 }
+
 glm::vec3 Physics::PhysicsHelper::GetRotation(const JPH::BodyID& bodyID) {
     assert(!bodyID.IsInvalid());
     if (bodyID.IsInvalid()) glm::vec3(-1);
