@@ -9,7 +9,11 @@ namespace Engine::Component {
 	struct AudioSource : public Component {
 	public:
 		~AudioSource() {
-			Engine::Audio::DeleteSound(audio);
+			//objectIsValid is set to false if the data has been moved
+			if (objectIsValid) {
+				Engine::Audio::DeleteSound(audio);
+			}
+
 		}
 		AudioSource() {
 			audio = new Engine::Audio::Audio();
@@ -33,6 +37,9 @@ namespace Engine::Component {
 
 			other.audio = nullptr;
 
+			//Invalid other
+			other.objectIsValid = false;
+
 			SetupConnections();
 		}
 		AudioSource& operator=(AudioSource&& other) noexcept {
@@ -50,6 +57,9 @@ namespace Engine::Component {
 				path = std::move(other.path);
 
 				audio = (std::exchange(other.audio, nullptr));
+
+				//Invalid other
+				other.objectIsValid = false;
 
 				//Synchronises the values of the observers
 				volume.Set(other.volume.Get());
@@ -81,6 +91,7 @@ namespace Engine::Component {
 		}
 
 	private:
+		bool objectIsValid = true;
 		void SetupConnections() {
 			volumeConnection = volume.Subscribe([this](const float& v) {
 				if (this->audio) Audio::SetVolume(*(this->audio), v);

@@ -11,6 +11,8 @@
 
 #include "Utilities/ImGui/imgui.h"
 
+#include "Physics/JoltRenderer.h"
+
 class All_Light;
 namespace Engine::Resource {
 
@@ -213,32 +215,19 @@ namespace Engine::Resource {
 	};
 
 	struct PhysicsResource : public Resource {
-		// This is the max amount of rigid bodies that you can add to the physics system. If you try to add more you'll get an error.
+		bool displayColliderBox = false;
+
 		const uint64_t cMaxBodies = 65536;
-
-		// This determines how many mutexes to allocate to protect rigid bodies from concurrent access. Set it to 0 for the default settings.
 		const uint64_t cNumBodyMutexes = 0;
-
-		// This is the max amount of body pairs that can be queued at any time (the broad phase will detect overlapping
-		// body pairs based on their bounding boxes and will insert them into a queue for the narrowphase). If you make this buffer
-		// too small the queue will fill up and the broad phase jobs will start to do narrow phase work. This is slightly less efficient.
 		const uint64_t cMaxBodyPairs = 65536;
-
-		// This is the maximum size of the contact constraint buffer. If more contacts (collisions between bodies) are detected than this
-		// number then these contacts will be ignored and bodies will start interpenetrating / fall through the world.
-		// Note: This value is low because this is a simple test. For a real project use something in the order of 10240.
 		const uint64_t cMaxContactConstraints = 1024;
 
 		Engine::Physics::BPLayerInterfaceImpl broad_phase_layer_interface;
 
 		Engine::Physics::ObjectVsBroadPhaseLayerFilterImpl object_vs_broadphase_layer_filter;
 
-		// Create class that filters object vs object layers
-		// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
-		// Also have a look at ObjectLayerPairFilterTable or ObjectLayerPairFilterMask for a simpler interface.
 		Engine::Physics::ObjectLayerPairFilterImpl object_vs_object_layer_filter;
 
-		// Now we can create the actual physics system.
 		JPH::PhysicsSystem physics_system;
 
 		Engine::Physics::MyBodyActivationListener body_activation_listener;
@@ -250,6 +239,10 @@ namespace Engine::Resource {
 
 		const float physicsDeltaTime = 1.0f / 60.0f;
 		float timeAccumulator = 0.0f;
+
+		std::unique_ptr<Engine::Physics::JoltDebugRenderer> joltDebugRenderer = nullptr;
+		std::unique_ptr<Shader> debugJoltShader = nullptr;
+		JPH::BodyManager::DrawSettings debug_draw_settings;
 	};
 
 

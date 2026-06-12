@@ -57,6 +57,19 @@ void Scheduler::Update() {
 
 void Scheduler::Shutdown() {
 	std::cout << "Shutdown Start" << std::endl;
+
+	//Delete All Scene Object
+	std::vector<Entity> all_entity;
+	View view = world->view<Component::Transform>();
+	view.each([&](int entity, Component::Transform& transform) {
+		all_entity.push_back(entity);
+	});
+
+	for (Entity currentEntity : all_entity) {
+		world->Delete_Entity(currentEntity);
+	}
+
+
 	window->Shutdown(*world);
 
 

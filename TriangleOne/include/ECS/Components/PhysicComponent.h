@@ -9,7 +9,8 @@ namespace Engine::Component {
 	struct PhysicObject : public Component {
 	public:
 		~PhysicObject() {
-			if (bodyID.IsInvalid()) {
+			//objectIsValid is set to false if the data has been moved
+			if (objectIsValid) {
 				Engine::Physics::PhysicsHelper::DeleteBody(bodyID);
 			}
 		}
@@ -20,6 +21,9 @@ namespace Engine::Component {
 			gravityForce.Set(other.gravityForce.Get());
 			bodyID = other.bodyID;
 			offset = other.offset;
+
+			//Invalid other
+			other.objectIsValid = false;
 
 			SetupConnections();
 		}
@@ -33,6 +37,9 @@ namespace Engine::Component {
 				//Transfers the master data
 				bodyID = other.bodyID;
 				offset = other.offset;
+
+				//Invalid other
+				other.objectIsValid = false;
 
 				//Synchronises the values of the observers
 				motionType.Set(other.motionType.Get());
@@ -55,6 +62,7 @@ namespace Engine::Component {
 		Observer<float> gravityForce;
 		Observer<JPH::EMotionType> motionType;
 	private:
+		bool objectIsValid = true;
 		void SetupConnections() {
 			motionType_Connection = motionType.Subscribe([this](const JPH::EMotionType& value) {
 				Engine::Physics::PhysicsHelper::SetMotionType(bodyID, value);
@@ -66,6 +74,7 @@ namespace Engine::Component {
 				Engine::Physics::PhysicsHelper::SetGravity(bodyID, value * gravity.Get());
 				});
 		}
+
 		ScopedConnection motionType_Connection;
 		ScopedConnection gravity_Connection;
 		ScopedConnection gravityForce_Connection;
@@ -73,17 +82,17 @@ namespace Engine::Component {
 		PhysicObject() {
 			motionType.Set(JPH::EMotionType::Static);
 			gravity.Set(false);
-			gravityForce.Set(1.0f);
+			gravityForce.Set(1);
 		};
 		PhysicObject(JPH::EMotionType setMotionType) {
 			motionType.Set(setMotionType);
 			gravity.Set(false);
-			gravityForce.Set(1.0f);
+			gravityForce.Set(1);
 		}
 		PhysicObject(JPH::EMotionType setMotionType, bool setGravity) {
 			motionType.Set(setMotionType);
-			gravity.Set(setGravity);
-			gravityForce.Set(1.0f);
+			gravity.Set(false);
+			gravityForce.Set(1);
 		}
 		PhysicObject(JPH::EMotionType setMotionType, bool setGravity, float setGravityForce) {
 			motionType.Set(setMotionType);
@@ -95,33 +104,38 @@ namespace Engine::Component {
 	};
 
 
+
+
 	struct BoxCollider : public PhysicObject {
 		BoxCollider() = delete;
-		BoxCollider(glm::vec3 position) {
+
+		BoxCollider(glm::vec3 position) : PhysicObject(JPH::EMotionType::Dynamic) {
 			boxSize.Set(glm::vec3(1.0));
-			motionType.Set(JPH::EMotionType::Dynamic);
 			bodyID = Engine::Physics::PhysicsHelper::CreateBox(position, boxSize.Get(), JPH::Quat::sIdentity(), motionType.Get());
 
-			//Physics::PhysicsHelper::SetGravity(bodyID, gravity.Get());
+			Engine::Physics::PhysicsHelper::SetGravity(bodyID, gravity.Get() * gravityForce.Get());
 			Engine::Physics::PhysicsHelper::AddBody_To_SimulateWorld(bodyID);
 		}
+
 		BoxCollider(glm::vec3 position, glm::vec3 size) : PhysicObject(JPH::EMotionType::Dynamic) {
 			boxSize.Set(size);
 			bodyID = Engine::Physics::PhysicsHelper::CreateBox(position, boxSize.Get(), JPH::Quat::sIdentity(), motionType.Get());
 
-			//Physics::PhysicsHelper::SetGravity(bodyID, gravity.Get());
+			Engine::Physics::PhysicsHelper::SetGravity(bodyID, gravity.Get() * gravityForce.Get());
 			Engine::Physics::PhysicsHelper::AddBody_To_SimulateWorld(bodyID);
 		}
+
 		BoxCollider(glm::vec3 position, glm::vec3 size, JPH::EMotionType setMotionType, bool setGravity, float setGravityForce ) : PhysicObject(setMotionType, setGravity, setGravityForce) {
 			boxSize.Set(size);
-			motionType.Set(JPH::EMotionType::Dynamic);
 			bodyID = Engine::Physics::PhysicsHelper::CreateBox(position, boxSize.Get(), JPH::Quat::sIdentity(), motionType.Get());
 
-			//Physics::PhysicsHelper::SetGravity(bodyID, gravity.Get());
+			Engine::Physics::PhysicsHelper::SetGravity(bodyID, gravity.Get() * gravityForce.Get());
 			Engine::Physics::PhysicsHelper::AddBody_To_SimulateWorld(bodyID);
 		}
 
+
 		~BoxCollider() = default;
+
 
 		BoxCollider(BoxCollider&& other) noexcept : PhysicObject(std::move(other)) {
 			boxSize.Set(other.boxSize.Get());
@@ -154,10 +168,10 @@ namespace Engine::Component {
 		template<typename F>
 		void Reflect(F&& f)
 		{
-			f("Gravity", gravity);
-			f("GravityForce", gravityForce);
+			f("Gravity:", gravity);
+			f("GravityForce:", gravityForce);
 			f("boxSize:", boxSize);
-			f("Offset", offset);
+			f("Offset:", offset);
 			f("Motion Type:", motionType);
 		}
 	private:

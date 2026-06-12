@@ -355,9 +355,8 @@ void Systems::RenderSystem::RenderScene(World& world, const Resource::ResourceBu
 			// --- Link Matrices ---
 			currentShader.setMatrix("view", mainCamera->viewMatrice);
 			currentShader.setMatrix("projection", resourceBuffer->renderResource->projection);
-
-
 			currentShader.setMatrix("model", transform.GetTransformModel());
+
 			world.renderer->DrawMesh(currentMesh);
 		}
 	});
@@ -414,7 +413,7 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	Component::MeshHandle meshHandle(value.second);
 	Component::SceneTag mesh_scene_Tag("Maison");
 	Component::MaterialHandle materialHandle(renderData->mainMaterialHandle);
-	Component::BoxCollider boxCollider(modelTransform.position, glm::vec3(200, 20, 200));
+	Component::BoxCollider boxCollider(modelTransform.position, glm::vec3(100, 5, 100));
 	boxCollider.motionType.Set(JPH::EMotionType::Static);
 
 	world.add_components(model, mesh_scene_Tag, materialHandle, meshHandle, modelTransform, std::move(boxCollider));

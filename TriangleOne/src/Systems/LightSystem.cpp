@@ -792,9 +792,18 @@ void Systems::LightSystem::Draw_BloomBlurEffect(Resource::RenderResource* render
 	glBindVertexArray(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+static void DrawPhysicsBox(Resource::PhysicsResource* physicsData, glm::mat4 viewMatrix, glm::mat4 projectionMatrix) {
+	physicsData->debugJoltShader->Use();
+	physicsData->debugJoltShader->setMatrix("view", viewMatrix);
+	physicsData->debugJoltShader->setMatrix("projection", projectionMatrix);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	physicsData->physics_system.DrawBodies(physicsData->debug_draw_settings, physicsData->joltDebugRenderer.get());
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
 
 //Post process
-void Systems::LightSystem::Draw_FinalPass(Resource::RenderResource* renderData) {
+void Systems::LightSystem::Draw_FinalPass(Resource::RenderResource* renderData, Resource::PhysicsResource* physicsData, glm::mat4 viewMatrice) {
 	if (renderData->bloomEnable) {
 		Draw_BloomBlurEffect(renderData);
 	}
@@ -829,6 +838,9 @@ void Systems::LightSystem::Draw_FinalPass(Resource::RenderResource* renderData) 
 
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
+
+	if (physicsData->displayColliderBox) DrawPhysicsBox(physicsData, viewMatrice, renderData->projection);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -912,6 +924,7 @@ void Systems::LightSystem::Update(World& world, const Resource::ResourceBuffer* 
 
 	Resource::RenderResource* renderResource = world.get_ressource<Resource::RenderResource>();
 	Resource::WindowResource* windowResource = world.get_ressource<Resource::WindowResource>();
+	Resource::PhysicsResource* physicsResource = world.get_ressource<Resource::PhysicsResource>();
 	if (windowResource->isIconified) return;
 
 	/////////////////Camera
@@ -931,7 +944,7 @@ void Systems::LightSystem::Update(World& world, const Resource::ResourceBuffer* 
 	SendDepthMapToLightningShader(&world, renderResource, resourceBuffer, renderResource->lights);
 	glDisable(GL_CULL_FACE);
 	LightningPass(&world, transformMainCamera, resourceBuffer, mainCamera->viewMatrice);
-	Draw_FinalPass(renderResource);
+	Draw_FinalPass(renderResource, physicsResource, mainCamera->viewMatrice);
 	glEnable(GL_CULL_FACE);
 
 	//glfwSwapBuffers(windowResource->window);

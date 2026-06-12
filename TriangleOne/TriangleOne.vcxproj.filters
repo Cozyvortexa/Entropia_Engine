@@ -245,6 +245,9 @@
     <ClInclude Include="include\ECS\Components\PhysicComponent.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\Physics\JoltRenderer.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\Geometry_Pass\Vertex_GeometryPass.glsl" />
@@ -280,6 +283,8 @@
     <None Include="Shader\MiscShader\AxisShader\AxisFrag.glsl" />
     <None Include="Shader\MiscShader\AxisShader\AxisVertex.glsl" />
     <None Include="include\Utilities\ImGui\imgui.natstepfilter" />
+    <None Include="Shader\Jolt\Fragment_DebugBox.glsl" />
+    <None Include="Shader\Jolt\Vertex_DebugBox.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="include\Utilities\ImGui\imgui.natvis" />

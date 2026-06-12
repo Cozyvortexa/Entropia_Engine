@@ -54,7 +54,7 @@ std::vector<const T*> SearchBar_GetFilter(const std::vector<T>& sourceList, cons
 
 //Create a new entity according to the user input
 //If a valid entity is provided, a component will be created for that entity
-void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderResource* renderData, Resource::AudioResource* audioData, std::string label, int entity = -1) {
+void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderResource* renderData, Resource::InterfaceRessource* interfaceData, Resource::AudioResource* audioData, std::string label, int entity = -1) {
     static char s_searchBuffer[128] = "";
 
     if (ImGui::Button(label.c_str()))
@@ -130,7 +130,7 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
 
                 //}
 
-
+                if (interfaceData->focusGameObject != entity) interfaceData->focusGameObject = entity;
                 ImGui::CloseCurrentPopup();
             }
         }
@@ -158,7 +158,7 @@ void RenderTarget_Menu(Resource::InterfaceRessource* interfaceData) {
 	}
 }
 
-void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData, Component::CameraComponent* cameraComponent) {
+void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::RenderResource* renderData, Component::CameraComponent* cameraComponent, Resource::PhysicsResource* physicsData) {
     ImGui::Begin("Render settings", &interfaceData->mainInterfaceOpen, ImGuiWindowFlags_MenuBar);
     ImGuiIO& io = ImGui::GetIO();
     ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "FPS: %.1f", io.Framerate);
@@ -174,6 +174,7 @@ void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::R
         ImGui::Checkbox("bloomEnable", &renderData->bloomEnable);
         ImGui::InputFloat("Exposure", &renderData->exposure);
         ImGui::InputFloat("Camera speed", &cameraComponent->cameraSpeed);
+        ImGui::Checkbox("Display Collider Box", &physicsData->displayColliderBox);
     }
     ImGui::End();
 }
@@ -211,7 +212,7 @@ void Systems::InterfaceSystem::Display_Hierarchy_Menu(World* world, const Resour
 
     ImGui::Begin("Hierarchy", &interfaceData->hierarchy_menu);
 
-    Add_Entity_Button(world, renderData, audioData, Editor::ADD_ICON);
+    Add_Entity_Button(world, renderData, interfaceData, audioData, Editor::ADD_ICON);
     ImGui::SameLine();
     
     // Search bar
@@ -354,7 +355,7 @@ void Systems::InterfaceSystem::Display_Inspecteur_Menu(World* world, const Resou
 
         ImGui::Separator();
         std::string label = "Add new Component";
-        Add_Entity_Button(world, renderData, audioData, label, (int)interfaceData->focusGameObject);
+        Add_Entity_Button(world, renderData, interfaceData, audioData, label, (int)interfaceData->focusGameObject);
     }
     ImGui::End();
 }
@@ -597,6 +598,7 @@ void Systems::InterfaceSystem::Update(World& world, const Resource::ResourceBuff
 	Resource::RenderResource* renderData = resourceBuffer->renderResource;
 	Resource::InterfaceRessource* interfaceData = resourceBuffer->interfaceRessource;
 	Resource::WindowResource* windowsData = resourceBuffer->windowResource;
+	Resource::PhysicsResource* physicsData = resourceBuffer->physicsResource;
 
     Entity entityCam = resourceBuffer->activeCamera->cameraID;
     Component::CameraComponent* mainCamera = world.get_component<Component::CameraComponent>(entityCam);
@@ -626,7 +628,7 @@ void Systems::InterfaceSystem::Update(World& world, const Resource::ResourceBuff
 
 
     RenderWindows(&world, renderData, interfaceData, windowsData);
-    Display_RenderMenu(interfaceData, renderData, mainCamera);
+    Display_RenderMenu(interfaceData, renderData, mainCamera, physicsData);
     Display_Hierarchy_Menu(&world, resourceBuffer);
     Display_Inspecteur_Menu(&world, resourceBuffer);
     Display_ArboMenu(interfaceData);

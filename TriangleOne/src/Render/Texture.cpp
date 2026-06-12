@@ -23,7 +23,7 @@ unsigned int TextureClass::LoadTextureFromFile(std::string name, std::string dir
 
 
 
-	//Blabla OpenGl
+	//
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 
@@ -85,7 +85,7 @@ unsigned int TextureClass::LoadEmbeddedTexture(const aiTexture* tex) {
 	unsigned int textureID;
 	int width, height, nrChannels;
 
-	unsigned char* data = reinterpret_cast<unsigned char*>(tex->pcData); // danger de fou
+	unsigned char* data = reinterpret_cast<unsigned char*>(tex->pcData);
 	bool areCompressed = tex->mHeight == 0;
 
 	stbi_set_flip_vertically_on_load(false);
@@ -109,7 +109,7 @@ unsigned int TextureClass::LoadEmbeddedTexture(const aiTexture* tex) {
 	if (nrChannels == 4)
 		format = GL_RGBA;
 
-	//Blabla OpenGl
+	//
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 

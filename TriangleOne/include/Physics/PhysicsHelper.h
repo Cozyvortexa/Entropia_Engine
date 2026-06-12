@@ -11,6 +11,7 @@
 namespace Engine::Physics {
     class PhysicsHelper {
     public:
+        PhysicsHelper() = delete;
         static void Init(JPH::BodyInterface& new_body_interface);
         //static JPH::BodyInterface& GetBodyInterface();
 
@@ -25,15 +26,12 @@ namespace Engine::Physics {
     #pragma endregion
 
     #pragma region Create Shape
-        static JPH::BodyID CreateBody_With_Param(JPH::BoxShapeSettings& shape_settings, glm::vec3 position);
-        static JPH::BodyID CreateBody_With_Param(JPH::BoxShapeSettings& shape_settings, glm::vec3 position, JPH::Quat quaternion);
-        static JPH::BodyID CreateBody_With_Param(JPH::BoxShapeSettings& shape_settings, glm::vec3 position, JPH::Quat quaternion, JPH::EMotionType motionType);
         static JPH::BodyID CreateBody_With_Param(JPH::BoxShapeSettings& shape_settings, glm::vec3 position, JPH::Quat quaternion, JPH::EMotionType motionType, JPH::ObjectLayer layers);
 
         static JPH::BodyID CreateBox(const glm::vec3 position);
         static JPH::BodyID CreateBox(const glm::vec3 position, glm::vec3 size);
-        static JPH::BodyID CreateBox(const glm::vec3 position, glm::vec3 size, JPH::Quat quaternion);
-        static JPH::BodyID CreateBox(const glm::vec3 position, glm::vec3 size, JPH::Quat quaternion, JPH::EMotionType motionType);
+        static JPH::BodyID CreateBox(const glm::vec3 position, glm::vec3 size, const JPH::Quat quaternion);
+        static JPH::BodyID CreateBox(const glm::vec3 position, glm::vec3 size, const JPH::Quat quaternion, JPH::EMotionType motionType);
 
     #pragma endregion
 
@@ -64,7 +62,10 @@ namespace Engine::Physics {
 
     static glm::vec3 GetPosition(const JPH::BodyID& bodyID);
     static glm::vec3 GetCenterOfMass(const JPH::BodyID& bodyID);
-    static glm::vec3 GetRotation(const JPH::BodyID& bodyID);
+    static glm::vec3 GetEulerRotation(const JPH::BodyID& bodyID);
+    static JPH::Quat GetQuatRotation(const JPH::BodyID& bodyID);
+
+    static JPH::EMotionType GetMotionType(const JPH::BodyID& bodyID);
 
     #pragma endregion
 

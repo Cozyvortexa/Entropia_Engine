@@ -38,7 +38,7 @@ namespace Engine::Systems {
 		void inline Arbo_RefreshButton(Resource::InterfaceRessource* interfaceData);
 
 		Entity CreateNewEntity(World* world);
-		void Add_Entity_Button(World* world, Engine::Resource::RenderResource* renderData, Engine::Resource::AudioResource* audioData, std::string label, int entity);
+		void Add_Entity_Button(World* world, Engine::Resource::RenderResource* renderData, Resource::InterfaceRessource* interfaceData, Engine::Resource::AudioResource* audioData, std::string label, int entity);
 		void Display_Hierarchy_Menu(World* world, const Resource::ResourceBuffer* resourceBuffer);
 
 

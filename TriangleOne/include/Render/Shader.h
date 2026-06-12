@@ -10,12 +10,22 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-class Shader
-{
+class Shader{
 public:
 	Shader() {};
 	Shader(const char* vertexPath, const char* fragmentPath);
 	Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath);
+	~Shader() = default;
+	//~Shader() {
+		//if (shaderID != 0) {
+		//	glUseProgram(0);
+		//	glDeleteProgram(shaderID);
+		//	shaderID = 0;
+		//}
+	//}
+
+	//Shader(const Shader&) = delete;
+	//Shader& operator=(const Shader&) = delete;
 
 	void Use();
 

@@ -50,9 +50,9 @@ private:
 
 	//Mesh creation
 	Mesh LoadMesh(std::string path);
-	void ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMesh);
-	void ProcessSub_Mesh(aiMesh* mesh, const aiScene* scene, Mesh& currentMesh);
-	unsigned int LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh);
+	void ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMesh, std::string path);
+	void ProcessSub_Mesh(aiMesh* mesh, const aiScene* scene, Mesh& currentMesh, std::string path);
+	unsigned int LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh, std::string path);
 
 	//friend
 	friend class LightSystem;  // WARNING, temp

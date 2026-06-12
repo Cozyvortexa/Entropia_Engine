@@ -5,29 +5,34 @@ namespace Audio = Engine::Audio;
 
 #pragma region Texture
 
-unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh)
+unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh, std::string path)
 {
 	unsigned int texture_Handle = 0;
 	aiString str;
 	aiReturn succes = mat->GetTexture(type, 0, &str);  // Only take the first texture
 	if (succes == aiReturn_FAILURE) { return -1; }
 
-	auto result = pathToIndexMap_Texture.try_emplace(str.C_Str());
+	std::string keyPath = str.C_Str();
+	// embedded path detected
+	if (keyPath.size() > 0 && keyPath[0] == '*') keyPath = path + str.C_Str();
+
+	auto result = pathToIndexMap_Texture.try_emplace(keyPath);
 	auto it = result.first;
 	auto is_Inserted = result.second;
 
 	if (is_Inserted) { // Create a new texture if the key don't exist
 		Texture texture;
 		const aiTexture* embeddedTex = scene->GetEmbeddedTexture(str.C_Str());
-		if (embeddedTex) {  // texture embarquer detecter
+		if (embeddedTex) {  // embedded texture detected
 			texture.id = TextureClass::LoadEmbeddedTexture(embeddedTex);
 		}
-		else
+		else 
 			texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), currentMesh.directory);
 
-		texture.path = str.C_Str();
+		texture.path = keyPath;
 
-		switch (type) {  // la texture est charger meme si elle ne serra pas utiliser
+
+		switch (type) {
 		case aiTextureType_DIFFUSE:
 			texture.textureType = Texture::Diffuse;
 			break;
@@ -102,12 +107,14 @@ Material& AssetStore::Get_Material(std::string name) {
 
 	if (index == -1) {
 		std::cout << "Material with the name: " << name << " do not exist in Get_Material(std::string name)" << std::endl;
+		abort();
 	}
 
 	return materials[index];
 }
 
 Material* AssetStore::Get_Material(unsigned int index) {  // Dedicate to the Systemes
+	assert(index >= 0);
 	if (index >= materials.size()) {  // Index out of range in Get_Material(int index)
 		return &materials[0];
 	}
@@ -135,28 +142,28 @@ Mesh AssetStore::LoadMesh(std::string path) {
 	//std::cout << "Number of meshes: " << scene->mNumMeshes << std::endl;
 	//std::cout << "Number of materials: " << scene->mNumMaterials << std::endl;
 	mesh.directory = path.substr(0, path.find_last_of("/"));
-	ProcessNode(scene->mRootNode, scene, mesh);
+	ProcessNode(scene->mRootNode, scene, mesh, path);
 	mesh.isValid = true;
 	return mesh;
 }
 
-void AssetStore::ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMesh)
+void AssetStore::ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMesh, std::string path)
 {
 	// process all the node’s meshes (if any)
 	for (unsigned int i = 0; i < node->mNumMeshes; i++)
 	{
 		aiMesh* subMesh = scene->mMeshes[node->mMeshes[i]];
 		if (!subMesh->HasTextureCoords(0)) currentMesh.hasUV = false;
-		ProcessSub_Mesh(subMesh, scene, currentMesh);
+		ProcessSub_Mesh(subMesh, scene, currentMesh, path);
 	}
 	// then do the same for each of its children
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
 	{
-		ProcessNode(node->mChildren[i], scene, currentMesh);
+		ProcessNode(node->mChildren[i], scene, currentMesh, path);
 	}
 }
 
-void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& currentMesh)
+void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& currentMesh, std::string path)
 {
 	std::vector<Vertex> vertices;
 	vertices.reserve(sub_Mesh->mNumVertices);
@@ -217,21 +224,21 @@ void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& c
 	if (sub_Mesh->mMaterialIndex >= 0)
 	{
 		aiMaterial* assimp_material = scene->mMaterials[sub_Mesh->mMaterialIndex];
-		unsigned int diffuseMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_BASE_COLOR, scene, currentMesh);
-		unsigned int normalMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_NORMALS, scene, currentMesh);
-		unsigned int ambientOcclusion_handle = LoadMaterialTextures(assimp_material, aiTextureType_AMBIENT_OCCLUSION, scene, currentMesh);
-		unsigned int metalness_handle = LoadMaterialTextures(assimp_material, aiTextureType_METALNESS, scene, currentMesh);
-		unsigned int roughness_handle = LoadMaterialTextures(assimp_material, aiTextureType_DIFFUSE_ROUGHNESS, scene, currentMesh);
+		unsigned int diffuseMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_BASE_COLOR, scene, currentMesh, path);
+		unsigned int normalMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_NORMALS, scene, currentMesh, path);
+		unsigned int ambientOcclusion_handle = LoadMaterialTextures(assimp_material, aiTextureType_AMBIENT_OCCLUSION, scene, currentMesh, path);
+		unsigned int metalness_handle = LoadMaterialTextures(assimp_material, aiTextureType_METALNESS, scene, currentMesh, path);
+		unsigned int roughness_handle = LoadMaterialTextures(assimp_material, aiTextureType_DIFFUSE_ROUGHNESS, scene, currentMesh, path);
 
 		if (normalMap_handle == -1) {
-			normalMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_HEIGHT, scene, currentMesh);
+			normalMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_HEIGHT, scene, currentMesh, path);
 			if (normalMap_handle == -1) currentMesh.hasNormalMap = false;
 		}
 		//if (metalness_handle == -1) {
 		//	metalness_handle = LoadMaterialTextures(assimp_material, aiTextureType_GLTF_METALLIC_ROUGHNESS, scene, currentMesh);
 		//}
 		if (diffuseMap_handle == -1) {
-			diffuseMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_DIFFUSE, scene, currentMesh);
+			diffuseMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_DIFFUSE, scene, currentMesh, path);
 		}
 
 		//Create the id key of the mat

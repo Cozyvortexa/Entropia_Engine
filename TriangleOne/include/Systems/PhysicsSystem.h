@@ -4,6 +4,7 @@
 
 #include "ECS/System.h"
 #include "ECS/World.h"
+#include "Physics/JoltRenderer.h"
 
 
 namespace Engine::Systems {

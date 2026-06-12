@@ -135,8 +135,8 @@ public:
         return static_cast<T*>(ressources[type_id].get());
     }
 
-    AssetStore* assetStore;
-    Renderer* renderer;
+    AssetStore* assetStore = nullptr;
+    Renderer* renderer = nullptr;
 private:
     std::unordered_map<std::type_index, std::unique_ptr<ISparseSet>> pools;
     std::unordered_map<std::type_index, std::unique_ptr<Engine::Resource::Resource>> ressources;

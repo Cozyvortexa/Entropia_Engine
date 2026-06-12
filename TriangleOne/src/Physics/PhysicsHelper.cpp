@@ -41,40 +41,10 @@ glm::vec3 Physics::PhysicsHelper::JoltQuatToEulerDegrees(const JPH::Quat& q) {
 #pragma endregion
 
 #pragma region Create Shape
-JPH::BodyID Physics::PhysicsHelper::CreateBody_With_Param(JPH::BoxShapeSettings& shape_settings, glm::vec3 position) {
-    JPH::ShapeSettings::ShapeResult shape_result = shape_settings.Create();
-    JPH::ShapeRefC shape = shape_result.Get();
 
-    #ifndef NDEBUG
-    if (shape_result.HasError())std::cout << shape_result.GetError() << std::endl;
-    #endif
+JPH::BodyID Physics::PhysicsHelper::CreateBody_With_Param(JPH::BoxShapeSettings& shape_settings, glm::vec3 position, 
+    JPH::Quat quaternion = JPH::Quat::sIdentity(), JPH::EMotionType motionType = JPH::EMotionType::Static, JPH::ObjectLayer layers = Layers::MOVING) {
 
-    JPH::BodyCreationSettings settings(shape, To_Rvec3_JPH(position), JPH::Quat::sIdentity(), JPH::EMotionType::Static, Layers::MOVING);
-    return body_interface->CreateBody(settings)->GetID();
-}
-JPH::BodyID Physics::PhysicsHelper::CreateBody_With_Param(JPH::BoxShapeSettings& shape_settings, glm::vec3 position, JPH::Quat quaternion) {
-    JPH::ShapeSettings::ShapeResult shape_result = shape_settings.Create();
-    JPH::ShapeRefC shape = shape_result.Get();
-
-    #ifndef NDEBUG
-    if (shape_result.HasError())std::cout << shape_result.GetError() << std::endl;
-    #endif
-
-    JPH::BodyCreationSettings settings(shape, To_Rvec3_JPH(position), quaternion, JPH::EMotionType::Static, Layers::MOVING);
-    return body_interface->CreateBody(settings)->GetID(); //mAllowDynamicOrKinematic set to true
-}
-JPH::BodyID Physics::PhysicsHelper::CreateBody_With_Param(JPH::BoxShapeSettings& shape_settings, glm::vec3 position, JPH::Quat quaternion, JPH::EMotionType motionType) {
-    JPH::ShapeSettings::ShapeResult shape_result = shape_settings.Create();
-    JPH::ShapeRefC shape = shape_result.Get();
-
-    #ifndef NDEBUG
-    if (shape_result.HasError())std::cout << shape_result.GetError() << std::endl;
-    #endif
-
-    JPH::BodyCreationSettings settings(shape, To_Rvec3_JPH(position), quaternion, motionType, Layers::MOVING);
-    return body_interface->CreateBody(settings)->GetID();
-}
-JPH::BodyID Physics::PhysicsHelper::CreateBody_With_Param(JPH::BoxShapeSettings& shape_settings, glm::vec3 position, JPH::Quat quaternion, JPH::EMotionType motionType, JPH::ObjectLayer layers) {
     JPH::ShapeSettings::ShapeResult shape_result = shape_settings.Create();
     JPH::ShapeRefC shape = shape_result.Get();
 
@@ -83,34 +53,40 @@ JPH::BodyID Physics::PhysicsHelper::CreateBody_With_Param(JPH::BoxShapeSettings&
 #endif
 
     JPH::BodyCreationSettings settings(shape, To_Rvec3_JPH(position), quaternion, motionType, layers);
+    if (motionType == JPH::EMotionType::Dynamic || motionType == JPH::EMotionType::Kinematic) settings.mAllowDynamicOrKinematic = true;
+
     return body_interface->CreateBody(settings)->GetID();
 }
 
-
+#pragma region CollisionBox
 JPH::BodyID Physics::PhysicsHelper::CreateBox(const glm::vec3 position) {
     JPH::BoxShapeSettings shape_settings(JPH::Vec3(1.0f, 1.0f, 1.0f));
     shape_settings.SetEmbedded();
 
     return CreateBody_With_Param(shape_settings, position);
 }
+
 JPH::BodyID Physics::PhysicsHelper::CreateBox(const glm::vec3 position, glm::vec3 size) {
     JPH::BoxShapeSettings shape_settings(To_Vec3_JPH(size));
     shape_settings.SetEmbedded();
 
     return CreateBody_With_Param(shape_settings, position);
 }
-JPH::BodyID Physics::PhysicsHelper::CreateBox(const glm::vec3 position, glm::vec3 size, JPH::Quat quaternion) {
+
+JPH::BodyID Physics::PhysicsHelper::CreateBox(const glm::vec3 position, glm::vec3 size, const JPH::Quat quaternion) {
     JPH::BoxShapeSettings shape_settings(To_Vec3_JPH(size));
     shape_settings.SetEmbedded();
 
     return CreateBody_With_Param(shape_settings, position, quaternion);
 }
-JPH::BodyID Physics::PhysicsHelper::CreateBox(const glm::vec3 position, glm::vec3 size, JPH::Quat quaternion, JPH::EMotionType motionType) {
+
+JPH::BodyID Physics::PhysicsHelper::CreateBox(const glm::vec3 position, glm::vec3 size, const JPH::Quat quaternion, JPH::EMotionType motionType) {
     JPH::BoxShapeSettings shape_settings(To_Vec3_JPH(size));
     shape_settings.SetEmbedded();
 
     return CreateBody_With_Param(shape_settings, position, quaternion, motionType);
 }
+#pragma endregion
 
 #pragma endregion
 
@@ -191,18 +167,36 @@ glm::vec3 Physics::PhysicsHelper::GetCenterOfMass(const JPH::BodyID& bodyID) {
     return To_Vec3_GLM(body_interface->GetCenterOfMassPosition(bodyID));
 }
 
-glm::vec3 Physics::PhysicsHelper::GetRotation(const JPH::BodyID& bodyID) {
+glm::vec3 Physics::PhysicsHelper::GetEulerRotation(const JPH::BodyID& bodyID) {
     assert(!bodyID.IsInvalid());
     if (bodyID.IsInvalid()) glm::vec3(-1);
 
     return JoltQuatToEulerDegrees(body_interface->GetRotation(bodyID));
 }
+JPH::Quat Physics::PhysicsHelper::GetQuatRotation(const JPH::BodyID& bodyID) {
+    assert(!bodyID.IsInvalid());
+    if (bodyID.IsInvalid()) glm::vec3(-1);
+
+    return body_interface->GetRotation(bodyID);
+}
+
+JPH::EMotionType Physics::PhysicsHelper::GetMotionType(const JPH::BodyID& bodyID) {
+    assert(!bodyID.IsInvalid());
+    if (bodyID.IsInvalid()) glm::vec3(-1);
+
+    return body_interface->GetMotionType(bodyID);
+}
+
 #pragma endregion
 
 #pragma region Resize shape
 JPH::BodyID Physics::PhysicsHelper::ResizeBox(const JPH::BodyID& bodyID, glm::vec3 newSize) {
+    glm::vec3 position = GetPosition(bodyID);
+    JPH::Quat quat = GetQuatRotation(bodyID);
+    JPH::EMotionType motionType = GetMotionType(bodyID);
+
     DeleteBody(bodyID);
-    return CreateBox(newSize);
+    return CreateBox(position, newSize, quat, motionType);
 }
 
 #pragma endregion

@@ -72,7 +72,13 @@ void Systems::PhysicSystem::Init(World& world, const Engine::Resource::ResourceB
 
 	physicData->job_system = std::make_unique<JPH::JobSystemThreadPool>(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
 
-
+	//DrawBox
+	physicData->joltDebugRenderer = Physics::JoltDebugRenderer_Factory();
+	physicData->debugJoltShader = std::make_unique<Shader>("TriangleOne/Shader/Jolt/Vertex_DebugBox.glsl", "TriangleOne/Shader/Jolt/Fragment_DebugBox.glsl");
+	
+	physicData->debug_draw_settings.mDrawShape = true;
+	physicData->debug_draw_settings.mDrawBoundingBox = true;
+	physicData->debug_draw_settings.mDrawVelocity = false;
 }
 
 void Systems::PhysicSystem::Update(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) {
@@ -91,13 +97,13 @@ void Systems::PhysicSystem::Update(World& world, const Engine::Resource::Resourc
 		JPH::BodyID currentBody = boxCollider.GetBodyID();
 		if (boxCollider.motionType.Get() == JPH::EMotionType::Dynamic) {
 			transform.position = Physics::PhysicsHelper::GetPosition(currentBody);
-			transform.rotation = Physics::PhysicsHelper::GetRotation(currentBody);
+			transform.rotation = Physics::PhysicsHelper::GetEulerRotation(currentBody);
 		}
 		else if (boxCollider.motionType.Get() == JPH::EMotionType::Kinematic) {
 			Physics::PhysicsHelper::SetPosition(currentBody, transform.position);
 		}
 
-		});
+	});
 
 }
 
