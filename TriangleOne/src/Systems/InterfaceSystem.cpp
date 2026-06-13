@@ -117,7 +117,10 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
                     world->add_components(entity, std::move(audioSource));
                 }
                 else if (entry->type == Editor::ObjectType::Collider) {
-                    Component::BoxCollider boxCollider(world->get_component<Component::Transform>(entity)->position);
+                    Component::Transform* transform = world->get_component<Component::Transform>(entity);
+                    assert(transform != nullptr);
+
+                    Component::BoxCollider boxCollider(transform->position);
                     world->add_components(entity, std::move(boxCollider));
                 }
                 //else if (entry->type == Editor::ObjectType::ParticuleSystem) {

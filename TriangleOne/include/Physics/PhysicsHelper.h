@@ -7,12 +7,15 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+namespace Engine::Component {
+    class PhysicObject;
+}
 
 namespace Engine::Physics {
     class PhysicsHelper {
     public:
         PhysicsHelper() = delete;
-        static void Init(JPH::BodyInterface& new_body_interface);
+        static void Init(JPH::PhysicsSystem* set_physics_system);
         //static JPH::BodyInterface& GetBodyInterface();
 
     #pragma region Converter
@@ -28,48 +31,61 @@ namespace Engine::Physics {
     #pragma region Create Shape
         static JPH::BodyID CreateBody_With_Param(JPH::BoxShapeSettings& shape_settings, glm::vec3 position, JPH::Quat quaternion, JPH::EMotionType motionType, JPH::ObjectLayer layers);
 
-        static JPH::BodyID CreateBox(const glm::vec3 position);
-        static JPH::BodyID CreateBox(const glm::vec3 position, glm::vec3 size);
-        static JPH::BodyID CreateBox(const glm::vec3 position, glm::vec3 size, const JPH::Quat quaternion);
         static JPH::BodyID CreateBox(const glm::vec3 position, glm::vec3 size, const JPH::Quat quaternion, JPH::EMotionType motionType);
 
     #pragma endregion
 
     #pragma region Simulated World Interaction
-        static void AddBody_To_SimulateWorld(const JPH::BodyID& bodyID);
-        static void RemoveBody_From_SimulateWorld(const JPH::BodyID& bodyID);
-        static void DeleteBody(const JPH::BodyID& bodyID);
+        static void AddBody_To_SimulateWorld(const Engine::Component::PhysicObject& physicObject);
+        static void RemoveBody_From_SimulateWorld(const Engine::Component::PhysicObject& physicObject);
+        static void DeleteBody(const Engine::Component::PhysicObject& physicObject);
+        static void Impulse(const Engine::Component::PhysicObject& physicObject, glm::vec3 force);
+        static void AngularImpulse(const Engine::Component::PhysicObject& physicObject, glm::vec3 force);
 
     #pragma endregion 
 
     #pragma region Resize shape
-    static JPH::BodyID ResizeBox(const JPH::BodyID& bodyID, glm::vec3 newSize);
+    static JPH::BodyID ResizeBox(const Engine::Component::PhysicObject& physicObject, glm::vec3 newSize);
 
     #pragma endregion
 
     #pragma region Setter
-    static void SetMotionType(const JPH::BodyID& bodyID, JPH::EMotionType newMotionType);
+    static void Set_MotionType(const Engine::Component::PhysicObject& physicObject, JPH::EMotionType newMotionType);
 
-    static void SetLayer(const JPH::BodyID& bodyID, JPH::ObjectLayer newLayers);
+    static void Set_Layer(const Engine::Component::PhysicObject& physicObject, JPH::ObjectLayer newLayers);
 
-    static void SetGravity(const JPH::BodyID& bodyID, float newValue);
+    static void Set_Gravity(const Engine::Component::PhysicObject& physicObject, float newValue);
 
-    static void SetPosition(const JPH::BodyID& bodyID, glm::vec3 position);
+    static void Set_Position(const Engine::Component::PhysicObject& physicObject, glm::vec3 position);
+
+    static void Set_Restitution(const Engine::Component::PhysicObject& physicObject, float newValue);
+
+    static void Set_Friction(const Engine::Component::PhysicObject& physicObject, float newValue);
+
+    static void Set_LinearDamping(const Engine::Component::PhysicObject& physicObject, float newValue);
+
+    static void Set_AngularDamping(const Engine::Component::PhysicObject& physicObject, float newValue);
 
     #pragma endregion
 
     #pragma region Getter
 
-    static glm::vec3 GetPosition(const JPH::BodyID& bodyID);
-    static glm::vec3 GetCenterOfMass(const JPH::BodyID& bodyID);
-    static glm::vec3 GetEulerRotation(const JPH::BodyID& bodyID);
-    static JPH::Quat GetQuatRotation(const JPH::BodyID& bodyID);
+    static glm::vec3 Get_Position(const Engine::Component::PhysicObject& physicObject);
 
-    static JPH::EMotionType GetMotionType(const JPH::BodyID& bodyID);
+    static glm::vec3 Get_CenterOfMass(const Engine::Component::PhysicObject& physicObject);
+
+    static glm::vec3 Get_EulerRotation(const Engine::Component::PhysicObject& physicObject);
+
+    static JPH::Quat Get_QuatRotation(const Engine::Component::PhysicObject& physicObject);
+
+    static JPH::EMotionType Get_MotionType(const Engine::Component::PhysicObject& physicObject);
+
+    static float Get_LinearVelocity(const Engine::Component::PhysicObject& physicObject);
 
     #pragma endregion
 
     private:
+        inline static JPH::PhysicsSystem* physics_system = nullptr;
         inline static JPH::BodyInterface* body_interface = nullptr;
     };
 }

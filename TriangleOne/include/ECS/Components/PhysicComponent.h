@@ -11,7 +11,7 @@ namespace Engine::Component {
 		~PhysicObject() {
 			//objectIsValid is set to false if the data has been moved
 			if (objectIsValid) {
-				Engine::Physics::PhysicsHelper::DeleteBody(bodyID);
+				Engine::Physics::PhysicsHelper::DeleteBody(*this);
 			}
 		}
 
@@ -65,13 +65,13 @@ namespace Engine::Component {
 		bool objectIsValid = true;
 		void SetupConnections() {
 			motionType_Connection = motionType.Subscribe([this](const JPH::EMotionType& value) {
-				Engine::Physics::PhysicsHelper::SetMotionType(bodyID, value);
+				Engine::Physics::PhysicsHelper::Set_MotionType(*this, value);
 				});
 			gravity_Connection = gravity.Subscribe([this](const bool& value) {
-				Engine::Physics::PhysicsHelper::SetGravity(bodyID, value * gravityForce.Get());
+				Engine::Physics::PhysicsHelper::Set_Gravity(*this, value * gravityForce.Get());
 				});
 			gravityForce_Connection = gravityForce.Subscribe([this](const float& value) {
-				Engine::Physics::PhysicsHelper::SetGravity(bodyID, value * gravity.Get());
+				Engine::Physics::PhysicsHelper::Set_Gravity(*this, value * gravity.Get());
 				});
 		}
 
@@ -80,30 +80,32 @@ namespace Engine::Component {
 		ScopedConnection gravityForce_Connection;
 	protected:
 		PhysicObject() {
-			motionType.Set(JPH::EMotionType::Static);
-			gravity.Set(false);
-			gravityForce.Set(1);
+			SetDefaultValue();
 		};
 		PhysicObject(JPH::EMotionType setMotionType) {
-			motionType.Set(setMotionType);
-			gravity.Set(false);
-			gravityForce.Set(1);
+			SetDefaultValue(setMotionType);
 		}
 		PhysicObject(JPH::EMotionType setMotionType, bool setGravity) {
-			motionType.Set(setMotionType);
-			gravity.Set(false);
-			gravityForce.Set(1);
+			SetDefaultValue(setMotionType, setGravity);
 		}
 		PhysicObject(JPH::EMotionType setMotionType, bool setGravity, float setGravityForce) {
+			SetDefaultValue(setMotionType, setGravity, setGravityForce);
+		}
+
+		inline void SetDefaultValue(JPH::EMotionType setMotionType = JPH::EMotionType::Static, bool setGravity = false, float setGravityForce = 1) {
 			motionType.Set(setMotionType);
 			gravity.Set(setGravity);
 			gravityForce.Set(setGravityForce);
 		}
 
+		inline void Add_To_Simulation() {
+			Engine::Physics::PhysicsHelper::Set_Gravity(*this, gravity.Get() * gravityForce.Get());
+			Engine::Physics::PhysicsHelper::AddBody_To_SimulateWorld(*this);
+		}
+
+		friend Engine::Physics::PhysicsHelper;
 		JPH::BodyID bodyID;
 	};
-
-
 
 
 	struct BoxCollider : public PhysicObject {
@@ -113,24 +115,21 @@ namespace Engine::Component {
 			boxSize.Set(glm::vec3(1.0));
 			bodyID = Engine::Physics::PhysicsHelper::CreateBox(position, boxSize.Get(), JPH::Quat::sIdentity(), motionType.Get());
 
-			Engine::Physics::PhysicsHelper::SetGravity(bodyID, gravity.Get() * gravityForce.Get());
-			Engine::Physics::PhysicsHelper::AddBody_To_SimulateWorld(bodyID);
+			Add_To_Simulation();
 		}
 
 		BoxCollider(glm::vec3 position, glm::vec3 size) : PhysicObject(JPH::EMotionType::Dynamic) {
 			boxSize.Set(size);
 			bodyID = Engine::Physics::PhysicsHelper::CreateBox(position, boxSize.Get(), JPH::Quat::sIdentity(), motionType.Get());
 
-			Engine::Physics::PhysicsHelper::SetGravity(bodyID, gravity.Get() * gravityForce.Get());
-			Engine::Physics::PhysicsHelper::AddBody_To_SimulateWorld(bodyID);
+			Add_To_Simulation();
 		}
 
 		BoxCollider(glm::vec3 position, glm::vec3 size, JPH::EMotionType setMotionType, bool setGravity, float setGravityForce ) : PhysicObject(setMotionType, setGravity, setGravityForce) {
 			boxSize.Set(size);
 			bodyID = Engine::Physics::PhysicsHelper::CreateBox(position, boxSize.Get(), JPH::Quat::sIdentity(), motionType.Get());
 
-			Engine::Physics::PhysicsHelper::SetGravity(bodyID, gravity.Get() * gravityForce.Get());
-			Engine::Physics::PhysicsHelper::AddBody_To_SimulateWorld(bodyID);
+			Add_To_Simulation();
 		}
 
 
@@ -177,10 +176,21 @@ namespace Engine::Component {
 	private:
 		void SetupConnections() {
 			boxSize_Connection = boxSize.Subscribe([this](const glm::vec3& vec) {
-				bodyID = Engine::Physics::PhysicsHelper::ResizeBox(bodyID, vec);
+				bodyID = Engine::Physics::PhysicsHelper::ResizeBox(*this, vec);
+				Add_To_Simulation();
 				});
 		}
 
 		ScopedConnection boxSize_Connection;
 	};
+
+
+	//struct ConvexShape : public PhysicObject {
+	//	ConvexShape(const std::vector<glm::vec3> vertices_Position) {
+
+	//		JPH::ConvexHullShapeSettings hullSettings
+	//	}
+
+
+	//};
 }

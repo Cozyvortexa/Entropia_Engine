@@ -65,8 +65,10 @@ void Systems::PhysicSystem::Init(World& world, const Engine::Resource::ResourceB
 	physicData->contact_listener.world = &world;
 	physicData->physics_system.SetContactListener(&physicData->contact_listener);
 
+	const JPH::BodyLockInterfaceLocking& lock_interface = physicData->physics_system.GetBodyLockInterface();
 
-	Engine::Physics::PhysicsHelper::Init(physicData->physics_system.GetBodyInterface());
+
+	Engine::Physics::PhysicsHelper::Init(&physicData->physics_system);
 
 
 
@@ -94,13 +96,14 @@ void Systems::PhysicSystem::Update(World& world, const Engine::Resource::Resourc
 	View view = world.view<Component::Transform, Component::BoxCollider>();
 
 	view.each([&](int entity, Component::Transform& transform, Component::BoxCollider& boxCollider) {
-		JPH::BodyID currentBody = boxCollider.GetBodyID();
-		if (boxCollider.motionType.Get() == JPH::EMotionType::Dynamic) {
-			transform.position = Physics::PhysicsHelper::GetPosition(currentBody);
-			transform.rotation = Physics::PhysicsHelper::GetEulerRotation(currentBody);
+
+		JPH::EMotionType motionType = boxCollider.motionType.Get();
+		if (motionType == JPH::EMotionType::Dynamic) {
+			transform.position = Physics::PhysicsHelper::Get_Position(boxCollider);
+			transform.rotation = Physics::PhysicsHelper::Get_EulerRotation(boxCollider);
 		}
-		else if (boxCollider.motionType.Get() == JPH::EMotionType::Kinematic) {
-			Physics::PhysicsHelper::SetPosition(currentBody, transform.position);
+		else if (motionType == JPH::EMotionType::Kinematic || motionType == JPH::EMotionType::Static) {
+			Physics::PhysicsHelper::Set_Position(boxCollider, transform.position);
 		}
 
 	});
