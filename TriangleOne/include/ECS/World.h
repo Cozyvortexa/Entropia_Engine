@@ -24,6 +24,24 @@
 #include <type_traits>
 
 
+struct ComponentTypeCounter {
+    static inline std::size_t s_next = 0;
+};
+struct ResourceTypeCounter {
+    static inline std::size_t s_next = 0;
+};
+
+template<typename T>
+std::size_t GetComponentTypeID() {
+    static const std::size_t id = ComponentTypeCounter::s_next++;
+    return id;
+}
+template<typename T>
+std::size_t GetResourceTypeID() {
+    static const std::size_t id = ResourceTypeCounter::s_next++;
+    return id;
+}
+
 template<typename... Components>
 class View {
 private:
@@ -71,8 +89,8 @@ public:
         return newEntity;
     }
     void Delete_Entity(Entity entity) {
-        for (auto& currrentPool : pools) {
-            currrentPool.second.get()->Remove(entity);
+        for (int i = 0; i < pools.size(); i++) {
+            pools[i].get()->Remove(entity);
         }
         entity_emptySlot.push_back(entity);
     }
@@ -97,76 +115,72 @@ public:
     template<typename T>
     T* get_component(Entity entity) {
         static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
-        auto it = pools.find(std::type_index(typeid(T)));
-        if (it == pools.end()) return nullptr;
 
-        return static_cast<SparseSet<T>*>(it->second.get())->try_Get(entity);
+        std::size_t id = GetComponentTypeID<T>();
+        if (id >= pools.size() || !pools[id]) return nullptr;
+
+        return static_cast<SparseSet<T>*>(pools[id].get())->try_Get(entity);
     }
     template<typename T>
     bool Has_component(Entity entity) {
         static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
-        auto it = pools.find(std::type_index(typeid(T)));
-        if (it == pools.end()) return false;
 
-        return static_cast<SparseSet<T>*>(it->second.get())->has(entity);
+        std::size_t id = GetComponentTypeID<T>();
+        if (id >= pools.size() || !pools[id]) return false;
+
+        return static_cast<SparseSet<T>*>(pools[id].get())->has(entity);
     }
     template<typename T>
     bool remove_component(Entity entity) {
         static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
-        auto it = pools.find(std::type_index(typeid(T)));
-        if (it == pools.end()) {
-            assert(true && "Deleting a component from an have fail");
-            return false;
-        }
-        return it->second.get()->Remove(entity);
+
+        std::size_t id = GetComponentTypeID<T>();
+        if (id >= pools.size() || !pools[id]) return false;
+
+        return pools[id].get()->Remove(entity);
     }
 
     template<typename T>
     T* get_ressource() {
         static_assert(std::is_base_of<Engine::Resource::Resource, T>::value, "T must inherit from Engine::Resource::Resource");
-        auto type_id = std::type_index(typeid(T));
+        std::size_t id = GetResourceTypeID<T>();
 
-        if (ressources.find(type_id) == ressources.end()) {
+        if (id >= resources.size() || !resources[id]) {
             std::cout << "The resource: " << typeid(T).name() << " does not exist" << std::endl;
             return nullptr;
         }
 
-        // Cast
-        return static_cast<T*>(ressources[type_id].get());
+        return static_cast<T*>(resources[id].get());
     }
 
     AssetStore* assetStore = nullptr;
     Renderer* renderer = nullptr;
 private:
-    std::unordered_map<std::type_index, std::unique_ptr<ISparseSet>> pools;
-    std::unordered_map<std::type_index, std::unique_ptr<Engine::Resource::Resource>> ressources;
+    std::vector<std::unique_ptr<ISparseSet>> pools;
+    std::vector<std::unique_ptr<Engine::Resource::Resource>> resources;
+
     std::deque<Entity> entity_emptySlot;
     uint32_t entity_Register = 0;
 
-    // Recupére/crée un pool spécifique
+    // Retrieve/create a specific pool
     template<typename T>
     SparseSet<T>* get_pool() {
-        auto type_id = std::type_index(typeid(T));
+        std::size_t id = GetComponentTypeID<T>();
+        if (id >= pools.size()) pools.resize(id + 1);
 
-        if (pools.find(type_id) == pools.end()) {
-            pools.emplace(type_id, std::make_unique<SparseSet<T>>());
-        }
-
-        // Cast
-        return static_cast<SparseSet<T>*>(pools[type_id].get());
+        if (!pools[id]) pools[id] = std::make_unique<SparseSet<T>>();
+        return static_cast<SparseSet<T>*>(pools[id].get());
     }
 
     template<typename T>
     T* add_ressource() {
         static_assert(std::is_base_of<Engine::Resource::Resource, T>::value, "T must inherit from Engine::Resource::Resource");
-        auto type_id = std::type_index(typeid(T));
 
-        if (ressources.find(type_id) == ressources.end()) {
-            ressources.emplace(type_id, std::make_unique<T>());
-        }
+        std::size_t id = GetResourceTypeID<T>();
+        if (id >= resources.size()) resources.resize(id + 1);
 
-        // Cast
-        return static_cast<T*>(ressources[type_id].get());
+        if (!resources[id]) resources[id] = std::make_unique<T>();
+        return static_cast<T*>(resources[id].get());
     }
 
     friend class Scheduler;
