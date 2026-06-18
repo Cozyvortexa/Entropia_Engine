@@ -33,6 +33,19 @@ static void TraceImpl(const char* inFMT, ...)
 }
 
 
+void Systems::PhysicSystem::UpdatePhysicObject(Engine::Component::Transform& transform, Component::PhysicObject& physicObject) {
+	JPH::EMotionType motionType = physicObject.motionType.Get();
+	if (motionType == JPH::EMotionType::Dynamic) {
+		transform.position = Physics::PhysicsHelper::Get_Position(physicObject);
+		transform.rotation = Physics::PhysicsHelper::Get_EulerRotation(physicObject);
+	}
+	else if (motionType == JPH::EMotionType::Kinematic || motionType == JPH::EMotionType::Static) {
+		Physics::PhysicsHelper::Set_Position(physicObject, transform.position);
+		Physics::PhysicsHelper::Set_Rotation(physicObject, transform.rotation);
+	}
+}
+
+
 void Systems::PhysicSystem::Init(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) {
 	Resource::PhysicsResource* physicData = resourceBuffer->physicsResource;
 	JPH::RegisterDefaultAllocator();
@@ -77,15 +90,23 @@ void Systems::PhysicSystem::Init(World& world, const Engine::Resource::ResourceB
 	//DrawBox
 	physicData->joltDebugRenderer = Physics::JoltDebugRenderer_Factory();
 	physicData->debugJoltShader = std::make_unique<Shader>("TriangleOne/Shader/Jolt/Vertex_DebugBox.glsl", "TriangleOne/Shader/Jolt/Fragment_DebugBox.glsl");
-	
-	physicData->debug_draw_settings.mDrawShape = true;
-	physicData->debug_draw_settings.mDrawBoundingBox = true;
-	physicData->debug_draw_settings.mDrawVelocity = false;
+	//
+	//physicData->debug_draw_settings.mDrawShape = true;
+	//physicData->debug_draw_settings.mDrawBoundingBox = true;
+	//physicData->debug_draw_settings.mDrawVelocity = false;
 }
 
 void Systems::PhysicSystem::Update(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) {
 	Resource::PhysicsResource* physicData = resourceBuffer->physicsResource;
 	Resource::TimeResource* timeData = resourceBuffer->timeResource;
+
+	if (physicData->display_physicsShape) {
+		Entity entityCam = world.get_ressource<Resource::ActiveCamera>()->cameraID;
+		Component::Transform* mainCamera_transform = world.get_component<Component::Transform>(entityCam);
+
+		physicData->joltDebugRenderer->SetCameraPos(Physics::PhysicsHelper::To_Vec3_JPH(mainCamera_transform->position));
+	}
+
 
 	physicData->timeAccumulator += timeData->deltaTime;
 	while (physicData->timeAccumulator >= physicData->physicsDeltaTime) {
@@ -93,21 +114,18 @@ void Systems::PhysicSystem::Update(World& world, const Engine::Resource::Resourc
 		physicData->timeAccumulator -= physicData->physicsDeltaTime;
 	}
 
-	View view = world.view<Component::Transform, Component::BoxCollider>();
+	View boxC_View = world.view<Component::Transform, Component::BoxCollider>();
+	View sphereC_View = world.view<Component::Transform, Component::SphereCollider>();
 
-	view.each([&](int entity, Component::Transform& transform, Component::BoxCollider& boxCollider) {
-
-		JPH::EMotionType motionType = boxCollider.motionType.Get();
-		if (motionType == JPH::EMotionType::Dynamic) {
-			transform.position = Physics::PhysicsHelper::Get_Position(boxCollider);
-			transform.rotation = Physics::PhysicsHelper::Get_EulerRotation(boxCollider);
-		}
-		else if (motionType == JPH::EMotionType::Kinematic || motionType == JPH::EMotionType::Static) {
-			Physics::PhysicsHelper::Set_Position(boxCollider, transform.position);
-		}
-
+	boxC_View.each([&](int entity, Component::Transform& transform, Component::BoxCollider& boxCollider) {
+		UpdatePhysicObject(transform, boxCollider);
+		if (boxCollider.displayShape) physicData->joltDebugRenderer->AddToPendingDraw(std::make_pair<>(entity, Physics::ShapeType::Box));
 	});
 
+	sphereC_View.each([&](int entity, Component::Transform& transform, Component::SphereCollider& sphereCollider) {
+		UpdatePhysicObject(transform, sphereCollider);
+		if (sphereCollider.displayShape) physicData->joltDebugRenderer->AddToPendingDraw(std::make_pair<>(entity, Physics::ShapeType::Sphere));
+	});
 }
 
 void Systems::PhysicSystem::Shutdown(World& world) {

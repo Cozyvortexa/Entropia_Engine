@@ -9,10 +9,14 @@
 
 namespace Engine::Systems {
 	class PhysicSystem : public Engine::Systems::System {
+	public:
 
 		void Init(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;
 		void Update(World& world, const Engine::Resource::ResourceBuffer* resourceBuffer) override;
 		void Shutdown(World& world) override;
+
+	private:
+		void UpdatePhysicObject(Engine::Component::Transform& transform, Engine::Component::PhysicObject& physicObject);
 	};
 
 }

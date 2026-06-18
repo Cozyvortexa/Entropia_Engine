@@ -26,12 +26,20 @@ namespace Engine::Physics {
         static inline glm::vec3 JoltQuatToEuler(const JPH::Quat& q);
         static inline glm::vec3 JoltQuatToEulerDegrees(const JPH::Quat& q);
 
+        static inline JPH::Quat To_JoltQuat(const glm::vec3& eulerDegrees);
+
+        static JPH::RMat44 To_RMat44_JPH(const glm::vec3& position, const glm::vec3& rotation);
+
     #pragma endregion
 
     #pragma region Create Shape
-        static JPH::BodyID CreateBody_With_Param(JPH::BoxShapeSettings& shape_settings, glm::vec3 position, JPH::Quat quaternion, JPH::EMotionType motionType, JPH::ObjectLayer layers);
+        static JPH::BodyID CreateBody_With_Param(JPH::ConvexShapeSettings& shape_settings, glm::vec3 position, JPH::Quat quaternion, JPH::EMotionType motionType, JPH::ObjectLayer layers);
 
         static JPH::BodyID CreateBox(const glm::vec3 position, glm::vec3 size, const JPH::Quat quaternion, JPH::EMotionType motionType);
+
+        static JPH::BodyID CreateSphere(const glm::vec3 position, float radius, const JPH::Quat quaternion, JPH::EMotionType motionType);
+
+        static JPH::BodyID CreateConvexShape(const JPH::Array<JPH::Vec3>& vertices_Position, glm::vec3 position, JPH::Quat quaternion, JPH::EMotionType motionType, JPH::ObjectLayer layers);
 
     #pragma endregion
 
@@ -47,6 +55,8 @@ namespace Engine::Physics {
     #pragma region Resize shape
     static JPH::BodyID ResizeBox(const Engine::Component::PhysicObject& physicObject, glm::vec3 newSize);
 
+    static JPH::BodyID ResizeSphere(const Engine::Component::PhysicObject& physicObject, float newRadius);
+
     #pragma endregion
 
     #pragma region Setter
@@ -57,6 +67,8 @@ namespace Engine::Physics {
     static void Set_Gravity(const Engine::Component::PhysicObject& physicObject, float newValue);
 
     static void Set_Position(const Engine::Component::PhysicObject& physicObject, glm::vec3 position);
+
+    static void Set_Rotation(const Engine::Component::PhysicObject& physicObject, glm::vec3 rotation);
 
     static void Set_Restitution(const Engine::Component::PhysicObject& physicObject, float newValue);
 
@@ -83,6 +95,7 @@ namespace Engine::Physics {
     static float Get_LinearVelocity(const Engine::Component::PhysicObject& physicObject);
 
     #pragma endregion
+    static void DrawShape(const Engine::Component::PhysicObject& physicObject, JPH::DebugRenderer* debugRenderer, JPH::RMat44Arg center, JPH::ColorArg debugColor);
 
     private:
         inline static JPH::PhysicsSystem* physics_system = nullptr;

@@ -4,15 +4,26 @@
 #include <Jolt/Jolt.h>
 #include <Jolt/Renderer/DebugRenderer.h>
 #include <vector>
-
+#include <Jolt/Renderer/DebugRendererSimple.h>
 #include "Render/RenderObject.h"
+#include "ECS/Components/BasicComponent.h"
+#include "ECS/Components/PhysicComponent.h"
+#include <iostream>
+
+class World;
 
 //Jolt Debug renderer
 namespace Engine::Physics {
-    class JoltDebugRenderer : public JPH::DebugRenderer {
+    enum class ShapeType {
+        Box,
+        Sphere
+    };
+
+    class JoltDebugRenderer : public JPH::DebugRendererSimple {
     public:
         JoltDebugRenderer() = default;
         virtual ~JoltDebugRenderer() = default;
+
         virtual void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override = 0;
 
         virtual void DrawTriangle(JPH::RVec3Arg inV1, JPH::RVec3Arg inV2, JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow) override = 0;
@@ -20,10 +31,21 @@ namespace Engine::Physics {
         virtual void DrawText3D(JPH::RVec3Arg inPosition, const JPH::string_view& inString, JPH::ColorArg inColor, float inHeight) override = 0;
 
 
+        //virtual Batch CreateTriangleBatch(const Triangle* inTriangles, int inTriangleCount) override { return Batch(); }
+        //virtual Batch CreateTriangleBatch(const Vertex* inVertices, int inVertexCount, const uint32_t* inIndices, int inIndexCount) override { return Batch(); }
+        //virtual void DrawGeometry(JPH::RMat44Arg inModelMatrix, const JPH::AABox& inWorldSpaceBounds, float inLODScaleSq, JPH::ColorArg inModelColor, const GeometryRef& inGeometry, ECullMode inCullMode = ECullMode::CullBackFace, ECastShadow inCastShadow = ECastShadow::On, EDrawMode inDrawMode = EDrawMode::Solid) override {}
 
-        virtual Batch CreateTriangleBatch(const Triangle* inTriangles, int inTriangleCount) override { return Batch(); }
-        virtual Batch CreateTriangleBatch(const Vertex* inVertices, int inVertexCount, const uint32_t* inIndices, int inIndexCount) override { return Batch(); }
-        virtual void DrawGeometry(JPH::RMat44Arg inModelMatrix, const JPH::AABox& inWorldSpaceBounds, float inLODScaleSq, JPH::ColorArg inModelColor, const GeometryRef& inGeometry, ECullMode inCullMode = ECullMode::CullBackFace, ECastShadow inCastShadow = ECastShadow::On, EDrawMode inDrawMode = EDrawMode::Solid) override {}
+
+
+        void AddToPendingDraw(std::pair<uint32_t, ShapeType> debugShape) {
+            debugShapeList.push_back(debugShape);
+        }
+
+
+        void DisplayDebugShape(World* world, JPH::Color debugColor = JPH::Color(200, 200, 200));
+
+    private:
+        std::vector<std::pair<uint32_t, ShapeType>> debugShapeList;
     };
 
 

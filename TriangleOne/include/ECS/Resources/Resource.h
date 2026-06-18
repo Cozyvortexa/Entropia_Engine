@@ -215,7 +215,7 @@ namespace Engine::Resource {
 	};
 
 	struct PhysicsResource : public Resource {
-		bool displayColliderBox = false;
+		bool display_physicsShape = false;
 
 		const uint64_t cMaxBodies = 65536;
 		const uint64_t cNumBodyMutexes = 0;
@@ -242,7 +242,7 @@ namespace Engine::Resource {
 
 		std::unique_ptr<Engine::Physics::JoltDebugRenderer> joltDebugRenderer = nullptr;
 		std::unique_ptr<Shader> debugJoltShader = nullptr;
-		JPH::BodyManager::DrawSettings debug_draw_settings;
+		//JPH::BodyManager::DrawSettings debug_draw_settings;
 	};
 
 

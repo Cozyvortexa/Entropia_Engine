@@ -4,6 +4,7 @@
 #include "ECS/System.h"
 #include "ECS/World.h"
 #include "ECS/Components/LightComponent.h"
+#include "ECS/Components/PhysicComponent.h"
 
 #include <tuple>
 #include <iostream>
@@ -84,7 +85,7 @@ namespace Engine::Systems {
 #pragma region Draw
 
 		void Draw_BloomBlurEffect(Engine::Resource::RenderResource* renderData);
-		void Draw_FinalPass(Resource::RenderResource* renderData, Resource::PhysicsResource* physicsData, glm::mat4 viewMatrice);
+		void Draw_FinalPass(World* world, Resource::RenderResource* renderData, Resource::PhysicsResource* physicsData, glm::mat4 viewMatrice);
 		void Draw_SkyBox(World* world, const Engine::Resource::ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice);
 		void LightningPass(World* world, Engine::Component::Transform* transformMainCamera, const Engine::Resource::ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice);
 

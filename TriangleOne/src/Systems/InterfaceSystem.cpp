@@ -116,12 +116,19 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
                     Component::AudioSource audioSource;
                     world->add_components(entity, std::move(audioSource));
                 }
-                else if (entry->type == Editor::ObjectType::Collider) {
+                else if (entry->type == Editor::ObjectType::BoxCollider) {
                     Component::Transform* transform = world->get_component<Component::Transform>(entity);
                     assert(transform != nullptr);
 
                     Component::BoxCollider boxCollider(transform->position);
                     world->add_components(entity, std::move(boxCollider));
+                }
+                else if (entry->type == Editor::ObjectType::SphereCollider) {
+                    Component::Transform* transform = world->get_component<Component::Transform>(entity);
+                    assert(transform != nullptr);
+
+                    Component::SphereCollider radiusCollider(transform->position);
+                    world->add_components(entity, std::move(radiusCollider));
                 }
                 //else if (entry->type == Editor::ObjectType::ParticuleSystem) {
                 // 
@@ -177,7 +184,7 @@ void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::R
         ImGui::Checkbox("bloomEnable", &renderData->bloomEnable);
         ImGui::InputFloat("Exposure", &renderData->exposure);
         ImGui::InputFloat("Camera speed", &cameraComponent->cameraSpeed);
-        ImGui::Checkbox("Display Collider Box", &physicsData->displayColliderBox);
+        ImGui::Checkbox("Display Physics item", &physicsData->display_physicsShape);
     }
     ImGui::End();
 }
@@ -355,6 +362,9 @@ void Systems::InterfaceSystem::Display_Inspecteur_Menu(World* world, const Resou
 
         //BoxCollider
         Editor::DrawComponentSection<Component::BoxCollider>(editorContext, interfaceData->focusGameObject, "BoxCollider");
+
+        //SphereCollider
+        Editor::DrawComponentSection<Component::SphereCollider>(editorContext, interfaceData->focusGameObject, "SphereCollider");
 
         ImGui::Separator();
         std::string label = "Add new Component";

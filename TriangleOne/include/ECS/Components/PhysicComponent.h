@@ -21,6 +21,7 @@ namespace Engine::Component {
 			gravityForce.Set(other.gravityForce.Get());
 			bodyID = other.bodyID;
 			offset = other.offset;
+			displayShape = other.displayShape;
 
 			//Invalid other
 			other.objectIsValid = false;
@@ -37,6 +38,7 @@ namespace Engine::Component {
 				//Transfers the master data
 				bodyID = other.bodyID;
 				offset = other.offset;
+				displayShape = other.displayShape;
 
 				//Invalid other
 				other.objectIsValid = false;
@@ -56,7 +58,7 @@ namespace Engine::Component {
 
 		inline JPH::BodyID& GetBodyID() { return bodyID; }
 
-
+		bool displayShape = true;
 		glm::vec3 offset = glm::vec3(0);
 		Observer<bool> gravity;
 		Observer<float> gravityForce;
@@ -106,7 +108,6 @@ namespace Engine::Component {
 		friend Engine::Physics::PhysicsHelper;
 		JPH::BodyID bodyID;
 	};
-
 
 	struct BoxCollider : public PhysicObject {
 		BoxCollider() = delete;
@@ -168,6 +169,7 @@ namespace Engine::Component {
 		void Reflect(F&& f)
 		{
 			f("Gravity:", gravity);
+			f("Display shape:", displayShape);
 			f("GravityForce:", gravityForce);
 			f("boxSize:", boxSize);
 			f("Offset:", offset);
@@ -185,12 +187,98 @@ namespace Engine::Component {
 	};
 
 
-	//struct ConvexShape : public PhysicObject {
-	//	ConvexShape(const std::vector<glm::vec3> vertices_Position) {
 
-	//		JPH::ConvexHullShapeSettings hullSettings
-	//	}
+	struct SphereCollider : public PhysicObject {
+		SphereCollider() = delete;
+
+		SphereCollider(glm::vec3 position) : PhysicObject(JPH::EMotionType::Dynamic) {
+			radius.Set(1.0f);
+			bodyID = Engine::Physics::PhysicsHelper::CreateSphere(position, radius.Get(), JPH::Quat::sIdentity(), motionType.Get());
+
+			Add_To_Simulation();
+		}
+
+		SphereCollider(glm::vec3 position, float setRadius) : PhysicObject(JPH::EMotionType::Dynamic) {
+			radius.Set(setRadius);
+			bodyID = Engine::Physics::PhysicsHelper::CreateSphere(position, radius.Get(), JPH::Quat::sIdentity(), motionType.Get());
+
+			Add_To_Simulation();
+		}
+
+		SphereCollider(glm::vec3 position, float setRadius, JPH::EMotionType setMotionType, bool setGravity, float setGravityForce) : PhysicObject(setMotionType, setGravity, setGravityForce) {
+			radius.Set(setRadius);
+			bodyID = Engine::Physics::PhysicsHelper::CreateSphere(position, radius.Get(), JPH::Quat::sIdentity(), motionType.Get());
+
+			Add_To_Simulation();
+		}
 
 
-	//};
+		~SphereCollider() = default;
+
+
+		SphereCollider(SphereCollider&& other) noexcept : PhysicObject(std::move(other)) {
+			radius.Set(other.radius.Get());
+
+			SetupConnections();
+		}
+		SphereCollider& operator=(SphereCollider&& other) noexcept {
+			if (this != &other) {
+				PhysicObject::operator=(std::move(other));
+
+				//Clear current connection
+				radius_Connection = ScopedConnection();
+
+				//Transfers the master dataD;
+				offset = std::move(other.offset);
+
+				//Synchronises the values of the observers
+				radius.Set(other.radius.Get());
+
+				SetupConnections();
+			}
+			return *this;
+		}
+		SphereCollider(const SphereCollider&) = delete;
+		SphereCollider& operator=(const SphereCollider&) = delete;
+
+
+		Observer<float> radius;
+
+		template<typename F>
+		void Reflect(F&& f)
+		{
+			f("Gravity:", gravity);
+			f("Display shape:", displayShape);
+			f("GravityForce:", gravityForce);
+			f("Radius:", radius);
+			f("Offset:", offset);
+			f("Motion Type:", motionType);
+		}
+	private:
+		void SetupConnections() {
+			radius_Connection = radius.Subscribe([this](const float& value) {
+				bodyID = Engine::Physics::PhysicsHelper::ResizeSphere(*this, value);
+				Add_To_Simulation();
+				});
+		}
+
+		ScopedConnection radius_Connection;
+	};
+
+
+
+	struct ConvexShape : public PhysicObject {
+		ConvexShape() : PhysicObject(JPH::EMotionType::Dynamic) {}
+
+		ConvexShape(glm::vec3 position, const std::vector<glm::vec3> verticesPos) : PhysicObject(JPH::EMotionType::Dynamic) {
+			JPH::Array<JPH::Vec3> points;
+			for (const glm::vec3& currentVertice : verticesPos) {
+				points.push_back(Engine::Physics::PhysicsHelper::To_Vec3_JPH(currentVertice));
+			}
+
+
+			bodyID = Engine::Physics::PhysicsHelper::CreateConvexShape(points, position, JPH::Quat::sIdentity(), JPH::EMotionType::Dynamic, Engine::Physics::Layers::MOVING);
+			Add_To_Simulation();
+		}
+	};
 }

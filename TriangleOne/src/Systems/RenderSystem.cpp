@@ -413,8 +413,10 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	Component::MeshHandle meshHandle(value.second);
 	Component::SceneTag mesh_scene_Tag("Maison");
 	Component::MaterialHandle materialHandle(renderData->mainMaterialHandle);
-	Component::BoxCollider boxCollider(modelTransform.position, glm::vec3(100, 5, 100));
-	boxCollider.motionType.Set(JPH::EMotionType::Static);
+	//Component::ConvexShape meshCollider(modelTransform.position, value.first.Get_VerticesPosition());
+	//meshCollider.motionType.Set(JPH::EMotionType::Static);
+	Component::BoxCollider boxCollider(modelTransform.position, glm::vec3(100, 2, 100), JPH::EMotionType::Static, false, 1.0f);
+
 
 	world.add_components(model, mesh_scene_Tag, materialHandle, meshHandle, modelTransform, std::move(boxCollider));
 

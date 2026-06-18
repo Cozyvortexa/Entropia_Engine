@@ -41,4 +41,30 @@ public:
 			break;
 		}
 	}
+
+	//std::vector<glm::vec3> Get_VerticesPosition() {
+	//	Engine::Render::RendererAPI::API graphicAPI = Engine::Render::RendererAPI::GetAPI();
+
+	//	std::vector<glm::vec3> points;
+
+	//	if (graphicAPI == Engine::Render::RendererAPI::API::None) {
+	//		std::cout << "RendererAPI is set on None" << std::endl;
+	//		abort();
+	//	}
+	//	else if (graphicAPI == Engine::Render::RendererAPI::API::Vulkan) {
+	//		std::cout << "RendererAPI is set on None" << std::endl;
+	//		abort();
+	//	}
+	//	else if (graphicAPI == Engine::Render::RendererAPI::API::OpenGL) {
+	//		for (const SubMeshStorage& current_SubMesh : subMeshs) {
+	//			std::visit([&points](auto& mesh) {
+	//				const SubMesh& subMesh = static_cast<const SubMesh&>(mesh);
+	//				for (const auto& vertex : subMesh.vertices) {
+	//					points.push_back(vertex.Position);
+	//				}
+	//			}, current_SubMesh);
+	//		}
+	//	}
+	//	return points;
+	//}
 };

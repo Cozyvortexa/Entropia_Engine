@@ -24,7 +24,8 @@ namespace Engine::Editor {
         Camera,
         Mesh,
         AudioSource,
-        Collider,
+        BoxCollider,
+        SphereCollider,
         //ParticuleSystem,
         //Script,
         //Rigidbody
@@ -111,8 +112,8 @@ namespace Engine::Editor {
     inline void DrawWidget<Observer<float>>(EditorContext ctx, const char* label, Observer<float>& value) {
         float temp = value.Get();
 
-        DrawLabel(label);
-        if (ImGui::InputFloat("##", &temp)){
+        DrawWidget(ctx, label, temp);
+        if (temp != value.Get()){
             value.Set(temp);
         }
     }
@@ -130,8 +131,8 @@ namespace Engine::Editor {
     inline void DrawWidget<Observer<glm::vec3>>(EditorContext ctx, const char* label, Observer<glm::vec3>& value) {
         glm::vec3 temp = value.Get();
 
-        DrawLabel(label);
-        if (ImGui::InputFloat3("##", &temp.x)){
+        DrawWidget(ctx, label, temp);
+        if (temp != value.Get()) {
             value.Set(temp);
         }
     }
@@ -284,7 +285,8 @@ namespace Engine::Editor {
         { ICON_FA_VIDEO,      "Camera",            ObjectType::Camera           },
         { ICON_FA_DICE_D6,    "Mesh",              ObjectType::Mesh             },
         { ICON_FA_VOLUME_HIGH,"Audio Source",     ObjectType::AudioSource      },
-        { ICON_FA_BORDER_ALL, "Collider",        ObjectType::Collider         },
+        { ICON_FA_BORDER_ALL, "BoxCollider",        ObjectType::BoxCollider         },
+        { ICON_FA_CIRCLE  , "SphereCollider",        ObjectType::SphereCollider         },
         /*{ ICON_FA_WIND,       "Particle System", ObjectType::ParticuleSystem  },*/
         /*{ ICON_FA_CODE,       "Script",          ObjectType::Script           },*/
         /*{ ICON_FA_MAGNET,     "Rigidbody",       ObjectType::Rigidbody        },*/

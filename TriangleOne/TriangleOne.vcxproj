@@ -141,6 +141,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Audio\AudioHelper.cpp" />
+    <ClCompile Include="src\Physics\JoltRenderer.cpp" />
     <ClCompile Include="src\Physics\PhysicsHelper.cpp" />
     <ClCompile Include="src\Render\Renderer.cpp" />
     <ClCompile Include="src\Systems\AudioSystem.cpp" />
