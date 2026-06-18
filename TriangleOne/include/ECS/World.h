@@ -121,6 +121,21 @@ public:
 
         return static_cast<SparseSet<T>*>(pools[id].get())->try_Get(entity);
     }
+    template <typename Parent, typename... Components>
+    Parent* get_component_of_type(Entity entity) {
+        Parent* result = nullptr;
+
+        // Iterate over each component
+        ((result = [](World* world, Entity entity) -> Parent* {
+            auto* comp = world->get_component<Components>(entity);
+            if (comp != nullptr) {
+                return static_cast<Parent*>(comp);
+            }
+            return nullptr;
+            }(this, entity)) || ...); // "|| ..." = Stop the search as soon as a valid pointer is found
+
+        return result;
+    }
     template<typename T>
     bool Has_component(Entity entity) {
         static_assert(std::is_base_of<Engine::Component::Component, T>::value, "T must inherit from Engine::Component::Component");
