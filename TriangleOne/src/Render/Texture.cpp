@@ -2,26 +2,19 @@
 #include "Render/Texture.h" 
 #include "glad/glad/glad.h"
 
-unsigned int TextureClass::LoadTextureFromFile(std::string name, std::string directory) {
+unsigned int TextureClass::Load_OpenGL_Texture(unsigned char* data, int width, int height, int nrChannels) {
 	unsigned int textureID;
-	int width, height, nrChannels;
+	GLenum format = GL_RED;
 
-	std::string totalPath = directory + "/" + name;
-	stbi_set_flip_vertically_on_load(false);
-
-	unsigned char* data = stbi_load(totalPath.c_str(), &width, &height, &nrChannels, 0);
-	if (!data) {
-		std::cout << "fail to load the texture: " << name << std::endl;
-		throw;
+	if (nrChannels == 2) {
+		format = GL_RG;
 	}
-
-	GLenum format;
-
-	format = GL_RGB;
-	if (nrChannels == 4)
+	else if (nrChannels == 3) {
+		format = GL_RGB;
+	}
+	else if (nrChannels == 4) {
 		format = GL_RGBA;
-
-
+	}
 
 	//
 	glGenTextures(1, &textureID);
@@ -37,11 +30,8 @@ unsigned int TextureClass::LoadTextureFromFile(std::string name, std::string dir
 	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-
-	stbi_image_free(data);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	return textureID;
 }
@@ -105,9 +95,17 @@ unsigned int TextureClass::LoadEmbeddedTexture(const aiTexture* tex) {
 		nrChannels = 4; // aiTexel == RGBA
 	}
 
-	GLenum format = GL_RGB;
-	if (nrChannels == 4)
+	GLenum format = GL_RED;
+
+	if (nrChannels == 2) {
+		format = GL_RG;
+	}
+	else if (nrChannels == 3) {
+		format = GL_RGB;
+	}
+	else if (nrChannels == 4) {
 		format = GL_RGBA;
+	}
 
 	//
 	glGenTextures(1, &textureID);
@@ -159,6 +157,6 @@ unsigned int TextureClass::LoadEquirectangularTex(std::string path) {
 		std::cout << "fail to load a equirectangular texture " << std::endl;
 		throw;
 	}
-
+	stbi_set_flip_vertically_on_load(false);
 	return hdrTexture;
 }

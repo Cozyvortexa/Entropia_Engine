@@ -230,6 +230,7 @@
     <None Include="Shader\BloomShader\VertexBloom.glsl" />
     <None Include="Shader\BRDF\Fragment_brdf.glsl" />
     <None Include="Shader\BRDF\Vertex_brdf.glsl" />
+    <None Include="Shader\Geometry_Pass\Vertex_Instanced_GeometryPass.glsl" />
     <None Include="Shader\IBLshader\BRDF\Fragment_brdf.glsl" />
     <None Include="Shader\IBLshader\BRDF\Vertex_brdf.glsl" />
     <None Include="Shader\IBLshader\Fragment_Equirectangular_to_Cubemap.glsl" />

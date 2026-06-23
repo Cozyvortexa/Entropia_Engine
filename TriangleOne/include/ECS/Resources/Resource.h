@@ -85,6 +85,7 @@ namespace Engine::Resource {
 		int renderWIDTH;
 		int renderHEIGHT;
 		unsigned int mainMaterialHandle;
+		unsigned int main_Instanced_Material_Handle;
 
 		R_Shader r_Shader;
 

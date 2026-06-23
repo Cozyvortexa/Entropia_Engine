@@ -10,7 +10,7 @@
 
 class TextureClass {
 public:
-	static unsigned int LoadTextureFromFile(std::string path, std::string directory);
+	static unsigned int Load_OpenGL_Texture(unsigned char* data, int width, int height, int nrChannels);
 
 	static unsigned int LoadEmbeddedTexture(const aiTexture* tex);
 

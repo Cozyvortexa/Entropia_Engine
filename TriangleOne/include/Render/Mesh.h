@@ -12,6 +12,19 @@
 
 using SubMeshStorage = std::variant<OpenGL_SubMesh>;
 
+struct InstanceGroup { 
+	InstanceGroup() {
+		glGenBuffers(1, &instanceMatrixVBO);
+	}
+	//~InstanceGroup() {
+	//	glDeleteBuffers(1, &instanceMatrixVBO);
+	//}
+
+	unsigned int subMesh = 0;
+	std::vector<glm::mat4> instancedMatrix;
+	unsigned int instanceMatrixVBO = 0;
+};
+
 class Mesh {
 public:
 	Mesh() {};
@@ -21,6 +34,8 @@ public:
 	bool hasTBN = true;
 	bool hasNormalMap = true;
 	bool isValid = false;
+
+	std::vector<InstanceGroup> instancesGroup;
 
 	//SubMesh factory
 	void Create_SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle) {

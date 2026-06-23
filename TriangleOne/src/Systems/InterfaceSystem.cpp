@@ -109,8 +109,7 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
                 }
                 else if (entry->type == Editor::ObjectType::Mesh) {
                     Component::MeshHandle meshHandle(-1);
-                    Component::MaterialHandle materialHandle(renderData->mainMaterialHandle);
-                    world->add_components(entity, meshHandle, materialHandle);
+                    world->add_components(entity, meshHandle);
                 }
                 else if (entry->type == Editor::ObjectType::AudioSource) {
                     Component::AudioSource audioSource;
@@ -174,6 +173,7 @@ void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::R
     ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "FPS: %.1f", io.Framerate);
     RenderTarget_Menu(interfaceData);
 
+    static bool vSyncToogle = true;
     if (ImGui::CollapsingHeader("SSAO Param"))
     {
         ImGui::InputFloat("Radius", &renderData->ssao.SSAO_radius);
@@ -185,6 +185,7 @@ void Display_RenderMenu(Resource::InterfaceRessource* interfaceData, Resource::R
         ImGui::InputFloat("Exposure", &renderData->exposure);
         ImGui::InputFloat("Camera speed", &cameraComponent->cameraSpeed);
         ImGui::Checkbox("Display Physics item", &physicsData->display_physicsShape);
+        if (ImGui::Checkbox("Vsync:", &vSyncToogle)) { glfwSwapInterval(vSyncToogle); }
     }
     ImGui::End();
 }

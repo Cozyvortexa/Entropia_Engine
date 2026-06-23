@@ -117,7 +117,7 @@ void Systems::WindowSystem::Init(World& world, const Resource::ResourceBuffer* r
 
 #endif
 
-	glfwSetFramebufferSizeCallback(windowData->window, Framebuffer_size_callback); // Pour adapter le viewport si la fenetre est resize pendant le court du programme 
+	glfwSetFramebufferSizeCallback(windowData->window, Framebuffer_size_callback); // To adjust the viewport if the window is resized while the program is running 
 	//world.renderer->SetViewport_Size(glm::vec2(windowData->WIDTH, windowData->HEIGHT));
 
 	//Default windows size
@@ -131,16 +131,14 @@ void Systems::WindowSystem::Init(World& world, const Resource::ResourceBuffer* r
 	//glfwSetInputMode(windowData->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetInputMode(windowData->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-	//Blending     //ya pas de blending mm avec cette ligne au cas ou 
+	//Blending
 	//glEnable(GL_BLEND);
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	//Face culling     //fonctionne bizzarement ( faudrait chek l'ordre de dessin des vertex)
+	//Face culling
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	//glFrontFace(GL_CCW);
-	//MSAA
-	//glEnable(GL_MULTISAMPLE);
+
 	glEnable(GL_DEPTH_TEST);
 
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);

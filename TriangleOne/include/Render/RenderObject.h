@@ -28,8 +28,7 @@ namespace Engine::Render {
         virtual void Unbind() const = 0;
     };
 
-    enum class Format
-    {
+    enum class Format{
         //Float
         Float1,
         Float2,
@@ -39,7 +38,10 @@ namespace Engine::Render {
         UInt1,
         UInt2,
         UInt3,
-        UInt4
+        UInt4,
+        //Matrix
+        Mat3,
+        Mat4
     };
 
     enum class BufferClearTarget {
@@ -80,20 +82,17 @@ namespace Engine::Render {
         }
     };
 
-    enum class Filter
-    {
+    enum class Filter{
         Nearest,
         Linear
     };
 
-    enum class WrapMode
-    {
+    enum class WrapMode{
         Repeat,
         ClampEdge
     };
 
-    struct SamplerDesc
-    {
+    struct SamplerDesc{
         Filter minFilter;
         Filter magFilter;
 

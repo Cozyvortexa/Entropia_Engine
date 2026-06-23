@@ -3,6 +3,16 @@
 namespace Resource = Engine::Resource;
 namespace Audio = Engine::Audio;
 
+static glm::mat4 AssimpMat4_To_glmMat4(aiMatrix4x4& assimpMat4) {
+	glm::mat4 nodeTransform;
+	for (int y = 0; y < 4; y++) {
+		for (int x = 0; x < 4; x++) {
+			nodeTransform[y][x] = assimpMat4[x][y];
+		}
+	}
+	return nodeTransform;
+}
+
 #pragma region Texture
 
 unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh, std::string path)
@@ -22,15 +32,7 @@ unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType typ
 
 	if (is_Inserted) { // Create a new texture if the key don't exist
 		Texture texture;
-		const aiTexture* embeddedTex = scene->GetEmbeddedTexture(str.C_Str());
-		if (embeddedTex) {  // embedded texture detected
-			texture.id = TextureClass::LoadEmbeddedTexture(embeddedTex);
-		}
-		else 
-			texture.id = TextureClass::LoadTextureFromFile(str.C_Str(), currentMesh.directory);
-
 		texture.path = keyPath;
-
 
 		switch (type) {
 		case aiTextureType_DIFFUSE:
@@ -58,6 +60,32 @@ unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType typ
 			texture.textureType = Texture::Ambient_Occlusion;
 			break;
 		}
+
+		const aiTexture* embeddedTex = scene->GetEmbeddedTexture(str.C_Str());
+		if (embeddedTex) {  // embedded texture detected
+			texture.id = TextureClass::LoadEmbeddedTexture(embeddedTex);
+		}
+		else {
+			// --- MULTI-THREADING POUR LES TEXTURES SUR DISQUE ---
+			texture.id = 0; // Sera généré plus tard sur le thread principal !
+
+			std::string filename = str.C_Str();
+			std::string dir = currentMesh.directory;
+
+			// On lance le chargement lourd en arrière-plan
+			m_PendingTextures.push_back(std::async(std::launch::async, [filename, dir, keyPath, type]() {
+				PendingTextureData pendingData;
+				pendingData.keyPath = keyPath;
+				pendingData.type = type;
+
+				std::string totalPath = dir + "/" + filename;
+
+				pendingData.data = stbi_load(totalPath.c_str(), &pendingData.width, &pendingData.height, &pendingData.nrChannels, 0);
+				return pendingData;
+				}));
+
+		}
+
 
 		textures.push_back(texture);
 		texture_Handle = textures.size() - 1;
@@ -126,11 +154,21 @@ Material* AssetStore::Get_Material(unsigned int index) {  // Dedicate to the Sys
 
 #pragma region Mesh
 
+//Count the number of identical meshes (Instancing purpose)
+void AssetStore::CountMesh(std::unordered_map<unsigned int, std::vector<aiNode*>>& meshCounts, aiNode* node) {
+	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+		meshCounts[node->mMeshes[i]].push_back(node);
+	}
+	for (unsigned int i = 0; i < node->mNumChildren; i++) {
+		CountMesh(meshCounts, node->mChildren[i]);
+	}
+}
+
 Mesh AssetStore::LoadMesh(std::string path) {
 	Mesh mesh = Mesh();
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices |
-		aiProcess_CalcTangentSpace | aiProcess_GlobalScale | aiProcess_PreTransformVertices | aiProcess_GenSmoothNormals);  // WARNING, the flag aiProcess_PreTransformVertices removes the node hierarchy, thereby preventing animations from working 
+		aiProcess_CalcTangentSpace | aiProcess_GlobalScale | aiProcess_GenSmoothNormals |  aiProcess_FindInstances );
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
@@ -142,29 +180,77 @@ Mesh AssetStore::LoadMesh(std::string path) {
 	//std::cout << "Number of meshes: " << scene->mNumMeshes << std::endl;
 	//std::cout << "Number of materials: " << scene->mNumMaterials << std::endl;
 	mesh.directory = path.substr(0, path.find_last_of("/"));
+
+	CountMesh(meshCounts, scene->mRootNode);
+
 	ProcessNode(scene->mRootNode, scene, mesh, path);
+
+	//Last Step
+	for (auto& futureTexture : m_PendingTextures) {
+		// Blocks the current thread until stbi_load has finished for this texture
+		PendingTextureData data = futureTexture.get();
+
+		if (data.data) {
+			unsigned int textureHandle = pathToIndexMap_Texture[data.keyPath];
+
+			unsigned int textureID = TextureClass::Load_OpenGL_Texture(data.data, data.width, data.height, data.nrChannels);
+			stbi_image_free(data.data);
+
+
+			// Updates the OpenGL ID of the texture that was waiting
+			textures[textureHandle].id = textureID;
+		}
+		else {
+			std::cout << "fail to load the texture in async thread: " << data.keyPath << std::endl;
+		}
+	}
+
+	m_PendingTextures.clear();
+	meshCounts.clear();
+	assimpToOurMeshIndex.clear();
 	mesh.isValid = true;
 	return mesh;
 }
 
-void AssetStore::ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMesh, std::string path)
-{
+void AssetStore::ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMesh, std::string path, glm::mat4 parentTransform){
+
+	glm::mat4 nodeTransform = AssimpMat4_To_glmMat4(node->mTransformation);
+	glm::mat4 globalTransform = parentTransform * nodeTransform;
+
+
 	// process all the node’s meshes (if any)
-	for (unsigned int i = 0; i < node->mNumMeshes; i++)
-	{
+	for (unsigned int i = 0; i < node->mNumMeshes; i++){
 		aiMesh* subMesh = scene->mMeshes[node->mMeshes[i]];
-		if (!subMesh->HasTextureCoords(0)) currentMesh.hasUV = false;
-		ProcessSub_Mesh(subMesh, scene, currentMesh, path);
+
+
+		// Global index in the assimp scene
+		unsigned int assimpMeshIndex = node->mMeshes[i];
+		auto it = assimpToOurMeshIndex.find(assimpMeshIndex);
+
+		bool subMeshAreInstanced = meshCounts[assimpMeshIndex].size() > 1;
+		if (it == assimpToOurMeshIndex.end()) {
+			ProcessSub_Mesh(subMesh, scene, currentMesh, path, subMeshAreInstanced);
+			assimpToOurMeshIndex[assimpMeshIndex] = currentMesh.subMeshs.size() - 1;
+
+			InstanceGroup group;
+			currentMesh.instancesGroup.push_back(group);
+		}
+
+		size_t ourMeshIndex = assimpToOurMeshIndex[assimpMeshIndex];
+		if (subMeshAreInstanced) {
+			currentMesh.instancesGroup[ourMeshIndex].instancedMatrix.push_back(globalTransform);
+		}
+		else if (currentMesh.instancesGroup[ourMeshIndex].instancedMatrix.empty()) {
+			currentMesh.instancesGroup[ourMeshIndex].instancedMatrix.push_back(globalTransform);
+		}
 	}
-	// then do the same for each of its children
-	for (unsigned int i = 0; i < node->mNumChildren; i++)
-	{
-		ProcessNode(node->mChildren[i], scene, currentMesh, path);
+	// Then we do the same for each of its childrens
+	for (unsigned int i = 0; i < node->mNumChildren; i++){
+		ProcessNode(node->mChildren[i], scene, currentMesh, path, globalTransform);
 	}
 }
 
-void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& currentMesh, std::string path)
-{
+void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& currentMesh, std::string path, bool instancedSubMesh){
 	std::vector<Vertex> vertices;
 	vertices.reserve(sub_Mesh->mNumVertices);
 	std::vector<unsigned int> indices;
@@ -251,7 +337,10 @@ void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& c
 
 
 		if (is_Inserted) {  // Create a new material if the key don't exist
-			Material material(Get_Material(0)->shader);  // Material at index 0 corresponds to the default mat who has all default value
+			Material material;  
+			if (instancedSubMesh) material.shader = Get_Material(1)->shader;
+			else material.shader = Get_Material(0)->shader; // Material at index 0 corresponds to the default mat who has all default value
+
 			material.diffuse_Text_Handle = diffuseMap_handle;
 			material.normal_Text_Handle = normalMap_handle;
 			material.ambientOcclusion_Text_Handle = ambientOcclusion_handle;

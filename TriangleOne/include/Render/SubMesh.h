@@ -54,6 +54,6 @@ protected:
 
 class OpenGL_SubMesh : public SubMesh{
 public:
-	unsigned int VAO, VBO, EBO;
 	OpenGL_SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle);
+	unsigned int VAO, VBO, EBO;
 };

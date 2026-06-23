@@ -1,6 +1,6 @@
 #include "Render/Renderer.h"
 
-void OpenGL_Renderer::DrawMesh(Mesh& currentMesh) {
+void OpenGL_Renderer::DrawMesh(Mesh& currentMesh, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, const glm::mat4& modelMatrix) {
 	if (currentMesh.isValid == false) return;
 	if (currentMesh.subMeshs.size() == 0) {
 		std::cout << "The mesh: " << currentMesh.directory << " have no submesh, drawCall cancel" << std::endl;
@@ -35,7 +35,9 @@ void OpenGL_Renderer::DrawMesh(Mesh& currentMesh) {
 			last_Shader_Use = &last_Material_Use->shader;
 			last_Shader_Use->Use();
 		}
-		OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[current_Material_Handle.second]));
+		size_t subMeshIndex = current_Material_Handle.second;
+
+		OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));
 
 
 		assert(glIsVertexArray(subMesh.VAO));
@@ -86,6 +88,10 @@ void OpenGL_Renderer::DrawMesh(Mesh& currentMesh) {
 			hasMetallic = true;
 		}
 
+		// --- Link Matrices ---
+		last_Shader_Use->setMatrix("view", viewMatrix);
+		last_Shader_Use->setMatrix("projection", projectionMatrix);
+
 
 		// Bind
 		int i = 0;
@@ -122,16 +128,41 @@ void OpenGL_Renderer::DrawMesh(Mesh& currentMesh) {
 		last_Shader_Use->setFloat("material.ao_Factor", currentMat->ao_Factor);
 		last_Shader_Use->setFloat("material.roughness_Factor", currentMat->roughness_Factor);
 		last_Shader_Use->setFloat("material.metallic_Factor", currentMat->metallic_Factor);
-		//if (currentMat->hasARM_Text) {  
-		//	last_Shader_Use->setInt("material.AO_Text", i);
-		//}
 
 		glActiveTexture(GL_TEXTURE0);
 
 
-		// draw SubMesh
 		glBindVertexArray(subMesh.VAO);
-		glDrawElements(GL_TRIANGLES, subMesh.indices.size(), GL_UNSIGNED_INT, 0);
+
+		// The subMesh have instanced subMesh to draw
+		if (subMeshIndex < currentMesh.instancesGroup.size() && currentMesh.instancesGroup[subMeshIndex].instancedMatrix.size() > 1) {
+			auto& group = currentMesh.instancesGroup[subMeshIndex];
+
+			glBindBuffer(GL_ARRAY_BUFFER, group.instanceMatrixVBO);
+			glBufferData(GL_ARRAY_BUFFER, group.instancedMatrix.size() * sizeof(glm::mat4), group.instancedMatrix.data(), GL_DYNAMIC_DRAW);
+
+			// Configure the vertex attributes for the 4x4 matrix (locations 4, 5, 6, 7)
+			// A mat4 is equivalent to 4 consecutive vec4
+			std::size_t vec4Size = sizeof(glm::vec4);
+			for (unsigned int i = 0; i < 4; i++) {
+				glEnableVertexAttribArray(4 + i);
+				glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(i * vec4Size));
+				glVertexAttribDivisor(4 + i, 1); // Advance per instance
+			}
+			// Draw instanced SubMeshs
+			glDrawElementsInstanced(GL_TRIANGLES, subMesh.indices.size(), GL_UNSIGNED_INT, 0, group.instancedMatrix.size());
+
+			// Clearing instance attributes
+			for (unsigned int i = 0; i < 4; i++) {
+				glDisableVertexAttribArray(4 + i);
+			}
+		}
+		else {
+			last_Shader_Use->setMatrix("model", modelMatrix * currentMesh.instancesGroup[subMeshIndex].instancedMatrix[0]);
+			// Draw SubMesh
+			glDrawElements(GL_TRIANGLES, subMesh.indices.size(), GL_UNSIGNED_INT, 0);
+		}
+
 		glBindVertexArray(0);
 	}
 }

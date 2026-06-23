@@ -343,21 +343,12 @@ void Systems::RenderSystem::RenderScene(World& world, const Resource::ResourceBu
 	glBindFramebuffer(GL_FRAMEBUFFER, resourceBuffer->renderResource->gBuffer.gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	View view = world.view<Component::MeshHandle, Component::Transform, Component::MaterialHandle>();
-	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::Transform& transform, Component::MaterialHandle& materialHandle) {
+	View view = world.view<Component::MeshHandle, Component::Transform>();
+	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::Transform& transform) {
 		if (meshHandle.index != -1 && meshHandle.haveToBeDraw) {
-			Shader currentShader = world.assetStore->Get_Material(materialHandle.index)->shader;
 			Mesh currentMesh = world.assetStore->Get_Mesh(meshHandle.index);
 
-
-			currentShader.Use();
-
-			// --- Link Matrices ---
-			currentShader.setMatrix("view", mainCamera->viewMatrice);
-			currentShader.setMatrix("projection", resourceBuffer->renderResource->projection);
-			currentShader.setMatrix("model", transform.GetTransformModel());
-
-			world.renderer->DrawMesh(currentMesh);
+			world.renderer->DrawMesh(currentMesh, mainCamera->viewMatrice, resourceBuffer->renderResource->projection, transform.GetTransformModel());
 		}
 	});
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -375,10 +366,17 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	Shader::CreateDefaultWhiteTexture();
 	Shader::CreateNeutralNormalText();
 
+	//Main mat
 	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "TriangleOne/Shader/Geometry_Pass/Vertex_GeometryPass.glsl", "TriangleOne/Shader/Geometry_Pass/Fragment_GeometryPass.glsl");
 	defaultMat.first.diffuse_Text_Handle = Shader::GetDefaultText();
 	defaultMat.first.normal_Text_Handle = Shader::GetNeutralNormalText();
 	renderData->mainMaterialHandle = defaultMat.second;
+
+	//Main Instanced mat
+	std::pair<Material&, int> default_Instanced_Mat = world.assetStore->CreateMaterial("Instanced_Default_Material", "TriangleOne/Shader/Geometry_Pass/Vertex_Instanced_GeometryPass.glsl", "TriangleOne/Shader/Geometry_Pass/Fragment_GeometryPass.glsl");
+	default_Instanced_Mat.first.diffuse_Text_Handle = Shader::GetDefaultText();
+	default_Instanced_Mat.first.normal_Text_Handle = Shader::GetNeutralNormalText();
+	renderData->main_Instanced_Material_Handle = default_Instanced_Mat.second;
 
 	std::pair<unsigned  int, unsigned int> shadowDummy = CreateDummyShadowTextures();
 	renderData->dummyDepthMap2D = shadowDummy.first;
@@ -412,13 +410,12 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	std::pair<Mesh&, int> value = world.assetStore->Get_Mesh("Assets/ImpScene/autumn_house.glb");
 	Component::MeshHandle meshHandle(value.second);
 	Component::SceneTag mesh_scene_Tag("Maison");
-	Component::MaterialHandle materialHandle(renderData->mainMaterialHandle);
 	//Component::ConvexShape meshCollider(modelTransform.position, value.first.Get_VerticesPosition());
 	//meshCollider.motionType.Set(JPH::EMotionType::Static);
 	Component::BoxCollider boxCollider(modelTransform.position, glm::vec3(100, 2, 100), JPH::EMotionType::Static, false, 1.0f);
 
 
-	world.add_components(model, mesh_scene_Tag, materialHandle, meshHandle, modelTransform, std::move(boxCollider));
+	world.add_components(model, mesh_scene_Tag, meshHandle, modelTransform, std::move(boxCollider));
 
 	glEnable(GL_CULL_FACE);
 	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);

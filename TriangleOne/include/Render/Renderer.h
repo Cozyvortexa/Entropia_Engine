@@ -21,7 +21,7 @@ public:
 	}
     virtual ~Renderer() = default;
 
-	virtual void DrawMesh(Mesh& currentMesh) = 0;
+	virtual void DrawMesh(Mesh& currentMesh, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, const glm::mat4& modelMatrix) = 0;
 	virtual void DrawMesh_Without_Texture(Mesh& currentMesh) = 0;
 
 	virtual void DrawQuad(Engine::Resource::RenderResource* renderData) = 0;
@@ -92,7 +92,7 @@ public:
     }
 
 
-    void DrawMesh(Mesh& currentMesh) override;
+    void DrawMesh(Mesh& currentMesh, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, const glm::mat4& modelMatrix) override;
     
     void DrawMesh_Without_Texture(Mesh& currentMesh) override;
 
