@@ -12,11 +12,10 @@
 
 #include "Render/Renderer.h"
 
+#include "Render/Binding_Points.h"
+
 #define MAX_POINT_LIGHT 8
 #define MAX_SPOT_LIGHT 8
-
-#define LIGHT_BINDING_POINT 1
-#define SHADOW_BINDING_POINT 2
 
 #pragma region Padding_Structures
 struct Padding_DirLight {  // To be identical to the memory alignment of structs in the shaders, SSBO

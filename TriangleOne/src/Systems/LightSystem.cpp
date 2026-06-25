@@ -360,7 +360,6 @@ void Systems::LightSystem::SendDepthMapToLightningShader(World* world, const Res
 
 #pragma region Init
 void Systems::LightSystem::InitLightSSBO(World& world, const Resource::ResourceBuffer* resourceBuffer) {
-	int uniform_Light_Binding_Point = 1;
 	Resource::RenderResource* renderResource = resourceBuffer->renderResource;
 
 	glGenBuffers(1, &renderResource->light_SSBO);
@@ -368,7 +367,7 @@ void Systems::LightSystem::InitLightSSBO(World& world, const Resource::ResourceB
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Padding_DirLight) + MAX_POINT_LIGHT * sizeof(Padding_PointLight) + MAX_SPOT_LIGHT * sizeof(Padding_SpotLight) + sizeof(int) * 2, NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	// BINDING SSBO slot 1, light
-	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, uniform_Light_Binding_Point, renderResource->light_SSBO, 0, sizeof(Padding_DirLight) + MAX_POINT_LIGHT * sizeof(Padding_PointLight) + MAX_SPOT_LIGHT * sizeof(Padding_SpotLight) + sizeof(int) * 2);
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, LIGHT_BINDING_POINT, renderResource->light_SSBO, 0, sizeof(Padding_DirLight) + MAX_POINT_LIGHT * sizeof(Padding_PointLight) + MAX_SPOT_LIGHT * sizeof(Padding_SpotLight) + sizeof(int) * 2);
 
 	renderResource->lightSSBO_Data_Size.push_back(sizeof(Padding_DirLight));
 	renderResource->lightSSBO_Data_Size.push_back(MAX_POINT_LIGHT * sizeof(Padding_PointLight));

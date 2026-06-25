@@ -10,6 +10,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <cstdint>
+
 class Shader{
 public:
 	Shader() {};
@@ -149,11 +151,18 @@ public:
 	unsigned int shaderID = NULL;
 	static unsigned int GetDefaultText() { assert(defaultText != 0); return defaultText; }
 	static GLuint GetNeutralNormalText() { assert(neutralNormalText != 0); return neutralNormalText; }
+
+	//BindlessHandle
+	static uint64_t GetDefaultText_Handle() { assert(defaultText_BindlessHandle != 0); return defaultText_BindlessHandle; }
+	static uint64_t GetNeutralNormalText_Handle() { assert(neutralNormalText_BindlessHandle != 0); return neutralNormalText_BindlessHandle; }
 private:
 	std::string ReadFile(const char* shaderPath);
 	int AssertShader(unsigned int& shader);
 
-	static GLuint neutralNormalText;
-	static unsigned int defaultText;
+	inline static GLuint neutralNormalText = 0;
+	inline static uint64_t neutralNormalText_BindlessHandle = 0;
+
+	inline static unsigned int defaultText = 0;
+	inline static uint64_t defaultText_BindlessHandle = 0;
 };
 

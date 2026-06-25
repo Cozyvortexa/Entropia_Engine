@@ -34,6 +34,7 @@ struct Texture {
 	};
 	Type textureType = None; // Valeur par default
 	unsigned int id;
+	uint64_t bindlessHandle;
 	std::string path;
 };
 

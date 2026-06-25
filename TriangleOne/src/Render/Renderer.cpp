@@ -1,171 +1,337 @@
 #include "Render/Renderer.h"
 
-void OpenGL_Renderer::DrawMesh(Mesh& currentMesh, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, const glm::mat4& modelMatrix) {
-	if (currentMesh.isValid == false) return;
-	if (currentMesh.subMeshs.size() == 0) {
-		std::cout << "The mesh: " << currentMesh.directory << " have no submesh, drawCall cancel" << std::endl;
+namespace Component = Engine::Component;
+
+
+void Renderer::ClearVertexList() {
+	mesh_In_VertexList.clear();
+	vertexList.clear();
+}
+
+void OpenGL_Renderer::AddMeshToRender(Component::MeshHandle newMesh) {
+	uint32_t meshIndex = newMesh.index;
+	Mesh currentMesh = assetStore->Get_Mesh(meshIndex);
+
+	// Check if the subMesh zero is already load
+	uint32_t firstSubMeshKey = (meshIndex << 16) | 0;
+	if (mesh_In_VertexList.find(firstSubMeshKey) != mesh_In_VertexList.end()) {
 		return;
 	}
-	std::vector<std::pair<unsigned int, size_t>> mat_indices;
-	mat_indices.reserve(currentMesh.subMeshs.size());
+
+	for (size_t subMeshIndex = 0; subMeshIndex < currentMesh.subMeshs.size(); ++subMeshIndex) {
+		SubMesh subMesh = static_cast<SubMesh>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));
+
+		uint32_t subMeshKey = (subMeshIndex << 16) | 0;
+
+		//Create new correspondence
+		MeshCorrespondence correspondence;
+		correspondence.meshIndex = meshIndex;
+
+		correspondence.vertexStart = vertexList.size();
+		correspondence.vertexCount = subMesh.vertices.size();
+
+		correspondence.indexStart = indexList.size();
+		correspondence.indexCount = subMesh.indices.size();
+
+		// Insertion into global buffers
+		vertexList.insert(vertexList.end(), subMesh.vertices.begin(), subMesh.vertices.end());
+		indexList.insert(indexList.end(), subMesh.indices.begin(), subMesh.indices.end());
 
 
-	//Data preparation
-	for (int i = 0; i < currentMesh.subMeshs.size(); i++) {
-		mat_indices.push_back(std::make_pair(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[i]).material_Handle, i));
+		// Add to history
+		mesh_In_VertexList[subMeshKey] = correspondence;
 	}
-	//Grouping submeshes with identical materials
-	std::sort(mat_indices.begin(), mat_indices.end(), [](const std::pair<unsigned int, size_t>& a, const std::pair<unsigned int, size_t>& b) {
-		return a.first < b.first; 
-	});
 
+	// Update buffer
+	glBindBuffer(GL_ARRAY_BUFFER, globalVBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, globalEBO);
 
-	int lastHandle = mat_indices[0].first;
-	Material* last_Material_Use = assetStore->Get_Material(lastHandle);
-	Shader* last_Shader_Use = &last_Material_Use->shader;
-	last_Shader_Use->Use();
+	glBufferSubData(GL_ARRAY_BUFFER, 0, vertexList.size() * sizeof(Vertex), vertexList.data());
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexList.size() * sizeof(uint32_t), indexList.data());
 
-	//Draw
-	for (std::pair<unsigned int, size_t>& current_Material_Handle : mat_indices) {
-
-		if (lastHandle != current_Material_Handle.first) {  // New material detected
-			lastHandle = current_Material_Handle.first;
-
-			last_Material_Use = assetStore->Get_Material(lastHandle);
-			last_Shader_Use = &last_Material_Use->shader;
-			last_Shader_Use->Use();
-		}
-		size_t subMeshIndex = current_Material_Handle.second;
-
-		OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));
-
-
-		assert(glIsVertexArray(subMesh.VAO));
-		assert(glIsBuffer(subMesh.EBO));
-
-		Material* currentMat = assetStore->Get_Material(subMesh.material_Handle);
-
-		bool hasRoughness = false;
-		bool hasMetallic = false;
-
-		unsigned int diffuse_Text = 0;  // diffuse or Albedo
-		unsigned int normal_Text = 0;
-		unsigned int ambientOcclusion_Text = 0;
-		unsigned int roughness_Text = 0;
-		unsigned int metallic_Text = 0;
-
-		// Get texture
-		// 
-		//Diffuse
-		Texture* diffuse = assetStore->Get_Texture(currentMat->diffuse_Text_Handle);
-		if (diffuse == nullptr) {
-			diffuse_Text = Shader::GetDefaultText();
-		}
-		else { diffuse_Text = diffuse->id; }
-
-		//Normal
-		Texture* normal = assetStore->Get_Texture(currentMat->normal_Text_Handle);
-		if (normal == nullptr) {
-			normal_Text = Shader::GetNeutralNormalText();
-		}
-		else { normal_Text = normal->id; }
-
-		//Ambient occlusion
-		Texture* ambientOcclusion = assetStore->Get_Texture(currentMat->ambientOcclusion_Text_Handle);
-		if (ambientOcclusion == nullptr) {
-			ambientOcclusion_Text = Shader::GetDefaultText();
-		}
-		else { ambientOcclusion_Text = ambientOcclusion->id; }
-
-		//Roughness
-		Texture* roughness = assetStore->Get_Texture(currentMat->roughness_handle_Text_Handle);
-		if (roughness != nullptr) {
-			hasRoughness = true;
-		}
-		//Metallic
-		Texture* metallic = assetStore->Get_Texture(currentMat->metalness_handle_Text_Handle);
-		if (metallic != nullptr) {
-			hasMetallic = true;
-		}
-
-		// --- Link Matrices ---
-		last_Shader_Use->setMatrix("view", viewMatrix);
-		last_Shader_Use->setMatrix("projection", projectionMatrix);
-
-
-		// Bind
-		int i = 0;
-		//Diffuse/Albedo
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, diffuse_Text);
-		last_Shader_Use->setInt("material.diffuseText", i++);
-
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, normal_Text);
-		last_Shader_Use->setInt("material.normalText", i++);
-		last_Shader_Use->setBool("have_NormalMap", currentMesh.hasTBN && currentMesh.hasUV && currentMesh.hasNormalMap);
-
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, ambientOcclusion_Text);
-		last_Shader_Use->setInt("material.ambientOcclusion_Text", i++);
-
-		last_Shader_Use->setBool("material.hasRoughness_Text", hasRoughness);
-		if (hasRoughness) {
-			glActiveTexture(GL_TEXTURE0 + i);
-			glBindTexture(GL_TEXTURE_2D, roughness_Text);
-			last_Shader_Use->setInt("material.roughness_Text", i++);
-		}
-		last_Shader_Use->setBool("material.hasMetallic_Text", hasMetallic);
-		if (hasMetallic) {
-			glActiveTexture(GL_TEXTURE0 + i);
-			glBindTexture(GL_TEXTURE_2D, metallic_Text);
-			last_Shader_Use->setInt("material.metallic_Text", i++);
-		}
-
-
-		//ARM
-		//last_Shader_Use->setBool("material.hasARM_Text", currentMat->hasARM_Text);
-		last_Shader_Use->setFloat("material.ao_Factor", currentMat->ao_Factor);
-		last_Shader_Use->setFloat("material.roughness_Factor", currentMat->roughness_Factor);
-		last_Shader_Use->setFloat("material.metallic_Factor", currentMat->metallic_Factor);
-
-		glActiveTexture(GL_TEXTURE0);
-
-
-		glBindVertexArray(subMesh.VAO);
-
-		// The subMesh have instanced subMesh to draw
-		if (subMeshIndex < currentMesh.instancesGroup.size() && currentMesh.instancesGroup[subMeshIndex].instancedMatrix.size() > 1) {
-			auto& group = currentMesh.instancesGroup[subMeshIndex];
-
-			glBindBuffer(GL_ARRAY_BUFFER, group.instanceMatrixVBO);
-			glBufferData(GL_ARRAY_BUFFER, group.instancedMatrix.size() * sizeof(glm::mat4), group.instancedMatrix.data(), GL_DYNAMIC_DRAW);
-
-			// Configure the vertex attributes for the 4x4 matrix (locations 4, 5, 6, 7)
-			// A mat4 is equivalent to 4 consecutive vec4
-			std::size_t vec4Size = sizeof(glm::vec4);
-			for (unsigned int i = 0; i < 4; i++) {
-				glEnableVertexAttribArray(4 + i);
-				glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(i * vec4Size));
-				glVertexAttribDivisor(4 + i, 1); // Advance per instance
-			}
-			// Draw instanced SubMeshs
-			glDrawElementsInstanced(GL_TRIANGLES, subMesh.indices.size(), GL_UNSIGNED_INT, 0, group.instancedMatrix.size());
-
-			// Clearing instance attributes
-			for (unsigned int i = 0; i < 4; i++) {
-				glDisableVertexAttribArray(4 + i);
-			}
-		}
-		else {
-			last_Shader_Use->setMatrix("model", modelMatrix * currentMesh.instancesGroup[subMeshIndex].instancedMatrix[0]);
-			// Draw SubMesh
-			glDrawElements(GL_TRIANGLES, subMesh.indices.size(), GL_UNSIGNED_INT, 0);
-		}
-
-		glBindVertexArray(0);
-	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	assert(vertexList.size() * sizeof(Vertex) <= 200 * 1024 * 1024 && "VBO overflow !");
+	assert(indexList.size() * sizeof(uint32_t) <= 100 * 1024 * 1024 && "EBO overflow !");
 }
+
+void OpenGL_Renderer::OrderDraw(Component::MeshHandle meshHandle, glm::mat4 modelMatrix) {
+	// If the object is not found in the global vertex list, add it
+	uint32_t meshIndex = (meshHandle.index << 16) | 0;
+	auto it_exist = mesh_In_VertexList.find(meshIndex);
+	if (it_exist == mesh_In_VertexList.end()) AddMeshToRender(meshHandle);
+
+	recordedMeshInstances[meshIndex].push_back(modelMatrix);
+}
+
+void OpenGL_Renderer::ExecuteRenderCommands() {
+	if (recordedMeshInstances.empty()) return;
+
+	//Temporal list
+	std::vector<DrawElementsIndirectCommand> indirectCommands;
+	std::vector<InstanceData> globalInstanceData;
+	indirectCommands.reserve(recordedMeshInstances.size());
+
+	// Iterate over all draw order of this form : (meshIndex, modelMatrix) , previously add by OrderDraw
+	// NOTES : meshIndex is the same index used to retrieve a Mesh in the Asset Store 
+	for (auto& [meshIndex, matrices] : recordedMeshInstances) {
+		Mesh currentMesh = assetStore->Get_Mesh(meshIndex);
+		uint32_t instanceCount = static_cast<uint32_t>(matrices.size());
+
+		// Iterate over all subMesh
+		for (size_t subMeshIndex = 0; subMeshIndex < currentMesh.subMeshs.size(); ++subMeshIndex) {
+			uint32_t subMeshKey = (subMeshIndex << 16) | 0;
+
+			// If the submesh don't existe in the global Vertex, discard it
+			auto corrIt = mesh_In_VertexList.find(subMeshKey);
+			if (corrIt == mesh_In_VertexList.end()) continue;
+			const MeshCorrespondence& corr = corrIt->second;
+
+
+			OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));
+			Material* currentMat = assetStore->Get_Material(subMesh.material_Handle);
+
+
+
+			// Récupération des handles bindless (avec fallback sur texture par défaut si null)
+			Texture* diff = assetStore->Get_Texture(currentMat->diffuse_Text_Handle);
+			uint64_t diffH = diff ? diff->bindlessHandle : Shader::GetDefaultText_Handle();
+
+			Texture* norm = assetStore->Get_Texture(currentMat->normal_Text_Handle);
+			uint64_t normH = norm ? norm->bindlessHandle : Shader::GetNeutralNormalText_Handle();
+
+			Texture* ao = assetStore->Get_Texture(currentMat->ambientOcclusion_Text_Handle);
+			uint64_t aoH = ao ? ao->bindlessHandle : Shader::GetDefaultText_Handle();
+
+			Texture* rough = assetStore->Get_Texture(currentMat->roughness_handle_Text_Handle);
+			uint64_t roughH = rough ? rough->bindlessHandle : 0;
+
+			Texture* met = assetStore->Get_Texture(currentMat->metalness_handle_Text_Handle);
+			uint64_t metH = met ? met->bindlessHandle : 0;
+
+			// Take the subMesh model matrices
+			glm::mat4 localTransform = glm::mat4(1.0f);
+			if (subMeshIndex < currentMesh.instancesGroup.size() && !currentMesh.instancesGroup[subMeshIndex].instancedMatrix.empty()) {
+				localTransform = currentMesh.instancesGroup[subMeshIndex].instancedMatrix[0];
+			}
+
+			// Create a indirect call for this subMesh
+			DrawElementsIndirectCommand openGLCmd;
+			openGLCmd.count = static_cast<uint32_t>(corr.indexCount);
+			openGLCmd.instanceCount = instanceCount;
+			openGLCmd.firstIndex = static_cast<uint32_t>(corr.indexStart);
+			openGLCmd.baseVertex = static_cast<int32_t>(corr.vertexStart);
+			openGLCmd.baseInstance = static_cast<uint32_t>(globalInstanceData.size());
+
+			indirectCommands.push_back(openGLCmd);
+
+
+			// Apply the modelMatrix and create a InstanceData for each matrices/Submesh instance
+			for (const auto& modelMatrix : matrices) {
+				InstanceData instData;
+				instData.modelMatrix = modelMatrix * localTransform;
+				instData.diffuseTexHandle = diffH;
+				instData.normalTexHandle = normH;
+				instData.aoTexHandle = aoH;
+				instData.roughnessTexHandle = roughH;
+				instData.metallicTexHandle = metH;
+				instData.aoFactor = currentMat->ao_Factor;
+				instData.roughnessFactor = currentMat->roughness_Factor;
+				instData.metallicFactor = currentMat->metallic_Factor;
+				instData.hasRoughness = rough ? 1 : 0;
+				instData.hasMetallic = met ? 1 : 0;
+				instData.hasNormalMap = currentMesh.hasTBN && currentMesh.hasUV && currentMesh.hasNormalMap;
+
+				globalInstanceData.push_back(instData);
+			}
+
+		}
+	}
+
+
+	// A. Envoi des matrices dans le SSBO d'Instances
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, instanceSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, globalInstanceData.size() * sizeof(InstanceData), globalInstanceData.data(), GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, INSTANCE_BUFFER_BINDING_POINT, instanceSSBO);
+
+	// B. Envoi des commandes dans le Buffer Indirect
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer);
+	glBufferData(GL_DRAW_INDIRECT_BUFFER, indirectCommands.size() * sizeof(DrawElementsIndirectCommand), indirectCommands.data(), GL_DYNAMIC_DRAW);
+
+	// Render
+	glBindVertexArray(globalVAO);
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(indirectCommands.size()), 0);
+
+	// Cleaning
+	glBindVertexArray(0);
+	recordedMeshInstances.clear();
+}
+
+//void OpenGL_Renderer::DrawMesh(Mesh& currentMesh, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, const glm::mat4& modelMatrix) {
+//	if (currentMesh.isValid == false) return;
+//	if (currentMesh.subMeshs.size() == 0) {
+//		std::cout << "The mesh: " << currentMesh.directory << " have no submesh, drawCall cancel" << std::endl;
+//		return;
+//	}
+//	std::vector<std::pair<unsigned int, size_t>> mat_indices;
+//	mat_indices.reserve(currentMesh.subMeshs.size());
+//
+//
+//	//Data preparation
+//	for (int i = 0; i < currentMesh.subMeshs.size(); i++) {
+//		mat_indices.push_back(std::make_pair(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[i]).material_Handle, i));
+//	}
+//	//Grouping submeshes with identical materials
+//	std::sort(mat_indices.begin(), mat_indices.end(), [](const std::pair<unsigned int, size_t>& a, const std::pair<unsigned int, size_t>& b) {
+//		return a.first < b.first; 
+//	});
+//
+//
+//	int lastHandle = mat_indices[0].first;
+//	Material* last_Material_Use = assetStore->Get_Material(lastHandle);
+//	Shader* last_Shader_Use = &last_Material_Use->shader;
+//	last_Shader_Use->Use();
+//
+//	//Draw
+//	for (std::pair<unsigned int, size_t>& current_Material_Handle : mat_indices) {
+//
+//		if (lastHandle != current_Material_Handle.first) {  // New material detected
+//			lastHandle = current_Material_Handle.first;
+//
+//			last_Material_Use = assetStore->Get_Material(lastHandle);
+//			last_Shader_Use = &last_Material_Use->shader;
+//			last_Shader_Use->Use();
+//		}
+//		size_t subMeshIndex = current_Material_Handle.second;
+//
+//		OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));
+//
+//
+//		assert(glIsVertexArray(subMesh.VAO));
+//		assert(glIsBuffer(subMesh.EBO));
+//
+//		Material* currentMat = assetStore->Get_Material(subMesh.material_Handle);
+//
+//		bool hasRoughness = false;
+//		bool hasMetallic = false;
+//
+//		unsigned int diffuse_Text = 0;  // diffuse or Albedo
+//		unsigned int normal_Text = 0;
+//		unsigned int ambientOcclusion_Text = 0;
+//		unsigned int roughness_Text = 0;
+//		unsigned int metallic_Text = 0;
+//
+//		// Get texture
+//		// 
+//		//Diffuse
+//		Texture* diffuse = assetStore->Get_Texture(currentMat->diffuse_Text_Handle);
+//		if (diffuse == nullptr) {
+//			diffuse_Text = Shader::GetDefaultText();
+//		}
+//		else { diffuse_Text = diffuse->id; }
+//
+//		//Normal
+//		Texture* normal = assetStore->Get_Texture(currentMat->normal_Text_Handle);
+//		if (normal == nullptr) {
+//			normal_Text = Shader::GetNeutralNormalText();
+//		}
+//		else { normal_Text = normal->id; }
+//
+//		//Ambient occlusion
+//		Texture* ambientOcclusion = assetStore->Get_Texture(currentMat->ambientOcclusion_Text_Handle);
+//		if (ambientOcclusion == nullptr) {
+//			ambientOcclusion_Text = Shader::GetDefaultText();
+//		}
+//		else { ambientOcclusion_Text = ambientOcclusion->id; }
+//
+//		//Roughness
+//		Texture* roughness = assetStore->Get_Texture(currentMat->roughness_handle_Text_Handle);
+//		if (roughness != nullptr) {
+//			hasRoughness = true;
+//		}
+//		//Metallic
+//		Texture* metallic = assetStore->Get_Texture(currentMat->metalness_handle_Text_Handle);
+//		if (metallic != nullptr) {
+//			hasMetallic = true;
+//		}
+//
+//		// --- Link Matrices ---
+//		last_Shader_Use->setMatrix("view", viewMatrix);
+//		last_Shader_Use->setMatrix("projection", projectionMatrix);
+//
+//
+//		// Bind
+//		int i = 0;
+//		//Diffuse/Albedo
+//		glActiveTexture(GL_TEXTURE0 + i);
+//		glBindTexture(GL_TEXTURE_2D, diffuse_Text);
+//		last_Shader_Use->setInt("material.diffuseText", i++);
+//
+//		glActiveTexture(GL_TEXTURE0 + i);
+//		glBindTexture(GL_TEXTURE_2D, normal_Text);
+//		last_Shader_Use->setInt("material.normalText", i++);
+//		last_Shader_Use->setBool("have_NormalMap", currentMesh.hasTBN && currentMesh.hasUV && currentMesh.hasNormalMap);
+//
+//		glActiveTexture(GL_TEXTURE0 + i);
+//		glBindTexture(GL_TEXTURE_2D, ambientOcclusion_Text);
+//		last_Shader_Use->setInt("material.ambientOcclusion_Text", i++);
+//
+//		last_Shader_Use->setBool("material.hasRoughness_Text", hasRoughness);
+//		if (hasRoughness) {
+//			glActiveTexture(GL_TEXTURE0 + i);
+//			glBindTexture(GL_TEXTURE_2D, roughness_Text);
+//			last_Shader_Use->setInt("material.roughness_Text", i++);
+//		}
+//		last_Shader_Use->setBool("material.hasMetallic_Text", hasMetallic);
+//		if (hasMetallic) {
+//			glActiveTexture(GL_TEXTURE0 + i);
+//			glBindTexture(GL_TEXTURE_2D, metallic_Text);
+//			last_Shader_Use->setInt("material.metallic_Text", i++);
+//		}
+//
+//
+//		//ARM
+//		//last_Shader_Use->setBool("material.hasARM_Text", currentMat->hasARM_Text);
+//		last_Shader_Use->setFloat("material.ao_Factor", currentMat->ao_Factor);
+//		last_Shader_Use->setFloat("material.roughness_Factor", currentMat->roughness_Factor);
+//		last_Shader_Use->setFloat("material.metallic_Factor", currentMat->metallic_Factor);
+//
+//		glActiveTexture(GL_TEXTURE0);
+//
+//
+//		glBindVertexArray(subMesh.VAO);
+//
+//		// The subMesh have instanced subMesh to draw
+//		if (subMeshIndex < currentMesh.instancesGroup.size() && currentMesh.instancesGroup[subMeshIndex].instancedMatrix.size() > 1) {
+//			auto& group = currentMesh.instancesGroup[subMeshIndex];
+//
+//			glBindBuffer(GL_ARRAY_BUFFER, group.instanceMatrixVBO);
+//			glBufferData(GL_ARRAY_BUFFER, group.instancedMatrix.size() * sizeof(glm::mat4), group.instancedMatrix.data(), GL_DYNAMIC_DRAW);
+//
+//			// Configure the vertex attributes for the 4x4 matrix (locations 4, 5, 6, 7)
+//			// A mat4 is equivalent to 4 consecutive vec4
+//			std::size_t vec4Size = sizeof(glm::vec4);
+//			for (unsigned int i = 0; i < 4; i++) {
+//				glEnableVertexAttribArray(4 + i);
+//				glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(i * vec4Size));
+//				glVertexAttribDivisor(4 + i, 1); // Advance per instance
+//			}
+//			// Draw instanced SubMeshs
+//			glDrawElementsInstanced(GL_TRIANGLES, subMesh.indices.size(), GL_UNSIGNED_INT, 0, group.instancedMatrix.size());
+//
+//			// Clearing instance attributes
+//			for (unsigned int i = 0; i < 4; i++) {
+//				glDisableVertexAttribArray(4 + i);
+//			}
+//		}
+//		else {
+//			last_Shader_Use->setMatrix("model", modelMatrix * currentMesh.instancesGroup[subMeshIndex].instancedMatrix[0]);
+//			// Draw SubMesh
+//			glDrawElements(GL_TRIANGLES, subMesh.indices.size(), GL_UNSIGNED_INT, 0);
+//		}
+//
+//		glBindVertexArray(0);
+//	}
+//}
 
 void OpenGL_Renderer::DrawMesh_Without_Texture(Mesh& currentMesh) {
 	if (currentMesh.isValid == false) return;

@@ -346,11 +346,15 @@ void Systems::RenderSystem::RenderScene(World& world, const Resource::ResourceBu
 	View view = world.view<Component::MeshHandle, Component::Transform>();
 	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::Transform& transform) {
 		if (meshHandle.index != -1 && meshHandle.haveToBeDraw) {
-			Mesh currentMesh = world.assetStore->Get_Mesh(meshHandle.index);
-
-			world.renderer->DrawMesh(currentMesh, mainCamera->viewMatrice, resourceBuffer->renderResource->projection, transform.GetTransformModel());
+			world.renderer->OrderDraw(meshHandle, transform.GetTransformModel());
 		}
 	});
+	Shader* mainShader = &world.assetStore->Get_Material(0)->shader;
+
+	mainShader->Use();
+	mainShader->setMatrix("view", mainCamera->viewMatrice);
+	mainShader->setMatrix("projection", resourceBuffer->renderResource->projection);
+	world.renderer->ExecuteRenderCommands();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -406,7 +410,7 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	world.get_ressource<Resource::ActiveCamera>()->cameraID = camEntity;
 
 	Entity model = world.Register();
-	Component::Transform modelTransform(glm::vec3(-2,-1,0)); // ("Assets/main_sponza/main_sponza/NewSponza_Main_Yup_003.fbx");
+	Component::Transform modelTransform(glm::vec3(-2,-1,0)); // ("Assets/main_sponza/main_sponza/NewSponza_Main_glTF_003.gltf");
 	std::pair<Mesh&, int> value = world.assetStore->Get_Mesh("Assets/ImpScene/autumn_house.glb");
 	Component::MeshHandle meshHandle(value.second);
 	Component::SceneTag mesh_scene_Tag("Maison");

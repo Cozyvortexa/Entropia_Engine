@@ -64,10 +64,14 @@ unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType typ
 		const aiTexture* embeddedTex = scene->GetEmbeddedTexture(str.C_Str());
 		if (embeddedTex) {  // embedded texture detected
 			texture.id = TextureClass::LoadEmbeddedTexture(embeddedTex);
+
+			texture.bindlessHandle = glGetTextureHandleARB(texture.id);
+			//Makes the texture persistent in GPU memory
+			glMakeTextureHandleResidentARB(texture.bindlessHandle);
 		}
 		else {
 			// --- MULTI-THREADING POUR LES TEXTURES SUR DISQUE ---
-			texture.id = 0; // Sera généré plus tard sur le thread principal !
+			texture.bindlessHandle = 0; // Sera généré plus tard sur le thread principal !
 
 			std::string filename = str.C_Str();
 			std::string dir = currentMesh.directory;
@@ -199,6 +203,10 @@ Mesh AssetStore::LoadMesh(std::string path) {
 
 			// Updates the OpenGL ID of the texture that was waiting
 			textures[textureHandle].id = textureID;
+			textures[textureHandle].bindlessHandle = glGetTextureHandleARB(textureID);
+
+			//Makes the texture persistent in GPU memory
+			glMakeTextureHandleResidentARB(textures[textureHandle].bindlessHandle);
 		}
 		else {
 			std::cout << "fail to load the texture in async thread: " << data.keyPath << std::endl;

@@ -1,52 +1,55 @@
-#version 430 core
+#version 460 core
+#extension GL_ARB_bindless_texture : require
+#extension GL_ARB_gpu_shader_int64 : require
+
 layout (location = 0) out vec3 gPosition;
 layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec4 gAlbedo;
 layout (location = 3) out vec3 g_ARM;
 
-struct Material {
-	sampler2D diffuseText;
-	sampler2D normalText;
-	//sampler2D ARM_Text;
-	//ARM
-	sampler2D ambientOcclusion_Text;
-	sampler2D roughness_Text;
-	sampler2D metallic_Text;
+struct InstanceData {
+    mat4 modelMatrix;
+    uint64_t diffuseTex;
+    uint64_t normalTex;
+    uint64_t aoTex;
+    uint64_t roughnessTex;
+    uint64_t metallicTex;
 
-	//bool hasARM_Text;
-
-	bool hasRoughness_Text;
-	bool hasMetallic_Text;
-
-	float ao_Factor;
-	float roughness_Factor;
-	float metallic_Factor;
+    float aoFactor;
+    float roughnessFactor;
+    float metallicFactor;
+    uint hasRoughness;
+    uint hasMetallic;
+	uint hasNormalMap;
 };
-uniform Material material;
 
-uniform bool have_NormalMap;
+layout(std430, binding = 3) readonly buffer InstanceBuffer {
+    InstanceData instances[];
+};
 
-uniform vec3 viewPos;
 
-
+//From the vertex shader 
+in flat uint uniqueID;
 in vec3 FragPos;
 in vec3 normal;
 in vec2 TexCoords;
-in vec4 FragPosLightSpace;
-
-
 in mat3 TBN;
+
 
 void main()
 {
-	vec4 finalDiffuse = texture(material.diffuseText, TexCoords);
+	InstanceData data = instances[uniqueID];
 
-	if (finalDiffuse.a < 0.5)
+	sampler2D diffuseSampler = sampler2D(data.diffuseTex);
+	vec4 diffuse = texture(diffuseSampler, TexCoords);
+
+	if (diffuse.a < 0.5)
 		discard;
 
 	vec3 norm = vec3(0,0,0);
-	if (have_NormalMap){
-		norm = texture(material.normalText, TexCoords).rgb;
+	if (data.hasNormalMap == 1){
+		sampler2D normalSampler = sampler2D(data.normalTex);
+		norm = texture(normalSampler, TexCoords).rgb;
 		norm = normalize(norm * 2.0 - 1.0);
 		norm = normalize(TBN * norm);
 	}
@@ -57,24 +60,20 @@ void main()
 
     gPosition = FragPos;
 
-	g_ARM.r = texture(material.ambientOcclusion_Text, TexCoords).r * material.ao_Factor;
-	g_ARM.g = material.roughness_Factor;
-	g_ARM.b = material.metallic_Factor;
-
-	// if (material.hasARM_Text){
-	// 	vec3 ARM_text = texture(material.ARM_Text, TexCoords).rgb;
-	// 	g_ARM.r = ARM_text.r * material.ao_Factor;
-	// 	g_ARM.g = ARM_text.g * material.roughness_Factor;
-	// 	g_ARM.b = ARM_text.b * material.metallic_Factor;
-	// }   
+	sampler2D aoSampler = sampler2D(data.aoTex);
+	g_ARM.r = texture(aoSampler, TexCoords).r * data.aoFactor;
+	g_ARM.g = data.roughnessFactor;
+	g_ARM.b = data.metallicFactor;
 
 	//temp, case by case, AO have a fallback texture
-	if(material.hasRoughness_Text){
-		g_ARM.g = texture(material.roughness_Text, TexCoords).g * material.roughness_Factor;
+	if(data.hasRoughness == 1){
+		sampler2D roughnessSampler = sampler2D(data.roughnessTex);
+		g_ARM.g = texture(roughnessSampler, TexCoords).g * data.roughnessFactor;
 	}
-	if(material.hasMetallic_Text){
-		g_ARM.b = texture(material.metallic_Text, TexCoords).b * material.metallic_Factor;
+	if(data.hasMetallic == 1){
+		sampler2D metalicSampler = sampler2D(data.metallicTex);
+		g_ARM.b = texture(metalicSampler, TexCoords).r * data.metallicFactor;
 	}
 
-    gAlbedo = vec4(finalDiffuse.rgb, 1.0f);
+    gAlbedo = vec4(diffuse.rgb, 1.0f);
 }

@@ -1,6 +1,4 @@
 #include "Render/Shader.h"
-unsigned int Shader::defaultText = 0;
-GLuint Shader::neutralNormalText = 0;
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 
@@ -152,6 +150,11 @@ void Shader::CreateDefaultWhiteTexture() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	defaultText = textureID;
+
+	defaultText_BindlessHandle = glGetTextureHandleARB(textureID);
+	glMakeTextureHandleResidentARB(defaultText_BindlessHandle);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Shader::CreateNeutralNormalText() {
@@ -165,5 +168,11 @@ void Shader::CreateNeutralNormalText() {
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
 	neutralNormalText = neutralNormalTexture;
+
+	neutralNormalText_BindlessHandle = glGetTextureHandleARB(neutralNormalText);
+	glMakeTextureHandleResidentARB(neutralNormalText_BindlessHandle);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
