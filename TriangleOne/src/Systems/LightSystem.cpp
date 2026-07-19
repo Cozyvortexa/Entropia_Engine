@@ -3,355 +3,293 @@
 namespace Resource = Engine::Resource;
 namespace Component = Engine::Component;
 namespace Systems = Engine::Systems;
+namespace Render = Engine::Render;
 namespace Physics = Engine::Physics; // To display jolt shape
 
-#pragma region Init shadow buffer 
+#pragma region Init Shadow 
 
-void Systems::LightSystem::InitShadowMap(Component::DirLight* currentLight) {
-	glGenFramebuffers(1, &currentLight->depthMapFBO);
-	
-	glGenTextures(1, &currentLight->depthMap);
-	glBindTexture(GL_TEXTURE_2D, currentLight->depthMap);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, currentLight->SHADOW_WIDTH, currentLight->SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+void Systems::LightSystem::InitShadowArray(World& world, const Resource::ResourceBuffer* resourceBuffer) {
+	Resource::ShadowResource* shadowData = resourceBuffer->shadowResource;
 
+	const float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	int startQuality = 256;
+	int currentQuality = startQuality;
 
-	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+	//PointLight
+	glGenTextures(3, &shadowData->point_Array[0]);
+	for (int i = 0; i < 3; i++) {
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, shadowData->point_Array[i]);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, currentLight->depthMapFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, currentLight->depthMap, 0);
+		glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, GL_DEPTH_COMPONENT24, currentQuality, currentQuality, MAX_SHADOW_CASTER_POINT_LIGHT * 6, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
 
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Shadow Framebuffer not complete!" << std::endl;
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void Systems::LightSystem::InitCubeMap(Component::PointLight* currentLight) {
-
-	glGenFramebuffers(1, &currentLight->depthCubeMapFBO);
-
-	glGenTextures(1, &currentLight->depthCubeMap);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, currentLight->depthCubeMap);
-	for (int i = 0; i < 6; ++i)
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT32F, currentLight->SHADOW_WIDTH, currentLight->SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, currentLight->depthCubeMapFBO);
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, currentLight->depthCubeMap, 0);
+		glTexParameterfv(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
+		//Bindless
+		shadowData->bindless_PointArray[i] = glGetTextureHandleARB(shadowData->point_Array[i]);
+		glMakeTextureHandleResidentARB(shadowData->bindless_PointArray[i]);
 
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "CubeMap Shadow Framebuffer not complete!" << std::endl;
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void Systems::LightSystem::InitSpotShadowMap(Component::SpotLight* currentLight) {
-
-	glGenFramebuffers(1, &currentLight->depthMapFBO);
-
-	glGenTextures(1, &currentLight->depthMap);
-	glBindTexture(GL_TEXTURE_2D, currentLight->depthMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, currentLight->SHADOW_WIDTH, currentLight->SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-
-	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, currentLight->depthMapFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, currentLight->depthMap, 0);
-
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Shadow Framebuffer not complete!" << std::endl;
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-}
-
-void Systems::LightSystem::InitShadowBuffer(World& world) {
-	std::vector<int> to_remove;
-	View view = world.view<Component::LightToInitTag>();
-	view.each([&](int entity, Component::LightToInitTag& lightTag) {
-		switch (lightTag.tag)
-		{
-		case Component::LightTag::None:
-			assert(false && "Init Tag not define on a light");
-			break;
-		case Component::LightTag::PointLight_Tag: {
-			Component::PointLight* currentLight = world.get_component<Component::PointLight>(entity);
-			if (currentLight != nullptr) {
-				InitCubeMap(currentLight);
-				to_remove.push_back(entity);
-				break;
-			}
-			[[fallthrough]];
-		}
-		case Component::LightTag::SpotLight_Tag: {
-			Component::SpotLight* currentLight = world.get_component<Component::SpotLight>(entity);
-			if (currentLight != nullptr) {
-				InitSpotShadowMap(currentLight);
-				to_remove.push_back(entity);
-				break;
-			}
-			[[fallthrough]];
-		}
-		case Component::LightTag::Directional_Tag: {
-			Component::DirLight* currentLight = world.get_component<Component::DirLight>(entity);
-			if (currentLight != nullptr) {
-				InitShadowMap(currentLight);
-				to_remove.push_back(entity);
-				break;
-			}
-			[[fallthrough]];
-		}
-		default:
-			assert(true && "Unexpected Error in InitShadowBuffer");
-			break;
-		}
-	});
-	for (int entity : to_remove) {
-		world.remove_component<Component::LightToInitTag>(entity);
+		currentQuality *= 2;
 	}
+	glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, 0);
+
+	currentQuality = startQuality;
+
+
+	//SpotLight
+	glGenTextures(3, &shadowData->spot_Array[0]);
+	for (int i = 0; i < 3; i++) {
+		glBindTexture(GL_TEXTURE_2D_ARRAY, shadowData->spot_Array[i]);
+
+		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT24, currentQuality, currentQuality, MAX_SHADOW_CASTER_SPOT_LIGHT, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+
+		glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+		//Bindless
+		shadowData->bindless_SpotArray[i] = glGetTextureHandleARB(shadowData->spot_Array[i]);
+		glMakeTextureHandleResidentARB(shadowData->bindless_SpotArray[i]);
+
+		currentQuality *= 2;
+	}
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+}
+
+void Systems::LightSystem::InitShadowSSBO(World& world, const Resource::ResourceBuffer* resourceBuffer) {
+	Resource::ShadowResource* shadowData = resourceBuffer->shadowResource;
+
+	size_t dirLightSize = sizeof(Render::ShadowMap);
+	size_t pointLightSize = sizeof(Render::ShadowMap_PointLight) * MAX_SHADOW_CASTER_POINT_LIGHT;
+	size_t spotLightSize = sizeof(Render::ShadowMap) * MAX_SHADOW_CASTER_SPOT_LIGHT;
+
+	glGenBuffers(1, &shadowData->SSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, shadowData->SSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, dirLightSize + pointLightSize + spotLightSize , NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, SHADOW_BINDING_POINT, shadowData->SSBO, 0, dirLightSize + pointLightSize + spotLightSize);
+	//BINDING SSBO
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, SHADOW_BINDING_POINT, shadowData->SSBO);
+
+	shadowData->SSBO_Data_Size.push_back(sizeof(Render::ShadowMap));
+	shadowData->SSBO_Data_Size.push_back(MAX_SHADOW_CASTER_POINT_LIGHT * sizeof(Render::ShadowMap_PointLight));
+	shadowData->SSBO_Data_Size.push_back(MAX_SHADOW_CASTER_SPOT_LIGHT * sizeof(Render::ShadowMap));
+}
+
+void Systems::LightSystem::InitShadowText_SSBO(World& world, const Resource::ResourceBuffer* resourceBuffer) {
+	Resource::ShadowResource* shadowData = resourceBuffer->shadowResource;
+
+	glGenBuffers(1, &shadowData->Text_SSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, shadowData->Text_SSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(uint64_t) * 6, NULL, GL_STATIC_READ);  // dirLight shadowMap + shadowArray(low, medium, hight, veryhight)
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, SHADOW_TEXT_BINDING_POINT, shadowData->Text_SSBO, 0, sizeof(uint64_t) * 6);
+	//BINDING SSBO
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, SHADOW_TEXT_BINDING_POINT, shadowData->Text_SSBO);
+
+	//Binding text
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(uint64_t) * 3, &shadowData->bindless_PointArray);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(uint64_t) * 3, sizeof(uint64_t) * 3, &shadowData->bindless_SpotArray);
+
+}
+
+void Systems::LightSystem::InitShadowFBO(World& world, const Resource::ResourceBuffer* resourceBuffer) {
+	Resource::ShadowResource* shadowData = resourceBuffer->shadowResource;
+
+	//PointLight
+	glGenFramebuffers(3, &shadowData->point_FBO[0]);
+	for (int i = 0; i < 3; i++) {
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowData->point_FBO[i]);
+		glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowData->point_Array[i], 0, 0);
+
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			std::cout << "Shadow Framebuffer not complete!" << std::endl;
+	}
+
+	//SpotLight
+	glGenFramebuffers(3, &shadowData->spot_FBO[0]);
+	for (int i = 0; i < 3; i++) {
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowData->spot_FBO[i]);
+		glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowData->spot_Array[i], 0, 0);
+
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			std::cout << "Shadow Framebuffer not complete!" << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+//Resize shadowText if textureQuality don't match with the expected quality
+void static Resize_ShadowText(unsigned int shadowText, Render::Shadow_Quality& textureQuality, Render::Shadow_Quality expectedQuality) {
+	if (textureQuality == expectedQuality) return;
+
+	float newQuality = Render::ShadowQuality_To_Value(expectedQuality);
+	glBindTexture(GL_TEXTURE_2D, shadowText);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, newQuality, newQuality, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	textureQuality = expectedQuality;
+}
+
+//Create The dir light FBO
+void Systems::LightSystem::InitDirLightFBO(World& world, const Resource::ResourceBuffer* resourceBuffer) {
+	Resource::ShadowResource* shadowData = resourceBuffer->shadowResource;
+
+	glGenTextures(1, &shadowData->dirLight_depthMap);
+	glBindTexture(GL_TEXTURE_2D, shadowData->dirLight_depthMap);
+
+	float defaultQuality = Render::ShadowQuality_To_Value(shadowData->dirLight_Current_Quality);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, defaultQuality, defaultQuality, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+
+	glGenFramebuffers(1, &shadowData->dirLight_depthMapFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowData->dirLight_depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowData->dirLight_depthMap, 0);
+
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Shadow Framebuffer not complete!" << std::endl;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 #pragma endregion 
 
 #pragma region Shadow
 
-void Systems::LightSystem::DrawShadowForDirLight(World* world, Resource::RenderResource& renderResource, All_Light& lights) {  // Bug sur la window si resize
-	world->renderer->SetViewport_Size(glm::vec2(lights.dirLight_Shadow_Size.first, lights.dirLight_Shadow_Size.second));
-	glBindFramebuffer(GL_FRAMEBUFFER, lights.dirLight_DepthMapFBO);
-	glClear(GL_DEPTH_BUFFER_BIT);
+void Systems::LightSystem::ClearShadowsMap(World* world, const Resource::ResourceBuffer* resourceBuffer) {
+	Resource::ShadowResource* shadowData = resourceBuffer->shadowResource;
+	const float depth = 1.0f;
 
-	Shader* depthShader = renderResource.r_Shader.depthShader.get();
-
-	depthShader->Use();
-	depthShader->setMatrix("lightSpaceMatrix", lights.dirLight_Matrice);
-
-	View view = world->view<Component::MeshHandle, Component::SceneTag, Component::Transform>();
-	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::SceneTag& sceneTag, Component::Transform& transform) {
-		if (meshHandle.index != -1  && meshHandle.haveToBeDraw && meshHandle.castShadow && sceneTag.scene_id == 0) {
-			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
-
-			depthShader->setMatrix("model", transform.GetTransformModel());
-			world->renderer->DrawMesh_Without_Texture(currentMesh);
-		}
-
-	});
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	world->renderer->SetViewport_Size(glm::vec2(renderResource.renderWIDTH, renderResource.renderHEIGHT));
+	//Clear shadow Array
+	//PointLight
+	for (int i = 0; i < 3; ++i){
+		glClearTexImage(shadowData->point_Array[i], 0, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+	}
+	//SpotLight
+	for (int i = 0; i < 3; ++i){
+		glClearTexImage(shadowData->spot_Array[i], 0, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+	}
 }
 
-void Systems::LightSystem::DrawShadowForPointLight(World* world, Resource::RenderResource& renderResource, All_Light& lights, int index) {
-	std::pair<unsigned int, unsigned int> shadowSize = lights.pointLights_Shadow_Size[index];
-	glm::vec3 position = lights.pointLights[index].position;
-	Shader* depthShader = renderResource.r_Shader.depthShaderCubeMap.get();
-	float range = lights.pointLights[index].range;
+void Systems::LightSystem::DrawShadow(World* world, const Resource::ResourceBuffer* resourceBuffer) {
+	int last_Empty_Slot_Spot[4] = { 0,0,0,0 };
+	int last_Empty_Slot_Point[4] = { 0,0,0,0 };
 
-	float aspect = (float)shadowSize.first / (float)shadowSize.second;
-	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, 0.1f, range);
+	Resource::ShadowResource* shadowData = resourceBuffer->shadowResource;
+	Resource::RenderResource* renderData = resourceBuffer->renderResource;
 
+	Shader* dirLight_S = renderData->r_Shader.depthShader.get();
+	Shader* pointLight_S = renderData->r_Shader.depthShaderCubeMap.get();
+	Shader* spotLight_S = renderData->r_Shader.depthShader_SpotLight.get();
 
-	world->renderer->SetViewport_Size(glm::vec2(shadowSize.first, shadowSize.second));
-	glBindFramebuffer(GL_FRAMEBUFFER, lights.pointLights_DepthMapFBO[index]);  // Fbo unique par point light
-	glClear(GL_DEPTH_BUFFER_BIT);
+	//DirLight
+	if (renderData->lights.dirLightCastShadow) {
+		//Resize dir light shadow text if necessary
+		Render::Shadow_Quality shadowQuality = renderData->lights.shadow_DirLight.quality;
+		Resize_ShadowText(shadowData->dirLight_depthMap, shadowData->dirLight_Current_Quality, shadowQuality);
 
-
-	std::vector<glm::mat4> shadowTransforms;
-	shadowTransforms.push_back(shadowProj * glm::lookAt(position, position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(position, position + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(position, position + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(position, position + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(position, position + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
-	shadowTransforms.push_back(shadowProj * glm::lookAt(position, position + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
+		dirLight_S->Use();
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowData->dirLight_depthMapFBO);
+		glClear(GL_DEPTH_BUFFER_BIT);
 
 
-	depthShader->Use();
-	depthShader->setFloat("far_plane", range);
-	depthShader->setVec("lightPos", position);
+		int quality_value = Render::ShadowQuality_To_Value(shadowQuality);
+		int quality_Index = static_cast<int>(shadowQuality);
 
-
-	for (int i = 0; i < shadowTransforms.size(); i++) {
-		depthShader->setMatrix("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
+		world->renderer->SetViewport_Size(glm::vec2(quality_value, quality_value));
+		world->renderer->ExecuteRenderCommands_Shadow(); //RenderCommand per face
 	}
 
+	//SpotLight
+	spotLight_S->Use();
+	for (Padding_SpotLight& currentSpotLight : renderData->lights.spotLights) {
+		//Check if the light casts a shadow 
+		int shadowIndex = currentSpotLight.shadowIndex;
+		if (shadowIndex == -1) continue;
 
-	View view = world->view<Component::MeshHandle, Component::SceneTag, Component::Transform>();
-	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::SceneTag& sceneTag, Component::Transform& transform) {
-		if (meshHandle.index != -1  && meshHandle.haveToBeDraw && meshHandle.castShadow && sceneTag.scene_id == 0) {
-			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
+		Render::ShadowMap currentShadow = renderData->lights.shadow_SpotLights[shadowIndex];
+		int quality_value = Render::ShadowQuality_To_Value(currentShadow.quality);
+		int quality_Index = static_cast<int>(currentShadow.quality);
 
-			depthShader->setMatrix("model", transform.GetTransformModel());
-			world->renderer->DrawMesh_Without_Texture(currentMesh);
-		}
-	});
+		//ShadowIndex becomes the position of the first shadow texture for this light
+		currentSpotLight.shadowIndex = last_Empty_Slot_Spot[quality_Index];
 
+		//Change FBO and viewport depending on the quality
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowData->spot_FBO[quality_Index]);
+		world->renderer->SetViewport_Size(glm::vec2(quality_value, quality_value));
+
+		spotLight_S->setInt("currentLight", shadowIndex);
+
+		glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowData->spot_Array[quality_Index], 0, last_Empty_Slot_Spot[quality_Index]);
+		world->renderer->ExecuteRenderCommands_Shadow();
+		last_Empty_Slot_Spot[quality_Index]++;
+	}
+	//PointLight
+	pointLight_S->Use();
+	for (Padding_PointLight& currentPointLight : renderData->lights.pointLights) {
+		//Check if the light casts a shadow 
+		int shadowIndex = currentPointLight.shadowIndex;
+		if (shadowIndex == -1) continue;
+
+		Render::ShadowMap_PointLight currentShadow = renderData->lights.shadow_PointLights[shadowIndex];
+		int quality_value = Render::ShadowQuality_To_Value(currentShadow.quality);
+		int quality_Index = static_cast<int>(currentShadow.quality);
+
+		//ShadowIndex becomes the position of the first shadow texture for this light
+		currentPointLight.shadowIndex = last_Empty_Slot_Point[quality_Index];
+
+		//Change FBO and viewport depending on the quality
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowData->point_FBO[quality_Index]);
+		world->renderer->SetViewport_Size(glm::vec2(quality_value, quality_value));
+
+		pointLight_S->setInt("currentLight", shadowIndex);
+
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowData->point_Array[quality_Index], 0);
+		world->renderer->ExecuteRenderCommands_PointShadow(); //RenderCommand per face, 1 Draw per point light
+		last_Empty_Slot_Point[quality_Index]++;
+	}
+	world->renderer->SetViewport_Size(glm::vec2(renderData->renderWIDTH, renderData->renderHEIGHT));
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	world->renderer->SetViewport_Size(glm::vec2(renderResource.renderWIDTH, renderResource.renderHEIGHT));
 }
 
-void Systems::LightSystem::DrawShadowForSpotLight(World* world, Resource::RenderResource& renderResource, All_Light& lights, int index) {
-	std::pair<unsigned int, unsigned int> shadowSize = lights.spotLights_Shadow_Size[index];
-	glm::vec3 position = lights.spotLights[index].position;
-	glm::vec3 direction = lights.spotLights[index].direction;
-	Shader* depthShader = renderResource.r_Shader.depthShader.get();
-
-
-	float aspect = (float)shadowSize.first / (float)shadowSize.second;
-	glm::mat4 shadowProj = glm::perspective(glm::radians(lights.spotLights[index].outerCutOff * 2.0f), aspect, 0.1f, lights.spotLights[index].range);
-
-	glm::vec3 up = (glm::abs(direction.y) > 0.99f) ? glm::vec3(1, 0, 0) : glm::vec3(0, 1, 0);
-	glm::mat4 shadowView = glm::lookAt(position, position + direction, up);
-
-
-	glm::mat4 lightSpaceMatrix = shadowProj * shadowView;
-
-	world->renderer->SetViewport_Size(glm::vec2(shadowSize.first, shadowSize.second));
-	glBindFramebuffer(GL_FRAMEBUFFER, lights.spotLights_DepthMapFBO[index]);  // Fbo unique par spot light
-	glClear(GL_DEPTH_BUFFER_BIT );
-
-
-	depthShader->Use();
-	depthShader->setMatrix("lightSpaceMatrix", lightSpaceMatrix);
-
-
-	View view = world->view<Component::MeshHandle, Component::SceneTag, Component::Transform>();
-	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::SceneTag& sceneTag, Component::Transform& transform) {
-		if (meshHandle.index != -1 && meshHandle.haveToBeDraw && meshHandle.castShadow && sceneTag.scene_id == 0) {
-			Mesh currentMesh = world->assetStore->Get_Mesh(meshHandle.index);
-
-			depthShader->setMatrix("model", transform.GetTransformModel());
-			world->renderer->DrawMesh_Without_Texture(currentMesh);
-		}
-	});
-
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	world->renderer->SetViewport_Size(glm::vec2(renderResource.renderWIDTH, renderResource.renderHEIGHT));
-}
-
-void Systems::LightSystem::ShadowPass(World* world, Resource::RenderResource* renderResource, All_Light* lights) {
+void Systems::LightSystem::ShadowPass(World* world, const Resource::ResourceBuffer* resourceBuffer) {
 	glCullFace(GL_BACK);
-	DrawShadowForDirLight(world, *renderResource, *lights);
+	world->renderer->BuildInstance_ShadowSSBO();
 
-	for (int i = 0; i < lights->pointLights.size(); i++) {
-		DrawShadowForPointLight(world, *renderResource, *lights, i);
-	}
-
-	for (int i = 0; i < lights->spotLights.size(); i++) {
-		DrawShadowForSpotLight(world, *renderResource, *lights, i);
-	}
-}
-
-void Systems::LightSystem::SendDepthMapToLightningShader(World* world, const Resource::RenderResource* renderResource, const Resource::ResourceBuffer* resourceBuffer, All_Light* lights) {
-	if (lights->pointLights_DepthMap.size() >= MAX_POINT_LIGHT) std::cout << "Max pointLight number reach" << std::endl;
-	if (lights->spotLights_DepthMap.size() >= MAX_SPOT_LIGHT) std::cout << "Max spotLight number reach" << std::endl;
-
-
-	Shader* currentShader = renderResource->r_Shader.lightningPass_Shader.get();
-	currentShader->Use();
-	// --- TEXTURE UNIT MANAGEMENT ---
-
-	const int SLOT_SHADOW_DIR = 16;
-	const int SLOT_SHADOW_POINT_START = 17;
-	const int SLOT_SHADOW_SPOT_START = 25;
-
-	// --- 2. GESTION LUMIERE DIRECTIONNELLE (Shadow Map 2D) ---
-	currentShader->setInt("shadowMap", SLOT_SHADOW_DIR);
-
-	glActiveTexture(GL_TEXTURE0 + SLOT_SHADOW_DIR);
-	if (lights->dirLight_DepthMap != 0) {  // WARNING, do a better check if the sun existe
-		glBindTexture(GL_TEXTURE_2D, lights->dirLight_DepthMap);
-		currentShader->setMatrix("lightSpaceMatrix", lights->dirLight_Matrice);
-	}
-	else {
-		glBindTexture(GL_TEXTURE_2D, resourceBuffer->renderResource->dummyDepthMap2D);
-	}
-
-	// --- 3. GESTION POINT LIGHTS (Shadow Cube Maps) ---
-	int maxPointLights = 8;
-	int activeLights = std::min((int)lights->pointLights_DepthMap.size(), maxPointLights);
-
-
-	//Component::PointLight
-	for (int i = 0; i < maxPointLights; i++) {
-
-		// Construction du nom "shadowCubeMaps[0]", "shadowCubeMaps[1]"...
-		std::string uniformName = "shadowCubeMaps[" + std::to_string(i) + "]";
-
-		int currentSlot = SLOT_SHADOW_POINT_START + i;
-
-		// 1. On dit au shader : "Le sampler i doit lire dans le slot X"
-		currentShader->setInt(uniformName, currentSlot);
-
-		// 2. On active le slot X
-		glActiveTexture(GL_TEXTURE0 + currentSlot);
-
-		if (i < activeLights) {
-			glBindTexture(GL_TEXTURE_CUBE_MAP, lights->pointLights_DepthMap[i]);
-		}
-		else {
-			// Nettoyage des slots inutilisés (évite les bugs de "Sampler Type Mismatch")
-			glBindTexture(GL_TEXTURE_CUBE_MAP, resourceBuffer->renderResource->dummyDepthCubeMap);
-		}
-	}
-
-	//// Gestion Spot Light
-	int maxSpotLights = 8;
-	int activeSpotLights = std::min((int)lights->spotLights_DepthMap.size(), maxSpotLights);
-	for (int i = 0; i < maxSpotLights; i++) {
-		std::string uniformName = "shadowMapSpot[" + std::to_string(i) + "]";
-		std::string uniformNameMatrice = "spotLightMatrices[" + std::to_string(i) + "]";
-
-		int currentSlot = SLOT_SHADOW_SPOT_START + i;
-
-		currentShader->setInt(uniformName, currentSlot);
-
-
-		glActiveTexture(GL_TEXTURE0 + currentSlot);
-
-
-		if (i < activeSpotLights) {
-			currentShader->setMatrix(uniformNameMatrice, lights->spotLight_Matrice[i]);
-			glBindTexture(GL_TEXTURE_2D, lights->spotLights_DepthMap[i]);
-		}
-		else {
-			glBindTexture(GL_TEXTURE_2D, resourceBuffer->renderResource->dummyDepthMap2D);
-		}
-	}
-
-	glActiveTexture(GL_TEXTURE0);
-
-	// --- END TEXTURE MANAGEMENT ---
+	ClearShadowsMap(world, resourceBuffer);
+	UpdateShadow(world, resourceBuffer);
+	DrawShadow(world, resourceBuffer);
+	glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
+	world->renderer->ClearShadowOrderList();
 }
 
 #pragma endregion
@@ -366,7 +304,7 @@ void Systems::LightSystem::InitLightSSBO(World& world, const Resource::ResourceB
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, renderResource->light_SSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Padding_DirLight) + MAX_POINT_LIGHT * sizeof(Padding_PointLight) + MAX_SPOT_LIGHT * sizeof(Padding_SpotLight) + sizeof(int) * 2, NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-	// BINDING SSBO slot 1, light
+	// BINDING SSBO
 	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, LIGHT_BINDING_POINT, renderResource->light_SSBO, 0, sizeof(Padding_DirLight) + MAX_POINT_LIGHT * sizeof(Padding_PointLight) + MAX_SPOT_LIGHT * sizeof(Padding_SpotLight) + sizeof(int) * 2);
 
 	renderResource->lightSSBO_Data_Size.push_back(sizeof(Padding_DirLight));
@@ -397,13 +335,14 @@ void Systems::LightSystem::Init_IrradianceMap(World& world, const Resource::Reso
 
 void Systems::LightSystem::InitCaptureCubeMap(World& world, const Resource::ResourceBuffer* resourceBuffer) {
 	Resource::RenderResource* renderData = resourceBuffer->renderResource;
+	int resolution = renderData->skyboxResolution;
 
 	glGenFramebuffers(1, &renderData->captureFBO);
 	glGenRenderbuffers(1, &renderData->captureRBO);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
 	glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, resolution, resolution);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderData->captureRBO);
 
 	glGenTextures(1, &renderData->envCubemap);
@@ -411,7 +350,7 @@ void Systems::LightSystem::InitCaptureCubeMap(World& world, const Resource::Reso
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		// note that we store each face with 16 bit floating point values
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, resolution, resolution, 0, GL_RGB, GL_FLOAT, nullptr);
 	}
 
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -444,10 +383,12 @@ void Systems::LightSystem::InitPrefilter_IBL(World& world, Resource::RenderResou
 
 void Systems::LightSystem::Init_BRDF_LUTTexture(World& world, const Resource::ResourceBuffer* resourceBuffer) {
 	Resource::RenderResource* renderData = resourceBuffer->renderResource;
+	int resolution = renderData->skyboxResolution;
+
 	glGenTextures(1, &renderData->brdfLUTTexture);
 
 	glBindTexture(GL_TEXTURE_2D, renderData->brdfLUTTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, resolution, resolution, 0, GL_RG, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -501,6 +442,7 @@ void Systems::LightSystem::Prefilter_EnvCub(World& world, Resource::RenderResour
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->envCubemap);
 	prefilter_Shader->setInt("environmentMap", 0);
+	prefilter_Shader->setFloat("resolution", (float)renderData->skyboxResolution);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
 
@@ -535,9 +477,9 @@ void Systems::LightSystem::Equirenctangular_To_CubeMap(World& world, const Resou
 
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
 	glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, renderData->skyboxResolution, renderData->skyboxResolution);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderData->captureRBO);
-	world.renderer->SetViewport_Size(glm::vec2(512, 512));
+	world.renderer->SetViewport_Size(glm::vec2(renderData->skyboxResolution, renderData->skyboxResolution));
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "FBO not complete before equirect render!" << std::endl;
@@ -587,7 +529,7 @@ void Systems::LightSystem::Equirenctangular_To_CubeMap(World& world, const Resou
 	//////brdfLUt
 	glBindFramebuffer(GL_FRAMEBUFFER, renderData->captureFBO);
 	glBindRenderbuffer(GL_RENDERBUFFER, renderData->captureRBO);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, renderData->skyboxResolution, renderData->skyboxResolution);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData->brdfLUTTexture, 0);
 
 	renderData->r_Shader.brdf_Shader->Use();
@@ -605,98 +547,139 @@ glm::vec3 Systems::LightSystem::Calc_SpotLightDirection(glm::mat4 transformModel
 	return glm::normalize(glm::vec3(transformModel * glm::vec4(lightDirection, 0.0f)));
 }
 
-void Systems::LightSystem::UpdateLight(World* world, Resource::RenderResource* renderResource, All_Light& lights) {
-	for (auto& spotLight : lights.spotLights) {  // This value need to be calculate at the last minute
+void Systems::LightSystem::UpdateLight(World* world, Resource::RenderResource* renderData) {
+	for (auto& spotLight : renderData->lights.spotLights) {  // This value need to be calculate at the last minute
 		spotLight.cutOff = glm::cos(glm::radians(spotLight.cutOff));
 		spotLight.outerCutOff = glm::cos(glm::radians(spotLight.outerCutOff));
 	}
 
-	size_t offset_End_DirLight = renderResource->lightSSBO_Data_Size[0];
-	size_t offset_End_PointLight = offset_End_DirLight + renderResource->lightSSBO_Data_Size[1];
-	size_t offset_End_SpotLight = offset_End_PointLight + renderResource->lightSSBO_Data_Size[2];
+	size_t offset_End_DirLight = renderData->lightSSBO_Data_Size[0];
+	size_t offset_End_PointLight = offset_End_DirLight + renderData->lightSSBO_Data_Size[1];
+	size_t offset_End_SpotLight = offset_End_PointLight + renderData->lightSSBO_Data_Size[2];
 
-	int activePointLights = std::min((int)lights.pointLights.size(), MAX_POINT_LIGHT); // Bloquer à 8 max
-	int activeSpotLights = std::min((int)lights.spotLights.size(), MAX_SPOT_LIGHT); // Bloquer à 8 max
+	int activePointLights = std::min((int)renderData->lights.pointLights.size(), MAX_POINT_LIGHT); // Set a maximum of 8
+	int activeSpotLights = std::min((int)renderData->lights.spotLights.size(), MAX_SPOT_LIGHT);
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, renderResource->light_SSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, renderData->light_SSBO);
 
 
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, offset_End_DirLight, &lights.dirLight); // Component::DirLight
-	if (!lights.pointLights.empty()) {
-		size_t actual_PointLights_Size = lights.pointLights.size() * sizeof(Padding_PointLight);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset_End_DirLight, actual_PointLights_Size, lights.pointLights.data()); // Component::PointLight
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, offset_End_DirLight, &renderData->lights.dirLight); // Component::DirLight
+	if (!renderData->lights.pointLights.empty()) {
+		size_t actual_PointLights_Size = renderData->lights.pointLights.size() * sizeof(Padding_PointLight);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset_End_DirLight, actual_PointLights_Size, renderData->lights.pointLights.data()); // Component::PointLight
 	}
-	if (!lights.spotLights.empty()) {
-		size_t actual_SpotLights_Size = lights.spotLights.size() * sizeof(Padding_SpotLight);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset_End_PointLight, actual_SpotLights_Size, lights.spotLights.data()); // Component::SpotLight
+	if (!renderData->lights.spotLights.empty()) {
+		size_t actual_SpotLights_Size = renderData->lights.spotLights.size() * sizeof(Padding_SpotLight);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset_End_PointLight, actual_SpotLights_Size, renderData->lights.spotLights.data()); // Component::SpotLight
 	}
 
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset_End_SpotLight, sizeof(int), &activePointLights);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset_End_SpotLight + sizeof(int), sizeof(int), &activeSpotLights);
 
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void Systems::LightSystem::UpdateShadow(World* world, const Resource::ResourceBuffer* resourceBuffer) {
+	Resource::ShadowResource* shadowData = resourceBuffer->shadowResource;
+	Resource::RenderResource* renderData = resourceBuffer->renderResource;
+
+	size_t offset_End_DirLight = shadowData->SSBO_Data_Size[0];
+	size_t offset_End_PointLight = offset_End_DirLight + shadowData->SSBO_Data_Size[1];
+	size_t offset_End_SpotLight = offset_End_PointLight + shadowData->SSBO_Data_Size[2];
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, shadowData->SSBO);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, offset_End_DirLight, &renderData->lights.shadow_DirLight); //DirLight
+	if (!renderData->lights.shadow_PointLights.empty()) {
+		size_t actual_Shadow_PointLights_Size = renderData->lights.shadow_PointLights.size() * sizeof(Render::ShadowMap_PointLight);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset_End_DirLight, actual_Shadow_PointLights_Size, renderData->lights.shadow_PointLights.data()); //PointLight
+	}
+	if (!renderData->lights.shadow_SpotLights.empty()) {
+		size_t actual_Shadow_SpotLights_Size = renderData->lights.shadow_SpotLights.size() * sizeof(Render::ShadowMap);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset_End_PointLight, actual_Shadow_SpotLights_Size, renderData->lights.shadow_SpotLights.data()); //SpotLight
+	}
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-All_Light* Systems::LightSystem::DataCollector(World* world, Component::CameraComponent* mainCamera, Resource::RenderResource* renderRessource) {
-	All_Light* lights = new All_Light();
+void Systems::LightSystem::LightCollector(World* world, Component::CameraComponent* mainCamera, Resource::RenderResource* renderData) {
+	renderData->lights.Clear();
+	
 	View viewDirLight = world->view<Component::DirLight>();
 
+	// Directional light
 	int starCompteur = 0;
-
 	viewDirLight.each([&](int entity, Component::DirLight& dirLight) {
 		Padding_DirLight p_DirLight;
 
 		starCompteur++;
 		if (starCompteur <= 1) {
 
-			//Dir_Light
+			//Light
 			p_DirLight.color = dirLight.color * dirLight.intensity;
 			p_DirLight.direction = dirLight.direction;
-			lights->dirLight = p_DirLight;
+			renderData->lights.dirLight = p_DirLight;
 
 			//Shadow
-			lights->dirLight_DepthMap = dirLight.depthMap;
-			lights->dirLight_DepthMapFBO = dirLight.depthMapFBO;
-			lights->dirLight_Shadow_Size = std::make_pair(dirLight.SHADOW_WIDTH, dirLight.SHADOW_HEIGHT);
+			if (dirLight.shadowCaster.castShadow) {
+				//Create a shadowMap struct for the Dir light, use in the Shadow Pass
+				Render::ShadowMap shadow_Light(dirLight.shadowCaster.quality);
+				shadow_Light.lightSpaceMatrice = dirLight.UpdateMatrix(mainCamera->viewMatrice, renderData->projection);
 
-			//Matrices
-			lights->dirLight_Matrice = dirLight.UpdateMatrix(mainCamera->viewMatrice, renderRessource->projection);
+				renderData->lights.shadow_DirLight = std::move(shadow_Light);
+				renderData->lights.dirLightCastShadow = true;
+			}
 		}
 		else {
 			std::cout << "Multiple dir light detected, only the first one will be take into consideration" << std::endl;
 		}
 
-		});
+	});
+	// Point lights
 	int pointLight_compteur = 0;
 	View viewPointLight = world->view<Component::PointLight, Component::Transform>();
 	viewPointLight.each([&](int entity, Component::PointLight& pointLight, Component::Transform& transform) {
 		pointLight_compteur++;
 		if (pointLight_compteur <= MAX_POINT_LIGHT) {
+			//Light, Collect light data
 			Padding_PointLight p_pointLight;
-			//Point_Light
 			p_pointLight.position = transform.position;
 			p_pointLight.color = pointLight.color * pointLight.intensity;
 			p_pointLight.range = pointLight.range;
-			lights->pointLights.push_back(p_pointLight);
 
-			//Shadow
-			lights->pointLights_DepthMap.push_back(pointLight.depthCubeMap);
-			lights->pointLights_DepthMapFBO.push_back(pointLight.depthCubeMapFBO);
-			lights->pointLights_Shadow_Size.push_back(std::make_pair(pointLight.SHADOW_WIDTH, pointLight.SHADOW_HEIGHT));
+
+			//Shadow, Collect shadow Data
+			if (pointLight.shadowCaster.castShadow) {
+				//Takes the shadow caster's quality
+				Render::Shadow_Quality current_Quality = pointLight.shadowCaster.quality;
+
+				//Create a shadowMap struct for this Point light, use in the Shadow Pass
+				Render::ShadowMap_PointLight shadowMap_PointLight(current_Quality, transform.position, pointLight.range);
+
+				//Update light
+				//shadowIndex points to the corresponding shadow texture in All_light, its function will change during the current frame
+				//shadowQuality is there to tell the shader which list the texture is in
+				p_pointLight.shadowQuality = static_cast<int>(current_Quality);
+				p_pointLight.shadowIndex = renderData->lights.shadow_PointLights.size();
+
+				//Push the shadow struct
+				renderData->lights.shadow_PointLights.push_back(std::move(shadowMap_PointLight));
+			}
+
+			renderData->lights.pointLights.push_back(p_pointLight);
 		}
 		else {
 			std::cout << "Component::PointLight number exceed the limit of: " << MAX_POINT_LIGHT << " Some light will not be taking into consideration, current nbr pointLight: " << pointLight_compteur << std::endl;
 		}
 
-		});
+	});
+	// Spot lights
 	int spotLight_compteur = 0;
 	View viewSpotLight = world->view<Component::SpotLight, Component::Transform>();
 	viewSpotLight.each([&](int entity, Component::SpotLight& spotLight, Component::Transform& transform) {
 		spotLight_compteur++;
 		if (spotLight_compteur <= MAX_SPOT_LIGHT) {
 			Padding_SpotLight p_spotLight;
-			//Spot_Light
+			//Light
 			p_spotLight.position = transform.position;
 			p_spotLight.direction = Calc_SpotLightDirection(transform.GetTransformModel(), spotLight.direction);
 			p_spotLight.color = spotLight.color * spotLight.intensity;
@@ -704,32 +687,33 @@ All_Light* Systems::LightSystem::DataCollector(World* world, Component::CameraCo
 			p_spotLight.cutOff = spotLight.cutOff;
 			p_spotLight.outerCutOff = spotLight.outerCutOff;
 
-			lights->spotLights.push_back(p_spotLight);
 
 			//Shadow
-			lights->spotLights_DepthMap.push_back(spotLight.depthMap);
-			lights->spotLights_DepthMapFBO.push_back(spotLight.depthMapFBO);
-			lights->spotLights_Shadow_Size.push_back(std::make_pair(spotLight.SHADOW_WIDTH, spotLight.SHADOW_HEIGHT));
+			if (spotLight.shadowCaster.castShadow) {
+				//Takes the shadow caster's quality
+				Render::Shadow_Quality current_Quality = spotLight.shadowCaster.quality;
 
-			//Matrices
-			spotLight.aspect = (float)spotLight.SHADOW_WIDTH / (float)spotLight.SHADOW_HEIGHT;
-			glm::mat4 projection = glm::perspective(glm::radians(p_spotLight.outerCutOff * 2.0f), spotLight.aspect, 0.1f, p_spotLight.range);
+				//Create a shadowMap struct for this Spot light, use in the Shadow Pass
+				Render::ShadowMap shadowMap(spotLight.shadowCaster.quality);
+				shadowMap.Generate_SpotLight_ShadowProj(transform.position, spotLight.direction, spotLight.range, spotLight.outerCutOff);
 
-			glm::vec3 up = (glm::abs(p_spotLight.direction.y) > 0.99f) ? glm::vec3(1, 0, 0) : glm::vec3(0, 1, 0);
-			glm::mat4 lightView = glm::lookAt(p_spotLight.position, p_spotLight.position + p_spotLight.direction, up);
+				//Update light
+				//shadowIndex points to the corresponding shadow texture in All_light, its function will change during the current frame
+				//shadowQuality is there to tell the shader which list the texture is in
+				p_spotLight.shadowQuality = static_cast<int>(current_Quality);
+				p_spotLight.shadowIndex = renderData->lights.shadow_SpotLights.size();
+				spotLight.lightSpaceMatrix = shadowMap.lightSpaceMatrice;
 
-
-			spotLight.lightSpaceMatrix = projection * lightView;
-
-			lights->spotLight_Matrice.push_back(spotLight.lightSpaceMatrix);
+				//Push the shadow struct
+				renderData->lights.shadow_SpotLights.push_back(std::move(shadowMap));
+			}
+			renderData->lights.spotLights.push_back(p_spotLight);
 		}
 		else {
 			std::cout << "Component::SpotLight number exceed the limit of: " << MAX_SPOT_LIGHT << " Some light will not be taking into consideration, current nbr spotLight: " << spotLight_compteur << std::endl;
 		}
 
-		});
-
-	return lights;
+	});
 }
 
 #pragma endregion
@@ -854,6 +838,7 @@ void Systems::LightSystem::Draw_FinalPass(World* world, Resource::RenderResource
 void Systems::LightSystem::LightningPass(World* world, Component::Transform* transformMainCamera, const Resource::ResourceBuffer* resourceBuffer, glm::mat4 viewMatrice) {
 	Resource::InterfaceRessource* interfaceRessource = resourceBuffer->interfaceRessource;
 	Resource::RenderResource* renderResource = resourceBuffer->renderResource;
+	Resource::ShadowResource* shadowResource = resourceBuffer->shadowResource;
 	glBindFramebuffer(GL_FRAMEBUFFER, renderResource->framebuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -893,6 +878,11 @@ void Systems::LightSystem::LightningPass(World* world, Component::Transform* tra
 	glBindTexture(GL_TEXTURE_2D, renderResource->brdfLUTTexture);
 	lighningShader->setInt("brdfLUT", i++);
 
+	//DirLightFBO
+	glActiveTexture(GL_TEXTURE0 + i);
+	glBindTexture(GL_TEXTURE_2D, shadowResource->dirLight_depthMap);
+	lighningShader->setInt("dirLight_shadowMap", i++);
+	lighningShader->setInt("dirLight_HaveShadow", renderResource->lights.dirLightCastShadow);
 
 	world->renderer->DrawQuad(renderResource);
 	//Skybox
@@ -904,29 +894,32 @@ void Systems::LightSystem::LightningPass(World* world, Component::Transform* tra
 
 
 void Systems::LightSystem::Init(World& world, const Resource::ResourceBuffer* resourceBuffer) {
-	static_assert(sizeof(Padding_DirLight) == 32, "Invalide alignement");
+	//static_assert(sizeof(Padding_DirLight) == 32, "Invalide alignement");
 	static_assert(alignof(Padding_DirLight) == 16);
 
-	static_assert(sizeof(Padding_PointLight) == 32, "Invalide alignement");
+	//static_assert(sizeof(Padding_PointLight) == 32, "Invalide alignement");
 	static_assert(alignof(Padding_PointLight) == 16);
 
-	static_assert(sizeof(Padding_SpotLight) == 64, "Invalide alignement");
+	//static_assert(sizeof(Padding_SpotLight) == 64, "Invalide alignement");
 	static_assert(alignof(Padding_SpotLight) == 16);
 
-	resourceBuffer->renderResource->lights = new All_Light();
+	//static_assert(sizeof(ShadowInstanceData) == 80, "Invalide alignement");
 
 	InitLightSSBO(world, resourceBuffer);
+	InitShadowSSBO(world, resourceBuffer);
+	InitShadowArray(world, resourceBuffer);
+	InitDirLightFBO(world, resourceBuffer);
+	InitShadowText_SSBO(world, resourceBuffer);
+	InitShadowFBO(world, resourceBuffer);
 
 	InitCaptureCubeMap(world, resourceBuffer);
 	Init_IrradianceMap(world, resourceBuffer);
 	Init_BRDF_LUTTexture(world, resourceBuffer);
 
-	Equirenctangular_To_CubeMap(world, resourceBuffer, "Assets/SkyBox/inTheSky/kloofendal_48d_partly_cloudy_puresky_2k.hdr");  //qwantani_night_puresky_2k
+	Equirenctangular_To_CubeMap(world, resourceBuffer, "SkyBox/inTheSky/kloofendal_48d_partly_cloudy_puresky_2k.hdr");  //qwantani_night_puresky_2k
 }
 
 void Systems::LightSystem::Update(World& world, const Resource::ResourceBuffer* resourceBuffer) {
-	InitShadowBuffer(world);
-
 	Resource::RenderResource* renderResource = world.get_ressource<Resource::RenderResource>();
 	Resource::WindowResource* windowResource = world.get_ressource<Resource::WindowResource>();
 	Resource::PhysicsResource* physicsResource = world.get_ressource<Resource::PhysicsResource>();
@@ -942,11 +935,10 @@ void Systems::LightSystem::Update(World& world, const Resource::ResourceBuffer* 
 	}
 	/////////////////
 
-	renderResource->lights = DataCollector(&world, mainCamera, renderResource);
+	LightCollector(&world, mainCamera, renderResource);
 
-	ShadowPass(&world, renderResource, renderResource->lights);
-	UpdateLight(&world, renderResource, *renderResource->lights);
-	SendDepthMapToLightningShader(&world, renderResource, resourceBuffer, renderResource->lights);
+	ShadowPass(&world, resourceBuffer);
+	UpdateLight(&world, renderResource);
 	glDisable(GL_CULL_FACE);
 	LightningPass(&world, transformMainCamera, resourceBuffer, mainCamera->viewMatrice);
 	Draw_FinalPass(&world, renderResource, physicsResource, mainCamera->viewMatrice);
@@ -954,5 +946,4 @@ void Systems::LightSystem::Update(World& world, const Resource::ResourceBuffer* 
 
 	//glfwSwapBuffers(windowResource->window);
 	glfwPollEvents();
-	delete renderResource->lights;
 }

@@ -2,10 +2,95 @@
 
 namespace Component = Engine::Component;
 
-
+//Renderer
 void Renderer::ClearVertexList() {
 	mesh_In_VertexList.clear();
 	vertexList.clear();
+}
+
+void Renderer::ClearOrderList() {
+	recordedMeshInstances.clear();
+}
+
+void Renderer::ClearShadowOrderList() {
+	recordedMeshInstances_ShadowPass.clear();
+	shadow_IndirectCommands.clear();
+}
+
+//OpenGl
+
+OpenGL_Renderer::OpenGL_Renderer(AssetStore* assetStore) : Renderer(assetStore) {
+	LoadDefaultCube();
+	SetupAxisArrow();
+
+	glGenVertexArrays(1, &globalVAO);
+	glGenBuffers(1, &globalVBO);
+	glGenBuffers(1, &globalEBO);
+
+	glBindVertexArray(globalVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, globalVBO);
+	glBufferData(GL_ARRAY_BUFFER, 100 * 1024 * 1024, nullptr, GL_STATIC_DRAW);
+
+	// Layout 0 : Position
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Position));
+	// Layout 1 : Normal
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+	// Layout 2 : UV/TexCoords
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+	// Layout 3 : Tangent
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+
+	//Bind Index list
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, globalEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 100 * 1024 * 1024, nullptr, GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+
+	//IndirectBuffer
+	glGenBuffers(1, &indirectBuffer);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+
+
+	//Instanced SSBO
+	size_t instanceBufferSize = MAX_INSTANCES * sizeof(InstanceData);
+
+	glGenBuffers(1, &instanceSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, instanceSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, instanceBufferSize, NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, INSTANCE_BUFFER_BINDING_POINT, instanceSSBO, 0, instanceBufferSize);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, INSTANCE_BUFFER_BINDING_POINT, instanceSSBO);
+
+
+	////Shadow
+	//ShadowIndirectBuffer
+	glGenBuffers(1, &shadowIndirectBuffer);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, shadowIndirectBuffer);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+
+	////Shadow
+	//PointShadowIndirectBuffer
+	glGenBuffers(1, &pointShadowIndirectBuffer);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, pointShadowIndirectBuffer);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+
+	//Instanced SSBO - Shadow
+	size_t shadowInstanceBufferSize = MAX_SHADOW_CASTER * sizeof(ShadowInstanceData);
+
+	glGenBuffers(1, &shadowInstanceSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, shadowInstanceSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, shadowInstanceBufferSize, NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, SHADOW_INSTANCE_BINDING_POINT, shadowInstanceSSBO, 0, shadowInstanceBufferSize);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, SHADOW_INSTANCE_BINDING_POINT, shadowInstanceSSBO);
 }
 
 void OpenGL_Renderer::AddMeshToRender(Component::MeshHandle newMesh) {
@@ -63,6 +148,15 @@ void OpenGL_Renderer::OrderDraw(Component::MeshHandle meshHandle, glm::mat4 mode
 	recordedMeshInstances[meshIndex].push_back(modelMatrix);
 }
 
+void OpenGL_Renderer::OrderShadowDraw(Component::MeshHandle meshHandle, glm::mat4 modelMatrix) {
+	// If the object is not found in the global vertex list, add it
+	uint32_t meshIndex = (meshHandle.index << 16) | 0;
+	auto it_exist = mesh_In_VertexList.find(meshIndex);
+	if (it_exist == mesh_In_VertexList.end()) AddMeshToRender(meshHandle);
+
+	recordedMeshInstances_ShadowPass[meshIndex].push_back(modelMatrix);
+}
+
 void OpenGL_Renderer::ExecuteRenderCommands() {
 	if (recordedMeshInstances.empty()) return;
 
@@ -92,7 +186,7 @@ void OpenGL_Renderer::ExecuteRenderCommands() {
 
 
 
-			// Récupération des handles bindless (avec fallback sur texture par défaut si null)
+			// Retrieving bindless handles (with a fallback to the default texture if null)
 			Texture* diff = assetStore->Get_Texture(currentMat->diffuse_Text_Handle);
 			uint64_t diffH = diff ? diff->bindlessHandle : Shader::GetDefaultText_Handle();
 
@@ -148,12 +242,12 @@ void OpenGL_Renderer::ExecuteRenderCommands() {
 	}
 
 
-	// A. Envoi des matrices dans le SSBO d'Instances
+	// Sending Matrices in the Instances SSBO
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, instanceSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, globalInstanceData.size() * sizeof(InstanceData), globalInstanceData.data(), GL_DYNAMIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, INSTANCE_BUFFER_BINDING_POINT, instanceSSBO);
 
-	// B. Envoi des commandes dans le Buffer Indirect
+	// Sending Orders to the Indirect Buffer
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer);
 	glBufferData(GL_DRAW_INDIRECT_BUFFER, indirectCommands.size() * sizeof(DrawElementsIndirectCommand), indirectCommands.data(), GL_DYNAMIC_DRAW);
 
@@ -161,187 +255,101 @@ void OpenGL_Renderer::ExecuteRenderCommands() {
 	glBindVertexArray(globalVAO);
 	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(indirectCommands.size()), 0);
 
-	// Cleaning
 	glBindVertexArray(0);
-	recordedMeshInstances.clear();
 }
 
-//void OpenGL_Renderer::DrawMesh(Mesh& currentMesh, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, const glm::mat4& modelMatrix) {
-//	if (currentMesh.isValid == false) return;
-//	if (currentMesh.subMeshs.size() == 0) {
-//		std::cout << "The mesh: " << currentMesh.directory << " have no submesh, drawCall cancel" << std::endl;
-//		return;
-//	}
-//	std::vector<std::pair<unsigned int, size_t>> mat_indices;
-//	mat_indices.reserve(currentMesh.subMeshs.size());
-//
-//
-//	//Data preparation
-//	for (int i = 0; i < currentMesh.subMeshs.size(); i++) {
-//		mat_indices.push_back(std::make_pair(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[i]).material_Handle, i));
-//	}
-//	//Grouping submeshes with identical materials
-//	std::sort(mat_indices.begin(), mat_indices.end(), [](const std::pair<unsigned int, size_t>& a, const std::pair<unsigned int, size_t>& b) {
-//		return a.first < b.first; 
-//	});
-//
-//
-//	int lastHandle = mat_indices[0].first;
-//	Material* last_Material_Use = assetStore->Get_Material(lastHandle);
-//	Shader* last_Shader_Use = &last_Material_Use->shader;
-//	last_Shader_Use->Use();
-//
-//	//Draw
-//	for (std::pair<unsigned int, size_t>& current_Material_Handle : mat_indices) {
-//
-//		if (lastHandle != current_Material_Handle.first) {  // New material detected
-//			lastHandle = current_Material_Handle.first;
-//
-//			last_Material_Use = assetStore->Get_Material(lastHandle);
-//			last_Shader_Use = &last_Material_Use->shader;
-//			last_Shader_Use->Use();
-//		}
-//		size_t subMeshIndex = current_Material_Handle.second;
-//
-//		OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));
-//
-//
-//		assert(glIsVertexArray(subMesh.VAO));
-//		assert(glIsBuffer(subMesh.EBO));
-//
-//		Material* currentMat = assetStore->Get_Material(subMesh.material_Handle);
-//
-//		bool hasRoughness = false;
-//		bool hasMetallic = false;
-//
-//		unsigned int diffuse_Text = 0;  // diffuse or Albedo
-//		unsigned int normal_Text = 0;
-//		unsigned int ambientOcclusion_Text = 0;
-//		unsigned int roughness_Text = 0;
-//		unsigned int metallic_Text = 0;
-//
-//		// Get texture
-//		// 
-//		//Diffuse
-//		Texture* diffuse = assetStore->Get_Texture(currentMat->diffuse_Text_Handle);
-//		if (diffuse == nullptr) {
-//			diffuse_Text = Shader::GetDefaultText();
-//		}
-//		else { diffuse_Text = diffuse->id; }
-//
-//		//Normal
-//		Texture* normal = assetStore->Get_Texture(currentMat->normal_Text_Handle);
-//		if (normal == nullptr) {
-//			normal_Text = Shader::GetNeutralNormalText();
-//		}
-//		else { normal_Text = normal->id; }
-//
-//		//Ambient occlusion
-//		Texture* ambientOcclusion = assetStore->Get_Texture(currentMat->ambientOcclusion_Text_Handle);
-//		if (ambientOcclusion == nullptr) {
-//			ambientOcclusion_Text = Shader::GetDefaultText();
-//		}
-//		else { ambientOcclusion_Text = ambientOcclusion->id; }
-//
-//		//Roughness
-//		Texture* roughness = assetStore->Get_Texture(currentMat->roughness_handle_Text_Handle);
-//		if (roughness != nullptr) {
-//			hasRoughness = true;
-//		}
-//		//Metallic
-//		Texture* metallic = assetStore->Get_Texture(currentMat->metalness_handle_Text_Handle);
-//		if (metallic != nullptr) {
-//			hasMetallic = true;
-//		}
-//
-//		// --- Link Matrices ---
-//		last_Shader_Use->setMatrix("view", viewMatrix);
-//		last_Shader_Use->setMatrix("projection", projectionMatrix);
-//
-//
-//		// Bind
-//		int i = 0;
-//		//Diffuse/Albedo
-//		glActiveTexture(GL_TEXTURE0 + i);
-//		glBindTexture(GL_TEXTURE_2D, diffuse_Text);
-//		last_Shader_Use->setInt("material.diffuseText", i++);
-//
-//		glActiveTexture(GL_TEXTURE0 + i);
-//		glBindTexture(GL_TEXTURE_2D, normal_Text);
-//		last_Shader_Use->setInt("material.normalText", i++);
-//		last_Shader_Use->setBool("have_NormalMap", currentMesh.hasTBN && currentMesh.hasUV && currentMesh.hasNormalMap);
-//
-//		glActiveTexture(GL_TEXTURE0 + i);
-//		glBindTexture(GL_TEXTURE_2D, ambientOcclusion_Text);
-//		last_Shader_Use->setInt("material.ambientOcclusion_Text", i++);
-//
-//		last_Shader_Use->setBool("material.hasRoughness_Text", hasRoughness);
-//		if (hasRoughness) {
-//			glActiveTexture(GL_TEXTURE0 + i);
-//			glBindTexture(GL_TEXTURE_2D, roughness_Text);
-//			last_Shader_Use->setInt("material.roughness_Text", i++);
-//		}
-//		last_Shader_Use->setBool("material.hasMetallic_Text", hasMetallic);
-//		if (hasMetallic) {
-//			glActiveTexture(GL_TEXTURE0 + i);
-//			glBindTexture(GL_TEXTURE_2D, metallic_Text);
-//			last_Shader_Use->setInt("material.metallic_Text", i++);
-//		}
-//
-//
-//		//ARM
-//		//last_Shader_Use->setBool("material.hasARM_Text", currentMat->hasARM_Text);
-//		last_Shader_Use->setFloat("material.ao_Factor", currentMat->ao_Factor);
-//		last_Shader_Use->setFloat("material.roughness_Factor", currentMat->roughness_Factor);
-//		last_Shader_Use->setFloat("material.metallic_Factor", currentMat->metallic_Factor);
-//
-//		glActiveTexture(GL_TEXTURE0);
-//
-//
-//		glBindVertexArray(subMesh.VAO);
-//
-//		// The subMesh have instanced subMesh to draw
-//		if (subMeshIndex < currentMesh.instancesGroup.size() && currentMesh.instancesGroup[subMeshIndex].instancedMatrix.size() > 1) {
-//			auto& group = currentMesh.instancesGroup[subMeshIndex];
-//
-//			glBindBuffer(GL_ARRAY_BUFFER, group.instanceMatrixVBO);
-//			glBufferData(GL_ARRAY_BUFFER, group.instancedMatrix.size() * sizeof(glm::mat4), group.instancedMatrix.data(), GL_DYNAMIC_DRAW);
-//
-//			// Configure the vertex attributes for the 4x4 matrix (locations 4, 5, 6, 7)
-//			// A mat4 is equivalent to 4 consecutive vec4
-//			std::size_t vec4Size = sizeof(glm::vec4);
-//			for (unsigned int i = 0; i < 4; i++) {
-//				glEnableVertexAttribArray(4 + i);
-//				glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(i * vec4Size));
-//				glVertexAttribDivisor(4 + i, 1); // Advance per instance
-//			}
-//			// Draw instanced SubMeshs
-//			glDrawElementsInstanced(GL_TRIANGLES, subMesh.indices.size(), GL_UNSIGNED_INT, 0, group.instancedMatrix.size());
-//
-//			// Clearing instance attributes
-//			for (unsigned int i = 0; i < 4; i++) {
-//				glDisableVertexAttribArray(4 + i);
-//			}
-//		}
-//		else {
-//			last_Shader_Use->setMatrix("model", modelMatrix * currentMesh.instancesGroup[subMeshIndex].instancedMatrix[0]);
-//			// Draw SubMesh
-//			glDrawElements(GL_TRIANGLES, subMesh.indices.size(), GL_UNSIGNED_INT, 0);
-//		}
-//
-//		glBindVertexArray(0);
-//	}
-//}
+// This is a lighter version of ExecuteRenderCommands for shadows,
+// He doesn't call glMultiDrawElementsIndirect
+// To start rendering, call ExecuteRenderCommands_Shadow
+void OpenGL_Renderer::BuildInstance_ShadowSSBO() {
+	if (recordedMeshInstances_ShadowPass.empty()) return;
+	shadow_IndirectCommands.clear();
+	pointShadow_IndirectCommands.clear();
 
-void OpenGL_Renderer::DrawMesh_Without_Texture(Mesh& currentMesh) {
-	if (currentMesh.isValid == false) return;
-	for (auto& subMesh : currentMesh.subMeshs) {
-		OpenGL_SubMesh& openGL_subMesh = std::get<OpenGL_SubMesh>(subMesh); 
+	std::vector<ShadowInstanceData> global_Shadow_InstanceData;
+	
+	// Add by OrderShadowDraw
+	for (auto& [meshIndex, matrices] : recordedMeshInstances_ShadowPass) {
+		Mesh currentMesh = assetStore->Get_Mesh(meshIndex);
+		uint32_t instanceCount = static_cast<uint32_t>(matrices.size());
 
-		glBindVertexArray(openGL_subMesh.VAO);
-		glDrawElements(GL_TRIANGLES, openGL_subMesh.indices.size(), GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
+		// Iterate over all subMesh
+		for (size_t subMeshIndex = 0; subMeshIndex < currentMesh.subMeshs.size(); ++subMeshIndex) {
+			uint32_t subMeshKey = (subMeshIndex << 16) | 0;
+
+			// If the submesh don't existe in the global Vertex, discard it
+			auto corrIt = mesh_In_VertexList.find(subMeshKey);
+			if (corrIt == mesh_In_VertexList.end()) continue;
+			const MeshCorrespondence& corr = corrIt->second;
+
+
+			OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));
+			Material* currentMat = assetStore->Get_Material(subMesh.material_Handle);
+
+
+			// Retrieving bindless handles (with a fallback to the default texture if null)
+			Texture* diff = assetStore->Get_Texture(currentMat->diffuse_Text_Handle);
+			uint64_t diffH = diff ? diff->bindlessHandle : Shader::GetDefaultText_Handle();
+
+
+
+			// Take the subMesh model matrices
+			glm::mat4 localTransform = glm::mat4(1.0f);
+			if (subMeshIndex < currentMesh.instancesGroup.size() && !currentMesh.instancesGroup[subMeshIndex].instancedMatrix.empty()) {
+				localTransform = currentMesh.instancesGroup[subMeshIndex].instancedMatrix[0];
+			}
+
+			// Create a indirect call for this subMesh
+			DrawElementsIndirectCommand openGLCmd;
+			openGLCmd.count = static_cast<uint32_t>(corr.indexCount);
+			openGLCmd.instanceCount = instanceCount;
+			openGLCmd.firstIndex = static_cast<uint32_t>(corr.indexStart);
+			openGLCmd.baseVertex = static_cast<int32_t>(corr.vertexStart);
+			openGLCmd.baseInstance = static_cast<uint32_t>(global_Shadow_InstanceData.size());
+
+			shadow_IndirectCommands.push_back(openGLCmd);
+
+			DrawElementsIndirectCommand pointCmd = openGLCmd;
+			pointCmd.instanceCount = instanceCount * 6;
+			pointShadow_IndirectCommands.push_back(pointCmd);
+
+
+			// Apply the modelMatrix and create a ShadowInstanceData for each matrices/Submesh instance
+			for (const auto& modelMatrix : matrices) {
+				ShadowInstanceData s_instData;
+				s_instData.modelMatrix = modelMatrix * localTransform;
+				s_instData.diffuseTexHandle = diffH;
+
+				global_Shadow_InstanceData.push_back(s_instData);
+			}
+		}
 	}
+
+	// Sending Matrices in the Shadow Instances SSBO
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, shadowInstanceSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, global_Shadow_InstanceData.size() * sizeof(ShadowInstanceData), global_Shadow_InstanceData.data(), GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, SHADOW_INSTANCE_BINDING_POINT, shadowInstanceSSBO);
+
+	// Sending Orders to the Indirect Buffer
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, shadowIndirectBuffer);
+	glBufferData(GL_DRAW_INDIRECT_BUFFER, shadow_IndirectCommands.size() * sizeof(DrawElementsIndirectCommand), shadow_IndirectCommands.data(), GL_DYNAMIC_DRAW);
+
+
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, pointShadowIndirectBuffer); // nouveau buffer GL dédié
+	glBufferData(GL_DRAW_INDIRECT_BUFFER, pointShadow_IndirectCommands.size() * sizeof(DrawElementsIndirectCommand), pointShadow_IndirectCommands.data(), GL_DYNAMIC_DRAW);
+}
+
+void OpenGL_Renderer::ExecuteRenderCommands_Shadow() {
+	glBindVertexArray(globalVAO);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, shadowIndirectBuffer);
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(shadow_IndirectCommands.size()), 0);
+	glBindVertexArray(0);
+}
+void OpenGL_Renderer::ExecuteRenderCommands_PointShadow() {
+	glBindVertexArray(globalVAO);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, pointShadowIndirectBuffer);
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(pointShadow_IndirectCommands.size()), 0);
+	glBindVertexArray(0);
 }
 
 void OpenGL_Renderer::DrawQuad(Engine::Resource::RenderResource* renderData) {
@@ -445,6 +453,12 @@ void OpenGL_Renderer::RenderAxisGizmo(glm::vec3 objectPosition, glm::mat4 view, 
 void OpenGL_Renderer::SetViewport_Size(glm::vec2 newSize) {
 	if (newSize.x < 0 || newSize.y < 0) return;
 	glViewport(0, 0, newSize.x, newSize.y);
+}
+
+// StartPos start at the upper-left corner 
+void OpenGL_Renderer::SetViewport(glm::vec2 startPos, glm::vec2 newSize) {
+	if (newSize.x < 0 || newSize.y < 0 || startPos.x < 0 || startPos.y < 0 ) return;
+	glViewport(startPos.x, startPos.y, newSize.x, newSize.y);
 }
 
 //Call when the viewport is re-scall

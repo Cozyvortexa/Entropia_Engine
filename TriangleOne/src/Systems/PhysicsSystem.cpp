@@ -89,7 +89,7 @@ void Systems::PhysicSystem::Init(World& world, const Engine::Resource::ResourceB
 
 	//DrawBox
 	physicData->joltDebugRenderer = Physics::JoltDebugRenderer_Factory();
-	physicData->debugJoltShader = std::make_unique<Shader>("TriangleOne/Shader/Jolt/Vertex_DebugBox.glsl", "TriangleOne/Shader/Jolt/Fragment_DebugBox.glsl");
+	physicData->debugJoltShader = std::make_unique<Shader>("Jolt/Vertex_DebugBox.glsl", "Jolt/Fragment_DebugBox.glsl");
 	//
 	//physicData->debug_draw_settings.mDrawShape = true;
 	//physicData->debug_draw_settings.mDrawBoundingBox = true;

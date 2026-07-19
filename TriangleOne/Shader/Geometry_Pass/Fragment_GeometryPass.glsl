@@ -23,7 +23,7 @@ struct InstanceData {
 	uint hasNormalMap;
 };
 
-layout(std430, binding = 3) readonly buffer InstanceBuffer {
+layout(std430, binding = 1) readonly buffer InstanceBuffer {
     InstanceData instances[];
 };
 
@@ -39,7 +39,7 @@ in mat3 TBN;
 void main()
 {
 	InstanceData data = instances[uniqueID];
-
+	
 	sampler2D diffuseSampler = sampler2D(data.diffuseTex);
 	vec4 diffuse = texture(diffuseSampler, TexCoords);
 

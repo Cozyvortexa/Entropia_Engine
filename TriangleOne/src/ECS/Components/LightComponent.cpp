@@ -10,22 +10,24 @@ Component::Light::Light(glm::vec3 color, float intensity) {
 #pragma endregion Init
 
 #pragma region SpotLight
-Component::SpotLight::SpotLight(glm::vec3 color, float intensity, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Shader* depthShaderSpotMap) : Light(color, intensity) {
-
+Component::SpotLight::SpotLight(glm::vec3 color, float intensity, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Render::Shadow_Quality shadowQuality) : Light(color, intensity) {
 	cutOff = _cutOff;
 	outerCutOff = _outercutOff;
 	direction = _direction;
 	this->range = range;
-	this->depthShader = depthShaderSpotMap;
+
+	//ShadowQuality
+	shadowCaster.quality = shadowQuality;
 }
 
 #pragma endregion SpotLight
 
 #pragma region DirLight
-Component::DirLight::DirLight(glm::vec3 color, float intensity, glm::vec3 _direction, Shader* depthShader ) : Light(color, intensity) {
+Component::DirLight::DirLight(glm::vec3 color, float intensity, glm::vec3 _direction, Render::Shadow_Quality shadowQuality) : Light(color, intensity) {
 	direction = _direction;
 
-	this->depthShader = depthShader;
+	//ShadowQuality
+	shadowCaster.quality = shadowQuality;
 
 	ndcCubePoint.push_back(glm::vec3(-1, -1, -1));
 	ndcCubePoint.push_back(glm::vec3(1, -1, -1));
@@ -88,14 +90,14 @@ glm::mat4 Component::DirLight::UpdateMatrix(const glm::mat4 viewMatrice, const g
 	std::vector<glm::vec3> worldCorners = CalcWorldCorner(projectionCamera, viewMatrice);
 
 	lightPos =  normalize(direction) * 10.0f;
-	// Premier passage
+	// First pass
 	lightViewMatrice = glm::lookAt(lightPos, glm::vec3(0), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	std::vector<glm::vec3> lightCorners = WorldCornerToLightSpace(lightViewMatrice, worldCorners);
 
 	AABB box = CalcBoundingBox(lightCorners);
 
-	// Deuxieme passage
+	// Second passage
 	float distance = (box.max.z - box.min.z) / 2.0f;
 	lightPos = normalize(direction) * distance;
 	glm::vec3 frustumCenter = FrustumCenter(worldCorners);
@@ -116,11 +118,12 @@ glm::mat4 Component::DirLight::UpdateMatrix(const glm::mat4 viewMatrice, const g
 
 
 #pragma region PointLight
-Component::PointLight::PointLight(glm::vec3 color, float intensity, float _range, Shader* depthShaderCubeMap) : Light(color, intensity) {
+Component::PointLight::PointLight(glm::vec3 color, float intensity, float _range, Render::Shadow_Quality shadowQuality) : Light(color, intensity) {
 	range = _range;
 	near_plane = 0.01f;
 
-	this->depthShader = depthShaderCubeMap;
+	//ShadowQuality
+	shadowCaster.quality = shadowQuality;
 }
 
 #pragma endregion PointLight

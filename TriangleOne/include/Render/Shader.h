@@ -9,13 +9,18 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <unordered_map>
+
+#include "PathFolder.h"
 
 #include <cstdint>
 
 class Shader{
 public:
 	Shader() {};
+	//The path starts with the Shader folder
 	Shader(const char* vertexPath, const char* fragmentPath);
+	//The path starts with the Shader folder
 	Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath);
 	~Shader() = default;
 	//~Shader() {
@@ -33,102 +38,53 @@ public:
 
 	inline void setBool(const std::string& name, bool value) const
 	{
-		glUniform1i(glGetUniformLocation(shaderID, name.c_str()), (int)value);
-
-		#ifndef NDEBUG
-		GLint loc = glGetUniformLocation(shaderID, name.c_str());
-		if (loc == -1) {
-			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
-		}
-		#endif
+		glUniform1i(GetUniformLocation(name), value);
 	}
 	inline void setInt(const std::string& name, int value) const
 	{
-		glUniform1i(glGetUniformLocation(shaderID, name.c_str()), value);
-
-		#ifndef NDEBUG
-		GLint loc = glGetUniformLocation(shaderID, name.c_str());
-		if (loc == -1) {
-			std::cerr << "Uniform: " << name << " not found in shader!" << std::endl;
-		}
-		#endif
+		glUniform1i(GetUniformLocation(name), value);
 	}
 	inline void setFloat(const std::string& name, float value) const
 	{
-		glUniform1f(glGetUniformLocation(shaderID, name.c_str()), value);
-
-		#ifndef NDEBUG
-		GLint loc = glGetUniformLocation(shaderID, name.c_str());
-		if (loc == -1) {
-			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
-		}
-		#endif
+		glUniform1f(GetUniformLocation(name), value);
 	}
 
-	inline void setVec(const std::string& name, glm::vec2 value)
+	inline void setVec(const std::string& name, glm::vec2 value) //Vec2
 	{
-		glUniform2fv(glGetUniformLocation(shaderID, name.c_str()), 1, glm::value_ptr(value));
-
-		#ifndef NDEBUG
-		GLint loc = glGetUniformLocation(shaderID, name.c_str());
-		if (loc == -1) {
-			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
-		}
-		#endif
+		glUniform2fv(GetUniformLocation(name), 1, glm::value_ptr(value));
 	}
-	inline void setVec(const std::string& name, glm::vec3 value)
+
+	inline void setVec(const std::string& name, glm::vec3 value) //Vec3
 	{
-		glUniform3fv(glGetUniformLocation(shaderID, name.c_str()), 1, glm::value_ptr(value));
-
-		#ifndef NDEBUG
-		GLint loc = glGetUniformLocation(shaderID, name.c_str());
-		if (loc == -1) {
-			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
-		}
-		#endif
+		glUniform3fv(GetUniformLocation(name), 1, glm::value_ptr(value));
 	}
+
 	inline void setVec(const std::string& name, std::vector<glm::vec3> values)
 	{
-		glUniform3fv(glGetUniformLocation(shaderID, name.c_str()), values.size(), glm::value_ptr(values[0]));
+		glUniform3fv(GetUniformLocation(name), 1, glm::value_ptr(values[0]));
+	}
 
-		#ifndef NDEBUG
-		GLint loc = glGetUniformLocation(shaderID, name.c_str());
-		if (loc == -1) {
-			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
-		}
-		#endif
+	inline void setVec(const std::string& name, glm::vec4 value) //Vec4
+	{
+		glUniform4fv(GetUniformLocation(name), 1, glm::value_ptr(value));
 	}
 
 	inline void setMatrix(const std::string& name, glm::mat4 matrix)
 	{
-		unsigned int projLoc = glGetUniformLocation(shaderID, name.c_str());
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(matrix));
-
-		#ifndef NDEBUG
-		if (projLoc == -1) {
-			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
-		}
-		#endif
+		glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, glm::value_ptr(matrix));
 	}
 	inline void setMatrix(const std::string& name, glm::mat3 matrix)
 	{
-		unsigned int projLoc = glGetUniformLocation(shaderID, name.c_str());
-		glUniformMatrix3fv(projLoc, 1, GL_FALSE, glm::value_ptr(matrix));
-
-		#ifndef NDEBUG
-		if (projLoc == -1) {
-			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
-		}
-		#endif
+		glUniformMatrix3fv(GetUniformLocation(name), 1, GL_FALSE, glm::value_ptr(matrix));
 	}
 
 	void DebugValueInShader() {
 		GLint count;
-		GLint size; // taille de la variable
-		GLenum type; // type de la variable (GL_FLOAT, GL_SAMPLER_2D, etc.)
-		const GLsizei bufSize = 32; // longueur max du nom
-		GLchar name[bufSize]; // nom de la variable
-		GLsizei length; // longueur du nom
+		GLint size; // variable size
+		GLenum type; // variable type (GL_FLOAT, GL_SAMPLER_2D,...)
+		const GLsizei bufSize = 32; // maximum name length
+		GLchar name[bufSize]; // variable name
+		GLsizei length; // name length
 
 		glGetProgramiv(shaderID, GL_ACTIVE_UNIFORMS, &count);
 		std::cout << "--- Uniforms Actifs pour Shader ID " << shaderID << " ---" << std::endl;
@@ -164,5 +120,24 @@ private:
 
 	inline static unsigned int defaultText = 0;
 	inline static uint64_t defaultText_BindlessHandle = 0;
+
+	mutable std::unordered_map<std::string, GLint> uniformLocationCache;
+
+	GLint GetUniformLocation(const std::string& name) const {
+		auto it = uniformLocationCache.find(name);
+		if (it != uniformLocationCache.end())
+			return it->second;
+
+		GLint location = glGetUniformLocation(shaderID, name.c_str());
+		uniformLocationCache[name] = location;
+
+		#ifndef NDEBUG
+		if (location == -1) {
+			std::cerr << "Uniform " << name << " not found in shader!" << std::endl;
+		}
+		#endif
+
+		return location;
+	}
 };
 

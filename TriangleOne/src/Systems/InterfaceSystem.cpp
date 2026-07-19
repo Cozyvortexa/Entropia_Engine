@@ -87,22 +87,14 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
 
                 }
                 else if (entry->type == Editor::ObjectType::PointLight && !world->Has_component<Component::PointLight>(entity)) {
-
-                    Component::PointLight pointLight(renderData->r_Shader.depthShaderCubeMap.get());
-                    Component::LightToInitTag pointTag(Component::LightTag::PointLight_Tag);
-                    world->add_components(entity, pointLight, pointTag);
+                    world->add_components(entity, Component::PointLight());
                 }
                 else if (entry->type == Editor::ObjectType::DirectionalLight && !world->Has_component<Component::DirLight>(entity)) {
-
-                    Component::DirLight dirLight(renderData->r_Shader.depthShader.get());
-                    Component::LightToInitTag dirTag(Component::LightTag::Directional_Tag);
-                    world->add_components(entity, dirLight, dirTag);
+                    world->add_components(entity, Component::DirLight());
                 }
                 else if (entry->type == Editor::ObjectType::SpotLight && !world->Has_component<Component::SpotLight>(entity)) {
 
-                    Component::SpotLight spotLight(renderData->r_Shader.depthShader.get());
-                    Component::LightToInitTag spotTag(Component::LightTag::SpotLight_Tag);
-                    world->add_components(entity, spotLight, spotTag);
+                    world->add_components(entity, Component::SpotLight());
                 }
                 else if (entry->type == Editor::ObjectType::Camera) {
                     // TODO
@@ -199,7 +191,7 @@ void RenderWindows(World* word, Resource::RenderResource* renderData, Resource::
         ImVec2(0, 1),
         ImVec2(1, 0)
     );
-    if (viewportPanelSize.x != interfaceData->previousSize.x || viewportPanelSize.y != interfaceData->previousSize.y) {
+    if ((viewportPanelSize.x != interfaceData->previousSize.x || viewportPanelSize.y != interfaceData->previousSize.y) && viewportPanelSize.x > 0 && viewportPanelSize.y > 0) {
 
         renderData->renderWIDTH = (int)viewportPanelSize.x;
         renderData->renderHEIGHT = (int)viewportPanelSize.y;
@@ -463,7 +455,7 @@ void inline Systems::InterfaceSystem::Arbo_RefreshButton(Resource::InterfaceRess
 
     ImGui::SameLine(available - buttonWidth + ImGui::GetStyle().WindowPadding.x);
     if (ImGui::Button(refreshLabel.c_str())) {
-        interfaceData->mainDirectory = BuildTree("Assets");
+        interfaceData->mainDirectory = BuildTree(ASSETS_DIR);
         interfaceData->focusDirectory = interfaceData->mainDirectory.get();
     }
 }
@@ -590,8 +582,16 @@ void Systems::InterfaceSystem::Init(World& world, const Resource::ResourceBuffer
     ImFontConfig config;
     config.MergeMode = true;
     config.PixelSnapH = true;
-    ImFont* font = io.Fonts->AddFontFromFileTTF("Assets/Font/Amarna-VariableFont_wght.ttf");
-    io.Fonts->AddFontFromFileTTF("Assets/Font/Font_Awesome_7_Free-Solid-900.otf", 16.0f, &config, icons_ranges);
+
+    std::filesystem::path ttf_FullPath = ASSETS_DIR / "Font/Amarna-VariableFont_wght.ttf";
+    std::filesystem::path otf_FullPath = ASSETS_DIR / "Font/Font_Awesome_7_Free-Solid-900.otf";
+
+    //The location of the imgui.ini file
+    static std::string iniPath = (SOLUTION_DIR / "imgui.ini").string();
+    io.IniFilename = iniPath.c_str();
+
+    ImFont* font = io.Fonts->AddFontFromFileTTF(ttf_FullPath.string().c_str());
+    io.Fonts->AddFontFromFileTTF(otf_FullPath.string().c_str(), 16.0f, &config, icons_ranges);
     ////
 
     ImGui_ImplOpenGL3_Init();
@@ -604,7 +604,7 @@ void Systems::InterfaceSystem::Init(World& world, const Resource::ResourceBuffer
 
     interfaceData->OnEditorView = true;
 
-    interfaceData->mainDirectory = BuildTree("Assets", interfaceData->mainDirectory.get());
+    interfaceData->mainDirectory = BuildTree(ASSETS_DIR, interfaceData->mainDirectory.get());
     interfaceData->focusDirectory = interfaceData->mainDirectory.get();
 }
 

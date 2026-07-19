@@ -1,4 +1,7 @@
 #version 430 core
+#extension GL_ARB_bindless_texture : require
+#extension GL_ARB_gpu_shader_int64 : require
+
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 BrightColor;
 
@@ -20,15 +23,18 @@ struct SpotLight {
 	float outerCutOff;
 
 	float range;
+	int shadowIndex;
+	int shadowQuality;
 };
 #define NBR_MAX_SPOT_LIGHTS 8
-uniform mat4 spotLightMatrices[NBR_MAX_SPOT_LIGHTS];
 
 struct PointLight {
 	vec3 position;
 	vec3 color;
 
 	float range;
+	int shadowIndex;
+	int shadowQuality;
 };
 #define NBR_MAX_POINT_LIGHTS 8
 
@@ -39,8 +45,7 @@ struct DirLight{
 
 
 //SSBO
-layout (std430, binding = 1) buffer Lights
-{
+layout (std430, binding = 3) buffer Lights{
 	DirLight dirLight;
 	PointLight pointLights[NBR_MAX_POINT_LIGHTS];
 	SpotLight spotLights[NBR_MAX_SPOT_LIGHTS];
@@ -48,18 +53,38 @@ layout (std430, binding = 1) buffer Lights
 	int nbrSpotLight;
 };
 
+//Shadow SSBO
+layout (std430, binding = 6) buffer ShadowText{
+	uint64_t pointLight_Shadow[3]; 
+	uint64_t spotLight_Shadow[3];// [0]=low, [1]=medium, [2]=hight
+};
+//The dir light is managed seperately
+uniform sampler2DShadow dirLight_shadowMap; 
+uniform bool dirLight_HaveShadow;
 
-//Shadow
-uniform sampler2DShadow shadowMap;
-uniform samplerCubeShadow shadowCubeMaps[NBR_MAX_POINT_LIGHTS];
-uniform sampler2DShadow shadowMapSpot [NBR_MAX_SPOT_LIGHTS];
-uniform float far_plane;
+
+struct ShadowMap{
+	mat4 matrice;
+	int quality;
+	float _pad[3];
+};
+struct ShadowCubeMap{
+	int quality;
+	mat4 shadowMatrices[6];
+	vec3 lightPos;
+	float far_plane;
+};
+const int MAX_SHADOW_CASTER_POINT_LIGHT = 4;
+const int MAX_SHADOW_CASTER_SPOT_LIGHT = 8; // adapte à ta vraie constante
+
+layout(std430, binding = 5) readonly buffer ShadowBuffer {
+	ShadowMap dirLight_Shadow; // renommé pour éviter le clash avec la struct DirLight "dirLight" du binding 3
+	ShadowCubeMap pointLightsShadow[MAX_SHADOW_CASTER_POINT_LIGHT];
+	ShadowMap spotLightsShadow[];
+};
+
 
 uniform vec3 viewPos;
-
-//vec4 CalcFinalDiffuse();
-//vec4 CalcFinalSpecular();
-
 ////////////////Function
 
 ////////Light
@@ -96,7 +121,6 @@ uniform samplerCube irradianceMap;
 
 uniform int renderTarget;
 
-uniform mat4 lightSpaceMatrix;
 
 const float PI = 3.14159265359;
 const float MAX_REFLECTION_LOD = 4.0;
@@ -169,7 +193,7 @@ void main()
 
 	vec3 final_lightning = vec3(0,0,0);
 
-	vec4 FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
+	vec4 FragPosLightSpace = dirLight_Shadow.matrice * vec4(FragPos, 1.0);
 
 	vec3 F0 = vec3(0.04);
 	F0 = mix(F0, material.albedo, material.metallic);
@@ -293,50 +317,37 @@ vec3 CalcSpotLight(SpotLight light, int lightIndex, vec3 viewDir, vec3 FragPos, 
 }
 
 ///////////////////////////  Shadow
-float GetDirShadowMapValue(int index, vec3 dir) {
-    if (index == 0) return texture(shadowMap, dir);
-    return 0.0;
-}
+float ShadowDirLight(vec4 FragPosLightSpace)
+{
+    vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
 
-float ShadowDirLight(vec4 FragPosLightSpace){
+    if (projCoords.z > 1.0 || !dirLight_HaveShadow)
+        return 0.0;
 
-	vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
-	projCoords = projCoords * 0.5 + 0.5;
-
-	if (projCoords.z > 1.0) 
-		return 0.0;
-
-
-	vec3 lightDir = normalize(-dirLight.direction );
     float bias = 0.005;
 
-	float shadow = 0.0;
-	vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-	for(int x = -1; x <= 1; ++x)
-	{
-		for(int y = -1; y <= 1; ++y)
-		{
-			shadow += texture(shadowMap, vec3(projCoords.xy + vec2(x, y) * texelSize, projCoords.z - bias));
-		}
-	}
-	shadow /= 9.0;
+    float shadow = texture(
+        dirLight_shadowMap,
+        vec3(projCoords.xy, projCoords.z - bias)
+    );
 
-	return 1.0 - shadow;
+    return 1.0 - shadow;
 }
 
-float GetShadowMapValue(int index, vec4 dirDepth) {
-    if (index == 0) return texture(shadowCubeMaps[0], dirDepth);
-    if (index == 1) return texture(shadowCubeMaps[1], dirDepth);
-    if (index == 2) return texture(shadowCubeMaps[2], dirDepth);
-    if (index == 3) return texture(shadowCubeMaps[3], dirDepth);
-    if (index == 4) return texture(shadowCubeMaps[4], dirDepth);
-    if (index == 5) return texture(shadowCubeMaps[5], dirDepth);
-    if (index == 6) return texture(shadowCubeMaps[6], dirDepth);
-    if (index == 7) return texture(shadowCubeMaps[7], dirDepth);
-    return 0.0;
+
+float GetShadowMapValue(int quality, int index, vec4 dirDepth) {
+	if (quality < 0 || quality > 3) return 0.0;
+
+	samplerCubeArrayShadow shadowMap = samplerCubeArrayShadow(pointLight_Shadow[quality]);
+
+    return texture(shadowMap, vec4(dirDepth.xyz, float(index)), dirDepth.w);
 }
 
 float ShadowPointLight(PointLight light, int lightIndex, vec3 FragPos, vec3 Normal){
+	if (light.shadowIndex == -1)
+		return 0.0; // This light does not cast shadow
+
 	vec3 sampleOffsetDirections[20] = vec3[]
 	(
 		vec3( 1, 1, 1), vec3( 1, -1, 1), vec3(-1, -1, 1), vec3(-1, 1, 1),
@@ -366,30 +377,30 @@ float ShadowPointLight(PointLight light, int lightIndex, vec3 FragPos, vec3 Norm
 	for(int i = 0; i < samples; ++i)
 	{
 		vec3 dir = fragToLight + (sampleOffsetDirections[i] * diskRadius);
-        shadow += GetShadowMapValue(lightIndex, vec4(dir, currentDepthNormalized));
+        shadow += GetShadowMapValue(light.shadowQuality, light.shadowIndex, vec4(dir, currentDepthNormalized));
 	}
     
     // Average the results
 	shadow /= samples;
 
-	return 1.0 - shadow;
+	return  shadow;
 }
 
-float GetSpotShadowMapValue(int index, vec3 coords) {
-    if (index == 0) return texture(shadowMapSpot[0], coords);
-    if (index == 1) return texture(shadowMapSpot[1], coords);
-    if (index == 2) return texture(shadowMapSpot[2], coords);
-    if (index == 3) return texture(shadowMapSpot[3], coords);
-    if (index == 4) return texture(shadowMapSpot[4], coords);
-    if (index == 5) return texture(shadowMapSpot[5], coords);
-    if (index == 6) return texture(shadowMapSpot[6], coords);
-    if (index == 7) return texture(shadowMapSpot[7], coords);
-    return 0.0;
+
+float GetSpotShadowMapValue(int quality, int index, vec3 coords) {
+    if (quality < 0 || quality >= 3)
+        return 0.0;
+
+    sampler2DArrayShadow shadowMap = sampler2DArrayShadow(spotLight_Shadow[quality]);
+
+    return texture(shadowMap, vec4(coords.xy, float(index), coords.z));
 }
 
 float ShadowSpotLight(SpotLight light, int lightIndex, vec3 FragPos){
-	vec4 fragPosSpotSpace = spotLightMatrices[lightIndex] * vec4(FragPos, 1.0);
+	if (light.shadowIndex == -1)
+		return 0.0; //This light does not cast shadow
 
+	vec4 fragPosSpotSpace = spotLightsShadow[lightIndex].matrice * vec4(FragPos, 1.0);
     vec3 projCoords = fragPosSpotSpace.xyz / fragPosSpotSpace.w;
 	projCoords = projCoords * 0.5 + 0.5;
 
@@ -399,21 +410,21 @@ float ShadowSpotLight(SpotLight light, int lightIndex, vec3 FragPos){
 		return 0.0;
 
 	vec3 lightDir = normalize(light.position - FragPos);
-    float bias = 0.005;
-
+    float bias = 0.005; //max(0.02 * (1.0 - dot(Normal, lightDir)), 0.002);
 	float shadow = 0.0;
-	vec2 texelSize = 1.0 / textureSize(shadowMapSpot[lightIndex], 0);
-	for(int x = -1; x <= 1; ++x) {
-        for(int y = -1; y <= 1; ++y) {
-            vec2 offset = vec2(x, y) * texelSize;
-            vec3 shadowCoords = vec3(projCoords.xy + offset, projCoords.z - bias);
-            
-            shadow += GetSpotShadowMapValue(lightIndex, shadowCoords);
-        }
-    }
-	shadow /= 9.0;
 
-	return 1.0 - shadow;
+	sampler2DArrayShadow shadowMap = sampler2DArrayShadow(spotLight_Shadow[light.shadowQuality]);
+	vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0).xy);
+
+	for(int x = -1; x <= 1; ++x) {
+		for(int y = -1; y <= 1; ++y) {
+			vec2 offset = vec2(x, y) * texelSize;
+			vec3 shadowCoords = vec3(projCoords.xy + offset, projCoords.z - bias);
+			shadow += GetSpotShadowMapValue(light.shadowQuality, light.shadowIndex, shadowCoords);
+		}
+	}
+
+	return  1.0 - shadow;
 }
 
 

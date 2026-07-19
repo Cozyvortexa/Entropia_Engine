@@ -36,7 +36,7 @@
     <ClCompile Include="src\Systems\LightSystem.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\ECS\Components\Light.cpp">
+    <ClCompile Include="src\ECS\Components\LightComponent.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\Render\SubMesh.cpp">
@@ -254,6 +254,9 @@
     <ClInclude Include="include\Render\Binding_Points.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\PathFolder.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\Geometry_Pass\Vertex_GeometryPass.glsl" />
@@ -264,15 +267,12 @@
     <None Include="Shader\PostProcessShader\PostProcessFrag.glsl" />
     <None Include="Shader\MiscShader\SkyBoxFrag.glsl" />
     <None Include="Shader\MiscShader\SkyBoxVertex.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\DepthMapFrag.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\DepthMapVertex.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\ShadowVertex.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\ShadowFrag.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\ShadowCubeVertex.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\ShadowCubeFrag.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\ShadowCubeGeometry.glsl" />
-    <None Include="Shader\BloomShader\FragmentBloom.glsl" />
-    <None Include="Shader\BloomShader\VertexBloom.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\DirLight\Fragment_DepthMap.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\DirLight\Vertex_DepthMap.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\PointLight\Vertex_ShadowCube.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\PointLight\Fragment_ShadowCube.glsl" />
+    <None Include="Shader\BloomShader\Fragment_Bloom.glsl" />
+    <None Include="Shader\BloomShader\Vertex_Bloom.glsl" />
     <None Include="Shader\Lighting_Pass\Fragment_LightningPass_Shader.glsl" />
     <None Include="Shader\Lighting_Pass\Vertex_LightningPass_Shader.glsl" />
     <None Include="Shader\SSAO_Pass\Vertex_SSAO_Shader.glsl" />
@@ -292,6 +292,8 @@
     <None Include="Shader\Jolt\Fragment_DebugBox.glsl" />
     <None Include="Shader\Jolt\Vertex_DebugBox.glsl" />
     <None Include="Shader\Geometry_Pass\Vertex_Instanced_GeometryPass.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\SpotLight\Fragment_S_DepthMap.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\SpotLight\Vertex_S_DepthMap.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="include\Utilities\ImGui\imgui.natvis" />

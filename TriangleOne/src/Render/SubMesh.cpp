@@ -80,23 +80,23 @@ SubMesh::SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices
 ///////////////OpenGL
 
 OpenGL_SubMesh::OpenGL_SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle) : SubMesh(vertices, indices, material_Handle) {
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
+	//glGenVertexArrays(1, &VAO);
+	//glGenBuffers(1, &VBO);
+	//glGenBuffers(1, &EBO);
 
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	//glBindVertexArray(VAO);
+	//glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * layout.stride, &vertices[0], GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+	//glBufferData(GL_ARRAY_BUFFER, vertices.size() * layout.stride, &vertices[0], GL_STATIC_DRAW);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
 
-	for (auto& currentAttribute : layout.attributes) {
-		glEnableVertexAttribArray(currentAttribute.location);
-		glVertexAttribPointer(currentAttribute.location, ToGLCount(currentAttribute.format), ToGLBaseType(currentAttribute.format), GL_FALSE, layout.stride, (void*)currentAttribute.offset);
-	}
+	//for (auto& currentAttribute : layout.attributes) {
+	//	glEnableVertexAttribArray(currentAttribute.location);
+	//	glVertexAttribPointer(currentAttribute.location, ToGLCount(currentAttribute.format), ToGLBaseType(currentAttribute.format), GL_FALSE, layout.stride, (void*)currentAttribute.offset);
+	//}
 
-	glBindVertexArray(0);
+	//glBindVertexArray(0);
 
 }

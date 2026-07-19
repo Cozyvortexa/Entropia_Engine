@@ -5,12 +5,14 @@ in vec3 localPos;
 
 uniform samplerCube environmentMap;
 uniform float roughness;
+uniform float resolution; // résolution (largeur) d'une face de environmentMap, ex: 512.0
 const float PI = 3.14159265359;
 
 
 float RadicalInverse_VdC(uint bits);
 vec2 Hammersley(uint i, uint N);
 vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness);
+float DistributionGGX(vec3 N, vec3 H, float roughness);
 
 void main()
 {
@@ -27,7 +29,22 @@ void main()
 		vec3 L = normalize(2.0 * dot(V, H) * H - V);
 		float NdotL = max(dot(N, L), 0.0);
 		if(NdotL > 0.0){
-			prefilteredColor += textureLod(environmentMap, L, 0.0).rgb * NdotL;
+			// --- Filtered Importance Sampling ---
+			// We calculate a mip level based on the PDF of the current sample,
+			// to pre-blur the source and avoid fireflies/blocks
+			// coming from very bright, concentrated areas (e.g., direct sunlight).
+			float NdotH = max(dot(N, H), 0.0);
+			float VdotH = max(dot(V, H), 0.0);
+
+			float D   = DistributionGGX(N, H, roughness);
+			float pdf = (D * NdotH / (4.0 * VdotH)) + 0.0001;
+
+			float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
+			float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
+
+			float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel);
+
+			prefilteredColor += textureLod(environmentMap, L, mipLevel).rgb * NdotL;
 			totalWeight += NdotL;
 		}
 	}
@@ -68,4 +85,18 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 	vec3 bitangent = cross(N, tangent);
 	vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
 	return normalize(sampleVec);
+}
+
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+	float a = roughness * roughness;
+	float a2 = a * a;
+	float NdotH = max(dot(N, H), 0.0);
+	float NdotH2 = NdotH * NdotH;
+
+	float num = a2;
+	float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+	denom = PI * denom * denom;
+
+	return num / denom;
 }

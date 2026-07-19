@@ -28,12 +28,12 @@ static struct MeshCorrespondence {
 struct DrawElementsIndirectCommand {
     uint32_t count;         // Number of mesh indices
     uint32_t instanceCount; // Instance number
-    uint32_t firstIndex;    // Début des indices dans l'EBO global
-    int32_t  baseVertex;    // Début des sommets dans le VBO global
-    uint32_t baseInstance;  // Index de départ de SES matrices dans le SSBO d'instances
+    uint32_t firstIndex;    // Start of the indices in the global EBO
+    int32_t  baseVertex;    // Start of the summits in the Global VBO
+    uint32_t baseInstance;  // Starting index of its matrices in the instance SSBO
 };
 
-// Structure alignée pour le SSBO (mémoire GPU)
+// Structure aligned in GPU-side memory
 struct InstanceData {
     glm::mat4 modelMatrix;
 
@@ -53,6 +53,13 @@ struct InstanceData {
 
 };
 
+struct ShadowInstanceData {
+    glm::mat4 modelMatrix;
+    //Opacity purpose
+    uint64_t diffuseTexHandle;
+    uint64_t _pad0;
+};
+
 static struct RenderCommand {
     uint32_t instanceNbr = 0;
     std::vector<InstanceData> instanceData;
@@ -67,13 +74,16 @@ public:
     virtual ~Renderer() = default;
 
 	//virtual void DrawMesh(Mesh& currentMesh, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, const glm::mat4& modelMatrix) = 0;
-	virtual void DrawMesh_Without_Texture(Mesh& currentMesh) = 0;
+	virtual void ExecuteRenderCommands_Shadow() = 0;
+	virtual void ExecuteRenderCommands_PointShadow() = 0;
 
 	virtual void DrawQuad(Engine::Resource::RenderResource* renderData) = 0;
 
 	virtual void DrawCube() = 0;
 
     virtual void SetViewport_Size(glm::vec2 newSize) = 0;
+
+    virtual void SetViewport(glm::vec2 startPos, glm::vec2 newSize) = 0;
 
     virtual void SetupAxisArrow() = 0;
 
@@ -85,9 +95,15 @@ public:
 
     virtual void OrderDraw(Engine::Component::MeshHandle meshHandle, glm::mat4 modelMatrix) = 0;
 
-    virtual  void ExecuteRenderCommands() = 0;
+    virtual void BuildInstance_ShadowSSBO() = 0;
+
+    virtual void OrderShadowDraw(Engine::Component::MeshHandle meshHandle, glm::mat4 modelMatrix) = 0;
+
+    virtual void ExecuteRenderCommands() = 0;
 
     void ClearVertexList();
+    void ClearOrderList();
+    void ClearShadowOrderList();
 
     const float cubeVertices[108] = {
         // back face
@@ -133,79 +149,38 @@ public:
          -1.0f,  1.0f,  1.0f,
          -1.0f,  1.0f, -1.0f,
     };
-
+    const size_t MAX_INSTANCES = 100000;
 protected: 
     AssetStore* assetStore;
     std::unordered_map<uint32_t, MeshCorrespondence> mesh_In_VertexList;  // MeshIndex to Correspondence
     std::vector<Vertex> vertexList;
     std::vector<uint32_t> indexList;
     std::unordered_map<uint32_t, std::vector<glm::mat4>> recordedMeshInstances; // Key : meshIndex
+    std::unordered_map<uint32_t, std::vector<glm::mat4>> recordedMeshInstances_ShadowPass;
+
+
+    std::vector<DrawElementsIndirectCommand> shadow_IndirectCommands;
+    std::vector<DrawElementsIndirectCommand> pointShadow_IndirectCommands;
 };
 
 class OpenGL_Renderer : public Renderer{
 public:
-    OpenGL_Renderer(AssetStore* assetStore) : Renderer(assetStore) {
-        LoadDefaultCube();
-        SetupAxisArrow();
-
-        glGenVertexArrays(1, &globalVAO);
-        glGenBuffers(1, &globalVBO);
-        glGenBuffers(1, &globalEBO);
-
-        glBindVertexArray(globalVAO);
-
-        glBindBuffer(GL_ARRAY_BUFFER, globalVBO);
-        // Optionnel pour l'instant : on alloue une taille de départ (ex: 50 Mo pour les sommets)
-        glBufferData(GL_ARRAY_BUFFER, 100 * 1024 * 1024, nullptr, GL_STATIC_DRAW);
-
-        // Layout 0 : Position
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Position));
-        // Layout 1 : Normal
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
-        // Layout 2 : UV/TexCoords
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
-        // Layout 3 : Tangent
-        glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
-
-
-        // On lie le gros EBO (Ta indexList)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, globalEBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 100 * 1024 * 1024, nullptr, GL_STATIC_DRAW); // ex: 20 Mo d'indices
-
-        glBindVertexArray(0);
-
-        //IndirectBuffer
-        glGenBuffers(1, &indirectBuffer);
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer);
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-
-
-        //Instance SSBO
-        const size_t MAX_INSTANCES = 100000;
-        size_t instanceBufferSize = MAX_INSTANCES * sizeof(InstanceData);
-
-        glGenBuffers(1, &instanceSSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, instanceSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, instanceBufferSize, NULL, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, INSTANCE_BUFFER_BINDING_POINT, instanceSSBO, 0, instanceBufferSize);
-
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, INSTANCE_BUFFER_BINDING_POINT, instanceSSBO);
-    }
+    OpenGL_Renderer(AssetStore* assetStore);
 
     void AddMeshToRender(Engine::Component::MeshHandle newMesh) override;
 
     void OrderDraw(Engine::Component::MeshHandle meshHandle, glm::mat4 modelMatrix) override;
 
+    void OrderShadowDraw(Engine::Component::MeshHandle meshHandle, glm::mat4 modelMatrix) override;
+
+    void BuildInstance_ShadowSSBO() override;
+
     void ExecuteRenderCommands() override;
 
     //void DrawMesh(Mesh& currentMesh, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, const glm::mat4& modelMatrix) override;
     
-    void DrawMesh_Without_Texture(Mesh& currentMesh) override;
+    void ExecuteRenderCommands_Shadow() override;
+    void ExecuteRenderCommands_PointShadow() override;
 
     void DrawQuad(Engine::Resource::RenderResource* renderData) override;
 
@@ -214,6 +189,8 @@ public:
     void LoadDefaultCube();
 
     void SetViewport_Size(glm::vec2 newSize) override;
+
+    void SetViewport(glm::vec2 startPos, glm::vec2 newSize) override;
 
     void SetupAxisArrow() override;
 
@@ -234,4 +211,10 @@ public:
 
     unsigned int instanceSSBO = -1;
     unsigned int indirectBuffer = -1;
+
+    //Shadow
+    unsigned int shadowIndirectBuffer = -1;
+    unsigned int pointShadowIndirectBuffer = -1;
+
+    unsigned int shadowInstanceSSBO = -1;
 };

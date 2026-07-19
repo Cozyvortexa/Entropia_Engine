@@ -1,11 +1,14 @@
 #include "Render/Shader.h"
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
+	std::filesystem::path vertex_FullPath = SHADER_DIR / vertexPath;
+	std::filesystem::path fragment_FullPath = SHADER_DIR / fragmentPath;
 
-	std::string vertexCode = ReadFile(vertexPath);  //Recuperation du vertexShader
+
+	std::string vertexCode = ReadFile(vertex_FullPath.string().c_str());  //Recuperation du vertexShader
 	const char* vShaderCode = vertexCode.c_str();
 
-	std::string fragmentCode = ReadFile(fragmentPath);  //Recuperation du fragmentShader 
+	std::string fragmentCode = ReadFile(fragment_FullPath.string().c_str());  //Recuperation du fragmentShader 
 	const char* fShaderCode = fragmentCode.c_str();
 
 	unsigned int shaderVertex = glCreateShader(GL_VERTEX_SHADER);  // Création du vertex shader
@@ -35,8 +38,8 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 	if (!success) {
 		glGetProgramInfoLog(shaderID, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::PROG::CREATION_FAILED\n" << infoLog << std::endl;
-		std::cout << "VertexPath :" << vertexPath << std::endl;
-		std::cout << "FragPath :" << fragmentPath << std::endl;
+		std::cout << "VertexPath :" << vertex_FullPath.string() << std::endl;
+		std::cout << "FragPath :" << fragment_FullPath.string() << std::endl;
 		throw  std::invalid_argument("ShaderProg");
 	}
 
@@ -45,14 +48,17 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 }
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath) {
+	std::filesystem::path vertex_FullPath = SHADER_DIR / vertexPath;
+	std::filesystem::path fragment_FullPath = SHADER_DIR / fragmentPath;
+	std::filesystem::path geometry_FullPath = SHADER_DIR / geometryPath;
 
-	std::string vertexCode = ReadFile(vertexPath); 
+	std::string vertexCode = ReadFile(vertex_FullPath.string().c_str());
 	const char* vShaderCode = vertexCode.c_str();
 
-	std::string fragmentCode = ReadFile(fragmentPath);  
+	std::string fragmentCode = ReadFile(fragment_FullPath.string().c_str());
 	const char* fShaderCode = fragmentCode.c_str();
 
-	std::string geometryCode = ReadFile(geometryPath);  
+	std::string geometryCode = ReadFile(geometry_FullPath.string().c_str());
 	const char* gShaderCode = geometryCode.c_str();
 
 	unsigned int shaderVertex = glCreateShader(GL_VERTEX_SHADER);  
@@ -87,9 +93,9 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geo
 	if (!success) {
 		glGetProgramInfoLog(shaderID, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::PROG::CREATION_FAILED\n" << infoLog << std::endl;
-		std::cout << "VertexPath :" << vertexPath << std::endl;
-		std::cout << "FragPath :" << fragmentPath << std::endl;
-		std::cout << "GeometryPath :" << geometryPath << std::endl;
+		std::cout << "VertexPath :" << vertex_FullPath.string() << std::endl;
+		std::cout << "FragPath :" << fragment_FullPath.string() << std::endl;
+		std::cout << "GeometryPath :" << geometry_FullPath.string() << std::endl;
 		throw std::invalid_argument("ShaderProg");
 	}
 

@@ -8,6 +8,7 @@
 
 #include "Render/Shader.h"
 #include "ECS/Components/ComponentBase.h"
+#include "Render/RenderObject.h"
 
 struct AABB {
 	AABB() { min = glm::vec3(0);  max = glm::vec3(0);};
@@ -22,41 +23,23 @@ public:
 };
 
 namespace Engine::Component {
-	enum LightTag {
-		None,
-		Directional_Tag,
-		PointLight_Tag,
-		SpotLight_Tag
-	};
-
-	struct LightToInitTag : public Component {
-		LightToInitTag() {};
-		LightToInitTag(LightTag tag) { this->tag = tag; }
-		LightTag tag = LightTag::None;
-	};
-
 	struct Light : Component {
 	public:
 		~Light() = default;
-		Light(Shader* newDepthShader) { this->depthShader = newDepthShader; }
+		Light() = default;
 		Light(glm::vec3 color, float intensity);
 
 		glm::vec3 color = glm::vec3(1.0f);
 		float intensity = 150.0f;
-		unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
-		Shader* depthShader = nullptr;
-
-
+		Engine::Render::ShadowCaster shadowCaster;
 	};
 
 	struct DirLight : public Light {
 		using Light::Light;
 		~DirLight() = default;
 		DirLight() = default;
-		DirLight(glm::vec3 color, float intensity, glm::vec3 direction, Shader* _depthShader);
+		DirLight(glm::vec3 color, float intensity, glm::vec3 direction, Engine::Render::Shadow_Quality quality = Engine::Render::Shadow_Quality::VeryHight);
 		glm::vec3 direction = glm::vec3(0.0f, -0.80f, 0.0f);
-		unsigned int depthMap = 0;
-		unsigned int depthMapFBO = 0;
 
 		//Shadow purpose
 		float near_plane = 0.1f, far_plane = 100.0f;
@@ -73,6 +56,7 @@ namespace Engine::Component {
 			f("Color:", color);
 			f("Intensity:", intensity);
 			f("Direction:", direction);
+			f("Cast Shadow", shadowCaster.castShadow);
 		}
 
 		glm::mat4 UpdateMatrix(const glm::mat4 viewMatrice, const glm::mat4 projectionCamera);
@@ -90,11 +74,9 @@ namespace Engine::Component {
 	public:
 		using Light::Light;
 		~PointLight() = default;
-		PointLight(glm::vec3 color, float intensity, float _range, Shader* depthShaderCubeMap);
+		PointLight() = default;
+		PointLight(glm::vec3 color, float intensity, float _range, Engine::Render::Shadow_Quality shadowQuality = Engine::Render::Shadow_Quality::Hight);
 		float range = 5.0f;
-
-		unsigned int depthCubeMapFBO = 0;
-		unsigned int depthCubeMap = 0;
 
 		//Shadow purpose
 		float aspect = 1.0f;
@@ -106,6 +88,7 @@ namespace Engine::Component {
 			f("Color:", color);
 			f("Intensity:", intensity);
 			f("Range:", range);
+			f("Cast Shadow", shadowCaster.castShadow);
 		}
 	};
 
@@ -113,7 +96,8 @@ namespace Engine::Component {
 	public:
 		using Light::Light;
 		~SpotLight() = default;
-		SpotLight(glm::vec3 color, float intensity, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Shader* depthShaderSpotMap);
+		SpotLight() = default;
+		SpotLight(glm::vec3 color, float intensity, glm::vec3 _direction, float _cutOff, float _outercutOff, float range, Engine::Render::Shadow_Quality shadowQuality = Engine::Render::Shadow_Quality::Hight);
 		float range = 1.0f;
 
 		glm::vec3 direction = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -127,10 +111,8 @@ namespace Engine::Component {
 		{
 			f("Color:", color);
 			f("Intensity:", intensity);
+			f("Cast Shadow", shadowCaster.castShadow);
 		}
-
-		unsigned int depthMapFBO = 0;
-		unsigned int depthMap = 0;
 
 		glm::mat4 lightSpaceMatrix = glm::mat4(1.0f);
 	};

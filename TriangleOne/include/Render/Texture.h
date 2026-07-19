@@ -6,6 +6,7 @@
 #include <assimp/scene.h>
 
 #include "stbImage/stb_image.h"
+#include "PathFolder.h"
 
 
 class TextureClass {

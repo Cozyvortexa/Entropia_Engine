@@ -226,8 +226,11 @@ void Systems::RenderSystem::InitGBuffer(Resource::RenderResource* renderData) {
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, renderData->gBuffer.gDepth, 0);
 
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		std::cout << "The intermediate FBO initialisation has failed" << std::endl;
+		throw;
+	}
+
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -345,8 +348,13 @@ void Systems::RenderSystem::RenderScene(World& world, const Resource::ResourceBu
 
 	View view = world.view<Component::MeshHandle, Component::Transform>();
 	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::Transform& transform) {
-		if (meshHandle.index != -1 && meshHandle.haveToBeDraw) {
-			world.renderer->OrderDraw(meshHandle, transform.GetTransformModel());
+		if (meshHandle.index != -1) {
+			if (meshHandle.haveToBeDraw) {
+				world.renderer->OrderDraw(meshHandle, transform.GetTransformModel());
+			}
+			if (meshHandle.castShadow) {
+				world.renderer->OrderShadowDraw(meshHandle, transform.GetTransformModel());
+			}
 		}
 	});
 	Shader* mainShader = &world.assetStore->Get_Material(0)->shader;
@@ -355,6 +363,7 @@ void Systems::RenderSystem::RenderScene(World& world, const Resource::ResourceBu
 	mainShader->setMatrix("view", mainCamera->viewMatrice);
 	mainShader->setMatrix("projection", resourceBuffer->renderResource->projection);
 	world.renderer->ExecuteRenderCommands();
+	world.renderer->ClearOrderList();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -371,13 +380,13 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	Shader::CreateNeutralNormalText();
 
 	//Main mat
-	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "TriangleOne/Shader/Geometry_Pass/Vertex_GeometryPass.glsl", "TriangleOne/Shader/Geometry_Pass/Fragment_GeometryPass.glsl");
+	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "Geometry_Pass/Vertex_GeometryPass.glsl", "Geometry_Pass/Fragment_GeometryPass.glsl");
 	defaultMat.first.diffuse_Text_Handle = Shader::GetDefaultText();
 	defaultMat.first.normal_Text_Handle = Shader::GetNeutralNormalText();
 	renderData->mainMaterialHandle = defaultMat.second;
 
 	//Main Instanced mat
-	std::pair<Material&, int> default_Instanced_Mat = world.assetStore->CreateMaterial("Instanced_Default_Material", "TriangleOne/Shader/Geometry_Pass/Vertex_Instanced_GeometryPass.glsl", "TriangleOne/Shader/Geometry_Pass/Fragment_GeometryPass.glsl");
+	std::pair<Material&, int> default_Instanced_Mat = world.assetStore->CreateMaterial("Instanced_Default_Material", "Geometry_Pass/Vertex_Instanced_GeometryPass.glsl", "Geometry_Pass/Fragment_GeometryPass.glsl");
 	default_Instanced_Mat.first.diffuse_Text_Handle = Shader::GetDefaultText();
 	default_Instanced_Mat.first.normal_Text_Handle = Shader::GetNeutralNormalText();
 	renderData->main_Instanced_Material_Handle = default_Instanced_Mat.second;
@@ -386,21 +395,34 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	renderData->dummyDepthMap2D = shadowDummy.first;
 	renderData->dummyDepthCubeMap = shadowDummy.second;
 
-	renderData->r_Shader.depthShader = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/DepthMapVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/DepthMapFrag.glsl");
-	renderData->r_Shader.depthShaderCubeMap = std::make_unique<Shader>("TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeVertex.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeFrag.glsl", "TriangleOne/Shader/LightShader/ShadowMapping/ShadowCubeGeometry.glsl");
-	renderData->r_Shader.postProcessShader = std::make_unique<Shader>("TriangleOne/Shader/PostProcessShader/PostProcessVertex.glsl", "TriangleOne/Shader/PostProcessShader/PostProcessFrag.glsl");
-	renderData->r_Shader.bloomShader = std::make_unique<Shader>("TriangleOne/Shader/BloomShader/VertexBloom.glsl", "TriangleOne/Shader/BloomShader/FragmentBloom.glsl");
-	renderData->r_Shader.lightningPass_Shader = std::make_unique<Shader>("TriangleOne/Shader/Lighting_Pass/Vertex_LightningPass_Shader.glsl", "TriangleOne/Shader/Lighting_Pass/Fragment_LightningPass_Shader.glsl");
-	renderData->r_Shader.ssaoPass_Shader = std::make_unique<Shader>("TriangleOne/Shader/SSAO_Pass/Vertex_SSAO_Shader.glsl", "TriangleOne/Shader/SSAO_Pass/Fragment_SSAO_Shader.glsl");
-	renderData->r_Shader.ssaoPass_Blur_Shader = std::make_unique<Shader>("TriangleOne/Shader/SSAO_Pass/Vertex_SSAO_Shader.glsl", "TriangleOne/Shader/SSAO_Pass/Fragment_Blur_SSAO_Shader.glsl");
-	renderData->r_Shader.equirectangular_To_CubemapShader = std::make_unique<Shader>("TriangleOne/Shader/IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "TriangleOne/Shader/IBLshader/Fragment_Equirectangular_to_Cubemap.glsl");
-	renderData->r_Shader.skyBox_Shader = std::make_unique<Shader>("TriangleOne/Shader/MiscShader/SkyBoxVertex.glsl", "TriangleOne/Shader/MiscShader/SkyBoxFrag.glsl");
-	renderData->r_Shader.irradiance_Shader = std::make_unique<Shader>("TriangleOne/Shader/IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "TriangleOne/Shader/IBLshader/Irradiance/Fragment_Irradiance_Convulation.glsl");
-	renderData->r_Shader.prefilter_Shader = std::make_unique<Shader>("TriangleOne/Shader/IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "TriangleOne/Shader/IBLshader/SpecularIBL/Fragment_Prefilter.glsl");
-	renderData->r_Shader.brdf_Shader = std::make_unique<Shader>("TriangleOne/Shader/BRDF/Vertex_brdf.glsl", "TriangleOne/Shader/BRDF/Fragment_brdf.glsl");
-	renderData->r_Shader.axisShader = std::make_unique<Shader>("TriangleOne/Shader/MiscShader/AxisShader/AxisVertex.glsl", "TriangleOne/Shader/MiscShader/AxisShader/AxisFrag.glsl");
+	//DirLight shader
+	renderData->r_Shader.depthShader = std::make_unique<Shader>("LightShader/ShadowMapping/DirLight/Vertex_DepthMap.glsl", "LightShader/ShadowMapping/DirLight/Fragment_DepthMap.glsl");
+	//Spotlight shader
+	renderData->r_Shader.depthShader_SpotLight = std::make_unique<Shader>("LightShader/ShadowMapping/SpotLight/Vertex_S_DepthMap.glsl", "LightShader/ShadowMapping/SpotLight/Fragment_S_DepthMap.glsl");
+	//PointLight shader
+	renderData->r_Shader.depthShaderCubeMap = std::make_unique<Shader>("LightShader/ShadowMapping/PointLight/Vertex_ShadowCube.glsl", "LightShader/ShadowMapping/PointLight/Fragment_ShadowCube.glsl");
+	//PostProcess shader
+	renderData->r_Shader.postProcessShader = std::make_unique<Shader>("PostProcessShader/PostProcessVertex.glsl", "PostProcessShader/PostProcessFrag.glsl");
+	//Bloom shader
+	renderData->r_Shader.bloomShader = std::make_unique<Shader>("BloomShader/Vertex_Bloom.glsl", "BloomShader/Fragment_Bloom.glsl");
+	//Lightning shader (main pass)
+	renderData->r_Shader.lightningPass_Shader = std::make_unique<Shader>("Lighting_Pass/Vertex_LightningPass_Shader.glsl", "Lighting_Pass/Fragment_LightningPass_Shader.glsl");
+	//SSAO shader
+	renderData->r_Shader.ssaoPass_Shader = std::make_unique<Shader>("SSAO_Pass/Vertex_SSAO_Shader.glsl", "SSAO_Pass/Fragment_SSAO_Shader.glsl");
+	//Blur shader
+	renderData->r_Shader.ssaoPass_Blur_Shader = std::make_unique<Shader>("SSAO_Pass/Vertex_SSAO_Shader.glsl", "SSAO_Pass/Fragment_Blur_SSAO_Shader.glsl");
+	//Equirectangular texture To Cubemap shader
+	renderData->r_Shader.equirectangular_To_CubemapShader = std::make_unique<Shader>("IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "IBLshader/Fragment_Equirectangular_to_Cubemap.glsl");
+	//Skybox shader
+	renderData->r_Shader.skyBox_Shader = std::make_unique<Shader>("MiscShader/SkyBoxVertex.glsl", "MiscShader/SkyBoxFrag.glsl");
+	//Bidirectional reflectance distribution function shader
+	renderData->r_Shader.irradiance_Shader = std::make_unique<Shader>("IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "IBLshader/Irradiance/Fragment_Irradiance_Convulation.glsl");
+	renderData->r_Shader.prefilter_Shader = std::make_unique<Shader>("IBLshader/Vertex_Equirectangular_to_Cubemap.glsl", "IBLshader/SpecularIBL/Fragment_Prefilter.glsl");
+	renderData->r_Shader.brdf_Shader = std::make_unique<Shader>("BRDF/Vertex_brdf.glsl", "BRDF/Fragment_brdf.glsl");
+	//Axis shader
+	renderData->r_Shader.axisShader = std::make_unique<Shader>("MiscShader/AxisShader/AxisVertex.glsl", "MiscShader/AxisShader/AxisFrag.glsl");
 
-	//Create the main cam  // TEMP / WARNING
+	//Create the main cam
 	Entity camEntity = world.Register();
 	Component::CameraComponent cameraComponent(windowData->WIDTH, windowData->HEIGHT);
 	Component::Transform transform(glm::vec3(0, 5, 10));
@@ -410,8 +432,8 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	world.get_ressource<Resource::ActiveCamera>()->cameraID = camEntity;
 
 	Entity model = world.Register();
-	Component::Transform modelTransform(glm::vec3(-2,-1,0)); // ("Assets/main_sponza/main_sponza/NewSponza_Main_glTF_003.gltf");
-	std::pair<Mesh&, int> value = world.assetStore->Get_Mesh("Assets/ImpScene/autumn_house.glb");
+	Component::Transform modelTransform(glm::vec3(-2,-1,0)); // ("main_sponza/main_sponza/NewSponza_Main_glTF_003.gltf");
+	std::pair<Mesh&, int> value = world.assetStore->Get_Mesh("ImpScene/autumn_house.glb");
 	Component::MeshHandle meshHandle(value.second);
 	Component::SceneTag mesh_scene_Tag("Maison");
 	//Component::ConvexShape meshCollider(modelTransform.position, value.first.Get_VerticesPosition());
@@ -432,34 +454,31 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	float outerCutOff = 15.5f;
 
 	Entity dirLight_E = world.Register();
-	Component::DirLight dirLight(color, intensity, worldLightDir, renderData->r_Shader.depthShader.get());
+	Component::DirLight dirLight(color, intensity, worldLightDir);
 
-	Component::LightToInitTag tag(Component::LightTag::Directional_Tag);
 	Component::Transform lightTransform(glm::vec3(0.0f, 4.0f, -6.0f));
 	Component::SceneTag dir_scene_Tag("Dir Light");
 
-	world.add_components(dirLight_E, dir_scene_Tag, transform, dirLight, tag);
+	world.add_components(dirLight_E, dir_scene_Tag, transform, dirLight);
 
 	/////////////////////////////////////
 
 	Entity spotLightEntity = world.Register();
 	Component::Transform spotTransform(glm::vec3(0.0f, 4.0f, -6.0f));
-	Component::SpotLight spotLight(color, 10000.0f, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f, renderData->r_Shader.depthShader.get());
-	Component::LightToInitTag spotTag(Component::LightTag::SpotLight_Tag);
+	Component::SpotLight spotLight(color, 10000.0f, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f);
 	Component::SceneTag spotLight_scene_Tag("Spot Light");
 
-	world.add_components(spotLightEntity, spotLight_scene_Tag, spotTransform, spotLight, spotTag);
+	world.add_components(spotLightEntity, spotLight_scene_Tag, spotTransform, spotLight);
 
 
 	/////////////////////////////////////
 
 	Entity pointLightEntity = world.Register();
 	Component::Transform transformPointLight(glm::vec3(1.0f, 5.0f, 0.0f));
-	Component::PointLight pointLight(color, 800.0f, 8.0f, renderData->r_Shader.depthShaderCubeMap.get());
-	Component::LightToInitTag pointTag(Component::LightTag::PointLight_Tag);
+	Component::PointLight pointLight(color, 800.0f, 8.0f);
 	Component::SceneTag pointLight_scene_Tag("Point Light");
 
-	world.add_components(pointLightEntity, pointLight_scene_Tag, transformPointLight, pointLight, pointTag);
+	world.add_components(pointLightEntity, pointLight_scene_Tag, transformPointLight, pointLight);
 	/////////////////////////////////////
 
 

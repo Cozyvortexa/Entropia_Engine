@@ -19,6 +19,8 @@
 #include "ECS/Components/AudioComponent.h"
 #include "ECS/Components/PhysicComponent.h"
 
+#include "PathFolder.h"
+
 #include "Utilities/Font_awesome.h"
 #include "Utilities/EditorComponent.h"
 

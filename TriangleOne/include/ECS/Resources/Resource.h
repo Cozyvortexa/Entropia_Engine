@@ -12,8 +12,8 @@
 #include "Utilities/ImGui/imgui.h"
 
 #include "Physics/JoltRenderer.h"
+#include "Render/RenderObject.h"
 
-class All_Light;
 namespace Engine::Resource {
 
 	struct Resource {
@@ -44,6 +44,7 @@ namespace Engine::Resource {
 
 	struct R_Shader : public Resource {
 		std::unique_ptr<Shader> depthShader = nullptr;
+		std::unique_ptr<Shader> depthShader_SpotLight = nullptr;
 		std::unique_ptr<Shader> depthShaderCubeMap = nullptr;
 		std::unique_ptr<Shader> postProcessShader = nullptr;
 		std::unique_ptr<Shader> bloomShader = nullptr;
@@ -76,14 +77,14 @@ namespace Engine::Resource {
 
 		bool ssao_Enabled = true;
 		int kernelSample = 16;
-		float SSAO_radius = 0.2f;
+		float SSAO_radius = 1.0f;
 		std::vector<glm::vec3> ssaoKernel;
 	};
 
 
 	struct RenderResource : public Resource {
-		int renderWIDTH;
-		int renderHEIGHT;
+		int renderWIDTH = 1080;
+		int renderHEIGHT = 1920;
 		unsigned int mainMaterialHandle;
 		unsigned int main_Instanced_Material_Handle;
 
@@ -106,7 +107,7 @@ namespace Engine::Resource {
 		SSAO ssao;
 
 		//Light SSBO
-		All_Light* lights = nullptr;
+		All_Light lights;
 		std::vector<size_t> lightSSBO_Data_Size;
 		GLuint light_SSBO;
 
@@ -119,6 +120,7 @@ namespace Engine::Resource {
 		bool horizontal = true;
 
 		//Capture cubeMap / IBL
+		int skyboxResolution = 512;
 		unsigned int captureFBO;
 		unsigned int captureRBO;
 		unsigned int envCubemap;
@@ -151,6 +153,30 @@ namespace Engine::Resource {
 			 1.0f, -1.0f,     1.0f, 0.0f
 		};
 
+	};
+
+	struct ShadowResource : public Resource {
+		//Shadow Array
+		unsigned int point_Array[3];
+		unsigned int spot_Array[3];
+
+		//Shadow FBO
+		unsigned int point_FBO[3];
+		unsigned int spot_FBO[3];
+
+		//Shadow SSBO
+		uint32_t SSBO;
+		uint32_t Text_SSBO;
+		std::vector<size_t> SSBO_Data_Size;
+
+		//Bindless Array
+		uint64_t bindless_SpotArray[3];
+		uint64_t bindless_PointArray[3];
+
+		//Shadow unique DirLight
+		unsigned int dirLight_depthMapFBO = 0;
+		unsigned int dirLight_depthMap = 0;  // No bindless for the dir light
+		Engine::Render::Shadow_Quality dirLight_Current_Quality = Engine::Render::Shadow_Quality::Low;
 	};
 
 	enum RenderTarget {
@@ -256,5 +282,6 @@ namespace Engine::Resource {
 		InterfaceRessource* interfaceRessource;
 		AudioResource* audioResource;
 		PhysicsResource* physicsResource;
+		ShadowResource* shadowResource;
 	};
 }

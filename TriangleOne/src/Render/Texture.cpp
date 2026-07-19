@@ -138,7 +138,9 @@ unsigned int TextureClass::LoadEmbeddedTexture(const aiTexture* tex) {
 unsigned int TextureClass::LoadEquirectangularTex(std::string path) {
 	stbi_set_flip_vertically_on_load(true);
 	int width, height, nrComponents;
-	float* data = stbi_loadf(path.c_str(), &width, &height, &nrComponents, 0);
+
+	std::filesystem::path equirectangular_FullPath = ASSETS_DIR / path.c_str();
+	float* data = stbi_loadf(equirectangular_FullPath.string().c_str(), &width, &height, &nrComponents, 0);
 
 	unsigned int hdrTexture;
 	if (data) {

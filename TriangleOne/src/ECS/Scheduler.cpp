@@ -13,6 +13,7 @@ Scheduler::Scheduler(World* world, Engine::Systems::WindowSystem* window) {
 	world->add_ressource<Engine::Resource::InputResource>();
 	world->add_ressource<Engine::Resource::AudioResource>();
 	world->add_ressource<Engine::Resource::PhysicsResource>();
+	world->add_ressource<Engine::Resource::ShadowResource>();
 	FillResourceBuffer();
 	window->Init(*world, resourceBuffer.get()); // Separate system
 }
@@ -88,4 +89,5 @@ void Scheduler::FillResourceBuffer() {
 	resourceBuffer->interfaceRessource = world->get_ressource<Engine::Resource::InterfaceRessource>();
 	resourceBuffer->audioResource = world->get_ressource<Engine::Resource::AudioResource>();
 	resourceBuffer->physicsResource = world->get_ressource<Engine::Resource::PhysicsResource>();
+	resourceBuffer->shadowResource = world->get_ressource<Engine::Resource::ShadowResource>();
 }

@@ -24,7 +24,12 @@ unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType typ
 
 	std::string keyPath = str.C_Str();
 	// embedded path detected
-	if (keyPath.size() > 0 && keyPath[0] == '*') keyPath = path + str.C_Str();
+	if (keyPath.size() > 0 && keyPath[0] == '*') {
+		keyPath = path + str.C_Str();
+	}
+	else {
+		keyPath = (ASSETS_DIR / currentMesh.directory / keyPath).string();
+	}
 
 	auto result = pathToIndexMap_Texture.try_emplace(keyPath);
 	auto it = result.first;
@@ -70,19 +75,19 @@ unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType typ
 			glMakeTextureHandleResidentARB(texture.bindlessHandle);
 		}
 		else {
-			// --- MULTI-THREADING POUR LES TEXTURES SUR DISQUE ---
-			texture.bindlessHandle = 0; // Sera généré plus tard sur le thread principal !
+			// --- MULTI-THREADING FOR DISK-BASED TEXTURES ---
+			texture.bindlessHandle = 0; // Will be generate later on the main thread !
 
 			std::string filename = str.C_Str();
 			std::string dir = currentMesh.directory;
 
-			// On lance le chargement lourd en arrière-plan
+			// Launch the loading process in the background
 			m_PendingTextures.push_back(std::async(std::launch::async, [filename, dir, keyPath, type]() {
 				PendingTextureData pendingData;
 				pendingData.keyPath = keyPath;
 				pendingData.type = type;
 
-				std::string totalPath = dir + "/" + filename;
+				std::string totalPath = ASSETS_DIR.string() + "/" + dir + "/" + filename;
 
 				pendingData.data = stbi_load(totalPath.c_str(), &pendingData.width, &pendingData.height, &pendingData.nrChannels, 0);
 				return pendingData;
@@ -169,9 +174,11 @@ void AssetStore::CountMesh(std::unordered_map<unsigned int, std::vector<aiNode*>
 }
 
 Mesh AssetStore::LoadMesh(std::string path) {
+	std::filesystem::path mesh_FullPath = ASSETS_DIR / path.c_str();
+
 	Mesh mesh = Mesh();
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices |
+	const aiScene* scene = importer.ReadFile(mesh_FullPath.string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices |
 		aiProcess_CalcTangentSpace | aiProcess_GlobalScale | aiProcess_GenSmoothNormals |  aiProcess_FindInstances );
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -187,7 +194,7 @@ Mesh AssetStore::LoadMesh(std::string path) {
 
 	CountMesh(meshCounts, scene->mRootNode);
 
-	ProcessNode(scene->mRootNode, scene, mesh, path);
+	ProcessNode(scene->mRootNode, scene, mesh, mesh_FullPath.string());
 
 	//Last Step
 	for (auto& futureTexture : m_PendingTextures) {

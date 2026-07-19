@@ -156,7 +156,7 @@
     <ClCompile Include="src\Systems\InterfaceSystem.cpp" />
     <ClCompile Include="src\Systems\LightSystem.cpp" />
     <ClCompile Include="src\glad.c" />
-    <ClCompile Include="src\ECS\Components\Light.cpp" />
+    <ClCompile Include="src\ECS\Components\LightComponent.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Render\SubMesh.cpp" />
     <ClCompile Include="src\Systems\PhysicsSystem.cpp" />
@@ -177,6 +177,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Audio\AudioHelper.h" />
+    <ClInclude Include="include\PathFolder.h" />
     <ClInclude Include="include\ECS\Components\AudioComponent.h" />
     <ClInclude Include="include\Audio\AudioStruct.h" />
     <ClInclude Include="include\ECS\Components\BasicComponent.h" />
@@ -227,8 +228,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="include\Utilities\ImGui\imgui.natstepfilter" />
-    <None Include="Shader\BloomShader\FragmentBloom.glsl" />
-    <None Include="Shader\BloomShader\VertexBloom.glsl" />
+    <None Include="Shader\BloomShader\Fragment_Bloom.glsl" />
+    <None Include="Shader\BloomShader\Vertex_Bloom.glsl" />
     <None Include="Shader\BRDF\Fragment_brdf.glsl" />
     <None Include="Shader\BRDF\Vertex_brdf.glsl" />
     <None Include="Shader\Geometry_Pass\Vertex_Instanced_GeometryPass.glsl" />
@@ -244,19 +245,18 @@
     <None Include="Shader\Lighting_Pass\Vertex_LightningPass_Shader.glsl" />
     <None Include="Shader\Geometry_Pass\Fragment_GeometryPass.glsl" />
     <None Include="Shader\Geometry_Pass\Vertex_GeometryPass.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\DepthMapFrag.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\DepthMapVertex.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\DirLight\Fragment_DepthMap.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\DirLight\Vertex_DepthMap.glsl" />
     <None Include="Shader\LightShader\Light\LightFragShader.glsl" />
     <None Include="Shader\LightShader\Light\LightVertexShader.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\SpotLight\Fragment_S_DepthMap.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\SpotLight\Vertex_S_DepthMap.glsl" />
     <None Include="Shader\MiscShader\AxisShader\AxisFrag.glsl" />
     <None Include="Shader\MiscShader\AxisShader\AxisVertex.glsl" />
     <None Include="Shader\PostProcessShader\PostProcessFrag.glsl" />
     <None Include="Shader\PostProcessShader\PostProcessVertex.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\ShadowCubeFrag.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\ShadowCubeGeometry.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\ShadowCubeVertex.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\ShadowFrag.glsl" />
-    <None Include="Shader\LightShader\ShadowMapping\ShadowVertex.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\PointLight\Fragment_ShadowCube.glsl" />
+    <None Include="Shader\LightShader\ShadowMapping\PointLight\Vertex_ShadowCube.glsl" />
     <None Include="Shader\MiscShader\SkyBoxFrag.glsl" />
     <None Include="Shader\MiscShader\SkyBoxVertex.glsl" />
     <None Include="Shader\SSAO_Pass\Fragment_Blur_SSAO_Shader.glsl" />

@@ -9,59 +9,18 @@
 #include <tuple>
 #include <iostream>
 #include <vector>
+#include <array>
 
 #include "Render/Renderer.h"
-
+#include "Render/RenderObject.h"
 #include "Render/Binding_Points.h"
 
 #define MAX_POINT_LIGHT 8
 #define MAX_SPOT_LIGHT 8
 
-#pragma region Padding_Structures
-struct Padding_DirLight {  // To be identical to the memory alignment of structs in the shaders, SSBO
-	alignas(16) glm::vec3 direction;
-	alignas(16) glm::vec3 color;
-};
-struct Padding_PointLight {
-	alignas(16) glm::vec3 position;
-	alignas(16) glm::vec3 color;
-	float range = 0.0f;
-};
-struct Padding_SpotLight {
-	alignas(16) glm::vec3 position;
-	alignas(16) glm::vec3 direction;
-	alignas(16) glm::vec3 color;
-	float cutOff;
-	float outerCutOff;
-	float range;
-	float padding;
-};
-struct All_Light {
-	Padding_DirLight dirLight; // Only one DirLight
-	std::vector<Padding_PointLight> pointLights;
-	std::vector<Padding_SpotLight> spotLights;
+#define MAX_SHADOW_CASTER_POINT_LIGHT 4
+#define MAX_SHADOW_CASTER_SPOT_LIGHT 8
 
-	/////////// --- Shadow --- ///////////
-	//Directional light
-	unsigned int dirLight_DepthMap = 0;
-	unsigned int dirLight_DepthMapFBO = 0;
-	std::pair<unsigned int, unsigned int> dirLight_Shadow_Size;
-
-	//Point lights
-	std::vector<unsigned int> pointLights_DepthMap;
-	std::vector<unsigned int> pointLights_DepthMapFBO;
-	std::vector<std::pair<unsigned int, unsigned int>> pointLights_Shadow_Size;
-
-	//Spot lights
-	std::vector<unsigned int> spotLights_DepthMap;
-	std::vector<unsigned int> spotLights_DepthMapFBO;
-	std::vector<std::pair<unsigned int, unsigned int>> spotLights_Shadow_Size;
-
-	/////////// --- Matrices --- /////////// 
-	glm::mat4 dirLight_Matrice = glm::mat4(1.0f);
-	std::vector <glm::mat4> spotLight_Matrice;
-};
-#pragma endregion
 
 namespace Engine::Systems {
 	class LightSystem : public System {
@@ -90,27 +49,31 @@ namespace Engine::Systems {
 
 #pragma endregion
 
-#pragma region Init shadow buffer 
-		void InitShadowMap(Engine::Component::DirLight* currentLight);
-		void InitCubeMap(Engine::Component::PointLight* currentLight);
-		void InitSpotShadowMap(Engine::Component::SpotLight* currentLight);
-		void InitShadowBuffer(World& world);
+#pragma region Init shadow 
+		//SSBO
+		void InitShadowSSBO(World& world, const Resource::ResourceBuffer* resourceBuffer);
+		void InitShadowText_SSBO(World& world, const Resource::ResourceBuffer* resourceBuffer);
 
+		void InitShadowArray(World& world, const Resource::ResourceBuffer* resourceBuffer);
+		void InitShadowFBO(World& world, const Resource::ResourceBuffer* resourceBuffer);
+
+		//Dir Light
+		void InitDirLightFBO(World& world, const Resource::ResourceBuffer* resourceBuffer);
 #pragma endregion
 
 #pragma region Shadow
-		void DrawShadowForDirLight(World* world, Engine::Resource::RenderResource& renderResource, All_Light& currentLight);
-		void DrawShadowForPointLight(World* world, Engine::Resource::RenderResource& renderResource, All_Light& lights, int index);
-		void DrawShadowForSpotLight(World* world, Engine::Resource::RenderResource& renderResource, All_Light& lights, int index);
-		void ShadowPass(World* world, Engine::Resource::RenderResource* renderResource, All_Light* lights);
+
+		void UpdateShadow(World* world, const Resource::ResourceBuffer* resourceBuffer);
+		void ClearShadowsMap(World* world, const Resource::ResourceBuffer* resourceBuffer);
+		void DrawShadow(World* world, const Resource::ResourceBuffer* resourceBuffer);
+		void ShadowPass(World* world, const Resource::ResourceBuffer* resourceBuffer);
+
 #pragma endregion
 
 	private:
-		All_Light* DataCollector(World* world, Engine::Component::CameraComponent* mainCamera, Engine::Resource::RenderResource* renderRessource);
+		void LightCollector(World* world, Engine::Component::CameraComponent* mainCamera, Engine::Resource::RenderResource* renderData);
 
-		void UpdateLight(World* world, Engine::Resource::RenderResource* renderResource, All_Light& lights);
-
-		void SendDepthMapToLightningShader(World* world, const Engine::Resource::RenderResource* renderResource, const Engine::Resource::ResourceBuffer* resourceBuffer, All_Light* lights);
+		void UpdateLight(World* world, Engine::Resource::RenderResource* renderResource);
 
 		glm::vec3 Calc_SpotLightDirection(glm::mat4 transformModel, glm::vec3 lightDirection);
 	};
