@@ -13,16 +13,10 @@
 using SubMeshStorage = std::variant<OpenGL_SubMesh>;
 
 struct InstanceGroup { 
-	InstanceGroup() {
-		glGenBuffers(1, &instanceMatrixVBO);
-	}
-	//~InstanceGroup() {
-	//	glDeleteBuffers(1, &instanceMatrixVBO);
-	//}
+	InstanceGroup() = default;
 
 	unsigned int subMesh = 0;
 	std::vector<glm::mat4> instancedMatrix;
-	unsigned int instanceMatrixVBO = 0;
 };
 
 class Mesh {
@@ -57,29 +51,23 @@ public:
 		}
 	}
 
-	//std::vector<glm::vec3> Get_VerticesPosition() {
-	//	Engine::Render::RendererAPI::API graphicAPI = Engine::Render::RendererAPI::GetAPI();
+	std::pair<std::vector<glm::vec3>, std::vector<unsigned int>> Get_VerticesAndIndices() {
+		std::vector<glm::vec3> vertices;
+		std::vector<unsigned int> indices;
 
-	//	std::vector<glm::vec3> points;
+		for (const SubMeshStorage& current_SubMesh : subMeshs) {
+			std::visit([&vertices, &indices](auto& mesh) {
+				const SubMesh& subMesh = static_cast<const SubMesh&>(mesh);
+				unsigned int baseIndex = static_cast<unsigned int>(vertices.size());
 
-	//	if (graphicAPI == Engine::Render::RendererAPI::API::None) {
-	//		std::cout << "RendererAPI is set on None" << std::endl;
-	//		abort();
-	//	}
-	//	else if (graphicAPI == Engine::Render::RendererAPI::API::Vulkan) {
-	//		std::cout << "RendererAPI is set on None" << std::endl;
-	//		abort();
-	//	}
-	//	else if (graphicAPI == Engine::Render::RendererAPI::API::OpenGL) {
-	//		for (const SubMeshStorage& current_SubMesh : subMeshs) {
-	//			std::visit([&points](auto& mesh) {
-	//				const SubMesh& subMesh = static_cast<const SubMesh&>(mesh);
-	//				for (const auto& vertex : subMesh.vertices) {
-	//					points.push_back(vertex.Position);
-	//				}
-	//			}, current_SubMesh);
-	//		}
-	//	}
-	//	return points;
-	//}
+				for (const auto& vertex : subMesh.vertices)
+					vertices.push_back(vertex.Position);
+
+				for (unsigned int idx : subMesh.indices)
+					indices.push_back(baseIndex + idx);
+
+				}, current_SubMesh);
+		}
+		return std::make_pair(vertices, indices);
+	}
 };

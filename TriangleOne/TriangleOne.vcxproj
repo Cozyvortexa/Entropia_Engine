@@ -114,7 +114,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Debug/glfw3.lib;opengl32.lib;user32.lib;gdi32.lib;shell32.lib;Debug/jolt.lib;assimp-vc143-mtd.lib</AdditionalDependencies>
+      <AdditionalDependencies>Debug/glfw3.lib;opengl32.lib;user32.lib;gdi32.lib;shell32.lib;Debug/jolt.lib;assimp-vc143-mtd.lib;Debug/coacd.lib;Debug/tbb12_debug.lib;Debug/spdlogd.lib;Debug/libopenvdb.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -136,7 +136,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Release/glfw3.lib;user32.lib;gdi32.lib;shell32.lib;Release/jolt.lib;assimp-vc143-mt.lib</AdditionalDependencies>
+      <AdditionalDependencies>Release/glfw3.lib;user32.lib;gdi32.lib;shell32.lib;Release/jolt.lib;assimp-vc143-mt.lib;Release/coacd.lib;Release/tbb12.lib;Release/spdlog.lib;Release/libopenvdb.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -211,6 +211,38 @@
     <ClInclude Include="include\Systems\TimeSystem.hpp" />
     <ClInclude Include="include\Systems\windowSystem.h" />
     <ClInclude Include="include\ECS\World.h" />
+    <ClInclude Include="include\Utilities\CoACD\btConvexHull\btAlignedAllocator.h" />
+    <ClInclude Include="include\Utilities\CoACD\btConvexHull\btAlignedObjectArray.h" />
+    <ClInclude Include="include\Utilities\CoACD\btConvexHull\btConvexHullComputer.h" />
+    <ClInclude Include="include\Utilities\CoACD\btConvexHull\btMinMax.h" />
+    <ClInclude Include="include\Utilities\CoACD\btConvexHull\btScalar.h" />
+    <ClInclude Include="include\Utilities\CoACD\btConvexHull\btVector3.h" />
+    <ClInclude Include="include\Utilities\CoACD\bvh.h" />
+    <ClInclude Include="include\Utilities\CoACD\clip.h" />
+    <ClInclude Include="include\Utilities\CoACD\config.h" />
+    <ClInclude Include="include\Utilities\CoACD\cost.h" />
+    <ClInclude Include="include\Utilities\CoACD\hausdorff.h" />
+    <ClInclude Include="include\Utilities\CoACD\intersection.h" />
+    <ClInclude Include="include\Utilities\CoACD\io.h" />
+    <ClInclude Include="include\Utilities\CoACD\logger.h" />
+    <ClInclude Include="include\Utilities\CoACD\mcts.h" />
+    <ClInclude Include="include\Utilities\CoACD\model_obj.h" />
+    <ClInclude Include="include\Utilities\CoACD\nanoflann.hpp" />
+    <ClInclude Include="include\Utilities\CoACD\preprocess.h" />
+    <ClInclude Include="include\Utilities\CoACD\process.h" />
+    <ClInclude Include="include\Utilities\CoACD\public\coacd.h" />
+    <ClInclude Include="include\Utilities\CoACD\quickhull\ConvexHull.hpp" />
+    <ClInclude Include="include\Utilities\CoACD\quickhull\HalfEdgeMesh.hpp" />
+    <ClInclude Include="include\Utilities\CoACD\quickhull\MathUtils.hpp" />
+    <ClInclude Include="include\Utilities\CoACD\quickhull\QuickHull.hpp" />
+    <ClInclude Include="include\Utilities\CoACD\quickhull\Structs\Mesh.hpp" />
+    <ClInclude Include="include\Utilities\CoACD\quickhull\Structs\Plane.hpp" />
+    <ClInclude Include="include\Utilities\CoACD\quickhull\Structs\Pool.hpp" />
+    <ClInclude Include="include\Utilities\CoACD\quickhull\Structs\Ray.hpp" />
+    <ClInclude Include="include\Utilities\CoACD\quickhull\Structs\Vector3.hpp" />
+    <ClInclude Include="include\Utilities\CoACD\quickhull\Structs\VertexDataSource.hpp" />
+    <ClInclude Include="include\Utilities\CoACD\shape.h" />
+    <ClInclude Include="include\Utilities\CoACD\sobol.h" />
     <ClInclude Include="include\Utilities\EditorComponent.h" />
     <ClInclude Include="include\Utilities\Font_awesome.h" />
     <ClInclude Include="include\Utilities\ImGui\backends\imgui_impl_glfw.h" />
