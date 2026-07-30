@@ -76,8 +76,8 @@ namespace Engine::Resource {
 		unsigned int ssao_NoiseText;
 
 		bool ssao_Enabled = true;
-		int kernelSample = 16;
-		float SSAO_radius = 1.0f;
+		int kernelSample = 8;
+		float SSAO_radius = 0.5f;
 		std::vector<glm::vec3> ssaoKernel;
 	};
 
@@ -139,7 +139,7 @@ namespace Engine::Resource {
 		float exposure = 0.5f; // HDR exposure
 
 		//Bloom
-		bool bloomEnable = false;
+		bool bloomEnable = true;
 		int bloom_iteration = 10;
 
 		float quadVertices[24] = {
@@ -203,6 +203,7 @@ namespace Engine::Resource {
 	struct Node {
 		std::string name;
 		std::string path;
+		std::string relativePath;
 		FileType type;
 
 		Node* parent = nullptr;

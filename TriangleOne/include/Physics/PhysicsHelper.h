@@ -7,6 +7,8 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Render/Mesh.h"
+
 namespace Engine::Component {
     class PhysicObject;
 }
@@ -40,6 +42,11 @@ namespace Engine::Physics {
         static JPH::BodyID CreateSphere(const glm::vec3 position, float radius, const JPH::Quat quaternion, JPH::EMotionType motionType);
 
         static JPH::BodyID CreateConvexShape(const JPH::Array<JPH::Vec3>& vertices_Position, glm::vec3 position, JPH::Quat quaternion, JPH::EMotionType motionType, JPH::ObjectLayer layers);
+
+        static JPH::BodyID CreateCompoundConvexShape(
+            const std::vector<JPH::Array<JPH::Vec3>>& hullsVertices, 
+            glm::vec3 position, JPH::Quat quaternion,
+            JPH::EMotionType motionType, JPH::ObjectLayer layers);
 
     #pragma endregion
 

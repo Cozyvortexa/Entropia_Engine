@@ -2,6 +2,10 @@
 
 #include "ECS/Components/PhysicComponent.h"
 
+#include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
+#include <Utilities/CoACD/public/coacd.h>
+
+
 namespace Physics = Engine::Physics;
 
 
@@ -317,4 +321,26 @@ void Physics::PhysicsHelper::DrawShape(const Engine::Component::PhysicObject& ph
             shape->Draw(debugRenderer, center, JPH::Vec3::sReplicate(1.0f), debugColor, false, true );
         }
     }
+}
+
+
+JPH::BodyID Physics::PhysicsHelper::CreateCompoundConvexShape(
+    const std::vector<JPH::Array<JPH::Vec3>>& hullsVertices, glm::vec3 position, JPH::Quat quaternion = JPH::Quat::sIdentity(),
+    JPH::EMotionType motionType = JPH::EMotionType::Static, JPH::ObjectLayer layers = Layers::MOVING){
+
+    JPH::Ref<JPH::StaticCompoundShapeSettings> compoundSettings = new JPH::StaticCompoundShapeSettings();
+
+    for (const JPH::Array<JPH::Vec3>& hullVertices : hullsVertices) {
+        JPH::ConvexHullShapeSettings hullSettings(hullVertices);
+        // Chaque hull est déjà positionné correctement les uns par rapport aux autres
+        // (coordonnées relatives issues de la décomposition) -> offset local nul
+        //compoundSettings->AddShape(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), hullSettings);
+    }
+
+    JPH::ShapeRefC shape = compoundSettings->Create().Get();
+    JPH::BodyCreationSettings settings(shape, To_Rvec3_JPH(position), quaternion, motionType, layers);
+    if (motionType == JPH::EMotionType::Dynamic || motionType == JPH::EMotionType::Kinematic)
+        settings.mAllowDynamicOrKinematic = true;
+
+    return body_interface->CreateBody(settings)->GetID();
 }

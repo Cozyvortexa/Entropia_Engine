@@ -15,14 +15,17 @@
 
 #include <variant>
 
-static struct MeshCorrespondence {
-    uint32_t meshIndex = 0;
-
+static struct SubMeshCorrespondence {
     size_t vertexStart;
     size_t vertexCount;
 
     size_t indexStart;
     size_t indexCount;
+};
+
+static struct MeshCorrespondence {
+    std::weak_ptr<Mesh> meshPtr;
+    std::vector<SubMeshCorrespondence> subMesh_Correspondence;
 };
 
 struct DrawElementsIndirectCommand {
@@ -91,7 +94,8 @@ public:
 
     virtual void ResizeFrameBufferText(Engine::Resource::RenderResource* renderData) = 0;
 
-    virtual void AddMeshToRender(Engine::Component::MeshHandle newMesh) = 0;
+    // If the object is not found in the global vertex list, add it
+    virtual MeshCorrespondence* AddMeshToRender(Engine::Component::MeshHandle newMesh) = 0;
 
     virtual void OrderDraw(Engine::Component::MeshHandle meshHandle, glm::mat4 modelMatrix) = 0;
 
@@ -152,11 +156,11 @@ public:
     const size_t MAX_INSTANCES = 100000;
 protected: 
     AssetStore* assetStore;
-    std::unordered_map<uint32_t, MeshCorrespondence> mesh_In_VertexList;  // MeshIndex to Correspondence
+    std::unordered_map<uint32_t, MeshCorrespondence> mesh_In_VertexList;  // Unique index mesh to his correspondence
     std::vector<Vertex> vertexList;
     std::vector<uint32_t> indexList;
-    std::unordered_map<uint32_t, std::vector<glm::mat4>> recordedMeshInstances; // Key : meshIndex
-    std::unordered_map<uint32_t, std::vector<glm::mat4>> recordedMeshInstances_ShadowPass;
+    std::unordered_map<MeshCorrespondence*, std::vector<glm::mat4>> recordedMeshInstances;
+    std::unordered_map<MeshCorrespondence*, std::vector<glm::mat4>> recordedMeshInstances_ShadowPass;
 
 
     std::vector<DrawElementsIndirectCommand> shadow_IndirectCommands;
@@ -167,7 +171,8 @@ class OpenGL_Renderer : public Renderer{
 public:
     OpenGL_Renderer(AssetStore* assetStore);
 
-    void AddMeshToRender(Engine::Component::MeshHandle newMesh) override;
+    // If the object is not found in the global vertex list, add it
+    MeshCorrespondence* AddMeshToRender(Engine::Component::MeshHandle newMesh) override;
 
     void OrderDraw(Engine::Component::MeshHandle meshHandle, glm::mat4 modelMatrix) override;
 

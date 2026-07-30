@@ -348,7 +348,7 @@ void Systems::RenderSystem::RenderScene(World& world, const Resource::ResourceBu
 
 	View view = world.view<Component::MeshHandle, Component::Transform>();
 	view.each([&](int entity, Component::MeshHandle& meshHandle, Component::Transform& transform) {
-		if (meshHandle.index != -1) {
+		if (meshHandle.meshPtr != nullptr) {
 			if (meshHandle.haveToBeDraw) {
 				world.renderer->OrderDraw(meshHandle, transform.GetTransformModel());
 			}
@@ -431,24 +431,25 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 
 	world.get_ressource<Resource::ActiveCamera>()->cameraID = camEntity;
 
-	Entity model = world.Register();
-	Component::Transform modelTransform(glm::vec3(-2,-1,0)); // ("main_sponza/main_sponza/NewSponza_Main_glTF_003.gltf");
-	std::pair<Mesh&, int> value = world.assetStore->Get_Mesh("ImpScene/autumn_house.glb");
-	Component::MeshHandle meshHandle(value.second);
-	Component::SceneTag mesh_scene_Tag("Maison");
+	//Entity model = world.Register();
+	//Component::Transform modelTransform(glm::vec3(0,0,0)); // ("main_sponza/main_sponza/NewSponza_Main_glTF_003.gltf");
+	//std::shared_ptr<Mesh> newMeshPtr = world.assetStore->Get_Mesh("main_sponza/main_sponza/NewSponza_Main_glTF_003.gltf");
+	//Component::MeshHandle meshHandle(newMeshPtr);
+	//Component::SceneTag mesh_scene_Tag("Maison");
 	//Component::ConvexShape meshCollider(modelTransform.position, value.first.Get_VerticesPosition());
 	//meshCollider.motionType.Set(JPH::EMotionType::Static);
-	Component::BoxCollider boxCollider(modelTransform.position, glm::vec3(100, 2, 100), JPH::EMotionType::Static, false, 1.0f);
+	//Component::BoxCollider boxCollider(modelTransform.position, glm::vec3(100, 2, 100), JPH::EMotionType::Static, false, 1.0f);
 
 
-	world.add_components(model, mesh_scene_Tag, meshHandle, modelTransform, std::move(boxCollider));
+	//world.add_components(model, mesh_scene_Tag, meshHandle, modelTransform, std::move(boxCollider));
 
 	glEnable(GL_CULL_FACE);
 	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
 
-	float intensity = 2.0f;
+	float intensity = 8.0f;
 
-	glm::vec3 worldLightDir = glm::normalize(glm::vec3(-2.0f, 4.0f, -1.0f));
+	//glm::vec3 worldLightDir = glm::normalize(glm::vec3(-0.5f, 4.0f, 1.0f));
+	glm::vec3 worldLightDir = glm::vec3(0.5f, 4.0f, 1.0f);
 
 	float cutOff = 5.5f;
 	float outerCutOff = 15.5f;
@@ -463,35 +464,23 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 
 	/////////////////////////////////////
 
-	Entity spotLightEntity = world.Register();
-	Component::Transform spotTransform(glm::vec3(0.0f, 4.0f, -6.0f));
-	Component::SpotLight spotLight(color, 10000.0f, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f);
-	Component::SceneTag spotLight_scene_Tag("Spot Light");
+	//Entity spotLightEntity = world.Register();
+	//Component::Transform spotTransform(glm::vec3(0.0f, 4.0f, -6.0f));
+	//Component::SpotLight spotLight(color, 10000.0f, glm::vec3(1.0f, 0.0f, 0.0f), cutOff, outerCutOff, 30.0f);
+	//Component::SceneTag spotLight_scene_Tag("Spot Light");
 
-	world.add_components(spotLightEntity, spotLight_scene_Tag, spotTransform, spotLight);
+	//world.add_components(spotLightEntity, spotLight_scene_Tag, spotTransform, spotLight);
 
 
 	/////////////////////////////////////
 
 	Entity pointLightEntity = world.Register();
-	Component::Transform transformPointLight(glm::vec3(1.0f, 5.0f, 0.0f));
-	Component::PointLight pointLight(color, 800.0f, 8.0f);
+	Component::Transform transformPointLight(glm::vec3(2.0f, 0.5f, 5.0f));
+	Component::PointLight pointLight(color, 500.0f, 8.0f);
 	Component::SceneTag pointLight_scene_Tag("Point Light");
 
 	world.add_components(pointLightEntity, pointLight_scene_Tag, transformPointLight, pointLight);
 	/////////////////////////////////////
-
-
-	//Entity backpack = world.Register();
-	//Component::Transform backPackTransform(glm::vec3(10.0f, 3.0f, 2.0f));
-	//backPackTransform.rotation = glm::vec3(-90, 0, 0);
-	//std::pair<Mesh&, int> backpackValue = world.assetStore->Get_Mesh("Assets/backpack/backpack.obj");
-	//Component::MeshHandle backpackModeleHandle(backpackValue.second);
-	//Component::SceneTag backpackTag("backpack");
-
-	//world.add_components(backpack, backPackTransform, backpackTag, materialHandle, backpackModeleHandle);
-
-	//world.renderer->SetViewport_Size(glm::vec2(renderData->renderWIDTH, renderData->renderHEIGHT));
 
 	glEnable(GL_DEPTH_TEST);
 	Init_AllBuffer(renderData);
@@ -502,6 +491,8 @@ void Systems::RenderSystem::Update(World& world, const Resource::ResourceBuffer*
 	Resource::WindowResource* windowData = resourceBuffer->windowResource;
 	Resource::RenderResource* renderData = resourceBuffer->renderResource;
 	if (windowData->isIconified) return;
+
+	world.assetStore->CheckNonUseResources();
 
 	/////////////////////Camera
 	Entity entityCam = resourceBuffer->activeCamera->cameraID;

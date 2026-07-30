@@ -1,7 +1,7 @@
 #pragma once
 #include "ECS/Components/ComponentBase.h"
 
-
+class Mesh;
 namespace Engine::Component {
 	struct Transform : public Component
 	{
@@ -82,13 +82,17 @@ namespace Engine::Component {
 		std::string name = "Default";
 	};
 
-	using MeshIndex = uint32_t;  // Named integer
 
 	struct MeshHandle : public Component {
 		MeshHandle() {};
-		MeshHandle(uint32_t index) { this->index = index; }
-		MeshHandle(uint32_t index, bool castShadow, bool haveToBeDraw = true) { this->index = index; this->castShadow = castShadow; this->haveToBeDraw = haveToBeDraw; }
-		MeshIndex index = 0;
+		MeshHandle(std::shared_ptr<Mesh> meshPtr) { this->meshPtr = meshPtr; }
+		MeshHandle(std::shared_ptr<Mesh> meshPtr, bool castShadow, bool haveToBeDraw = true) {
+			this->meshPtr = meshPtr; 
+			this->castShadow = castShadow; 
+			this->haveToBeDraw = haveToBeDraw; 
+		}
+
+		std::shared_ptr<Mesh> meshPtr;
 		bool castShadow = true;
 		bool haveToBeDraw = true;
 
@@ -97,7 +101,7 @@ namespace Engine::Component {
 		{
 			f("HaveToBeDraw", haveToBeDraw);
 			f("CastShadow", castShadow);
-			f("Mesh", index);
+			f("Mesh", meshPtr);
 		}
 	};
 

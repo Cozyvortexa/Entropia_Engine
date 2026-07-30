@@ -35,6 +35,8 @@ namespace Engine::Systems {
 		std::unique_ptr<Resource::Node> BuildTree(const std::filesystem::path& rootPath, Engine::Resource::Node* parent = nullptr);
 
 	private:
+		std::unique_ptr<Resource::Node> BuildTreeInternal(const std::filesystem::path& currentPath, Resource::Node* parent, const std::filesystem::path& basePath);
+
 		Resource::FileType GetType(const std::filesystem::path& path);
 		void Display_ArboMenu(Resource::InterfaceRessource* interfaceData);
 		void inline Arbo_RefreshButton(Resource::InterfaceRessource* interfaceData);

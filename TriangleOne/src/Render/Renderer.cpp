@@ -93,38 +93,37 @@ OpenGL_Renderer::OpenGL_Renderer(AssetStore* assetStore) : Renderer(assetStore) 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, SHADOW_INSTANCE_BINDING_POINT, shadowInstanceSSBO);
 }
 
-void OpenGL_Renderer::AddMeshToRender(Component::MeshHandle newMesh) {
-	uint32_t meshIndex = newMesh.index;
-	Mesh currentMesh = assetStore->Get_Mesh(meshIndex);
+MeshCorrespondence* OpenGL_Renderer::AddMeshToRender(Component::MeshHandle newMesh) {
+	// Check if the Mesh is already load
+	uint32_t currentUniqueIndex = newMesh.meshPtr->Get_UniqueIndex();
 
-	// Check if the subMesh zero is already load
-	uint32_t firstSubMeshKey = (meshIndex << 16) | 0;
-	if (mesh_In_VertexList.find(firstSubMeshKey) != mesh_In_VertexList.end()) {
-		return;
+	auto it = mesh_In_VertexList.find(currentUniqueIndex);
+	if (it != mesh_In_VertexList.end()) {
+		return &it->second;
 	}
+	Mesh currentMesh = *newMesh.meshPtr;
 
+	MeshCorrespondence meshCorrespondence;
+	meshCorrespondence.meshPtr = newMesh.meshPtr; //Weak Ptr
+
+	//Build the correspondence for all of his subMesh
 	for (size_t subMeshIndex = 0; subMeshIndex < currentMesh.subMeshs.size(); ++subMeshIndex) {
 		SubMesh subMesh = static_cast<SubMesh>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));
 
-		uint32_t subMeshKey = (subMeshIndex << 16) | 0;
+		//Create new a subMesh correspondence
+		SubMeshCorrespondence subMesh_Correspondence;
 
-		//Create new correspondence
-		MeshCorrespondence correspondence;
-		correspondence.meshIndex = meshIndex;
+		subMesh_Correspondence.vertexStart = vertexList.size();
+		subMesh_Correspondence.vertexCount = subMesh.vertices.size();
 
-		correspondence.vertexStart = vertexList.size();
-		correspondence.vertexCount = subMesh.vertices.size();
-
-		correspondence.indexStart = indexList.size();
-		correspondence.indexCount = subMesh.indices.size();
+		subMesh_Correspondence.indexStart = indexList.size();
+		subMesh_Correspondence.indexCount = subMesh.indices.size();
 
 		// Insertion into global buffers
 		vertexList.insert(vertexList.end(), subMesh.vertices.begin(), subMesh.vertices.end());
 		indexList.insert(indexList.end(), subMesh.indices.begin(), subMesh.indices.end());
 
-
-		// Add to history
-		mesh_In_VertexList[subMeshKey] = correspondence;
+		meshCorrespondence.subMesh_Correspondence.push_back(std::move(subMesh_Correspondence));
 	}
 
 	// Update buffer
@@ -135,26 +134,24 @@ void OpenGL_Renderer::AddMeshToRender(Component::MeshHandle newMesh) {
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexList.size() * sizeof(uint32_t), indexList.data());
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	assert(vertexList.size() * sizeof(Vertex) <= 200 * 1024 * 1024 && "VBO overflow !");
+	assert(vertexList.size() * sizeof(Vertex) <= 100 * 1024 * 1024 && "VBO overflow !");
 	assert(indexList.size() * sizeof(uint32_t) <= 100 * 1024 * 1024 && "EBO overflow !");
+
+	// Add to history
+	mesh_In_VertexList[currentUniqueIndex] = std::move(meshCorrespondence);
+	return &mesh_In_VertexList[currentUniqueIndex];
 }
 
 void OpenGL_Renderer::OrderDraw(Component::MeshHandle meshHandle, glm::mat4 modelMatrix) {
-	// If the object is not found in the global vertex list, add it
-	uint32_t meshIndex = (meshHandle.index << 16) | 0;
-	auto it_exist = mesh_In_VertexList.find(meshIndex);
-	if (it_exist == mesh_In_VertexList.end()) AddMeshToRender(meshHandle);
+	MeshCorrespondence* correspondance = AddMeshToRender(meshHandle);
 
-	recordedMeshInstances[meshIndex].push_back(modelMatrix);
+	recordedMeshInstances[correspondance].push_back(modelMatrix);
 }
 
 void OpenGL_Renderer::OrderShadowDraw(Component::MeshHandle meshHandle, glm::mat4 modelMatrix) {
-	// If the object is not found in the global vertex list, add it
-	uint32_t meshIndex = (meshHandle.index << 16) | 0;
-	auto it_exist = mesh_In_VertexList.find(meshIndex);
-	if (it_exist == mesh_In_VertexList.end()) AddMeshToRender(meshHandle);
+	MeshCorrespondence* correspondance = AddMeshToRender(meshHandle);
 
-	recordedMeshInstances_ShadowPass[meshIndex].push_back(modelMatrix);
+	recordedMeshInstances_ShadowPass[correspondance].push_back(modelMatrix);
 }
 
 void OpenGL_Renderer::ExecuteRenderCommands() {
@@ -165,20 +162,25 @@ void OpenGL_Renderer::ExecuteRenderCommands() {
 	std::vector<InstanceData> globalInstanceData;
 	indirectCommands.reserve(recordedMeshInstances.size());
 
-	// Iterate over all draw order of this form : (meshIndex, modelMatrix) , previously add by OrderDraw
-	// NOTES : meshIndex is the same index used to retrieve a Mesh in the Asset Store 
-	for (auto& [meshIndex, matrices] : recordedMeshInstances) {
-		Mesh currentMesh = assetStore->Get_Mesh(meshIndex);
+	// Iterate over all draw order of this form : (MeshCorrespondence, modelMatrix), previously add by OrderDraw
+	for (auto& [mesh_Correspondence, matrices] : recordedMeshInstances) {
+		if (mesh_Correspondence->subMesh_Correspondence.size() <= 0) continue;
+
+		std::shared_ptr<Mesh> meshPtr = mesh_Correspondence->meshPtr.lock();
+		Mesh currentMesh = *meshPtr;
+
+		//Assert
+		assert(mesh_Correspondence != nullptr && "Current Mesh_Correspondence is empty in ExecuteRenderCommands");
+		assert(meshPtr && "NullPtr in execute commands");
+		assert(mesh_In_VertexList.find(meshPtr->Get_UniqueIndex()) != mesh_In_VertexList.end() && "Current MeshCorrespondence don't exist in the global Vertex");
+		assert(currentMesh.subMeshs.size() == mesh_Correspondence->subMesh_Correspondence.size() && "SubMesh and correspondence submesh are de-aligned");
+
+
 		uint32_t instanceCount = static_cast<uint32_t>(matrices.size());
 
 		// Iterate over all subMesh
 		for (size_t subMeshIndex = 0; subMeshIndex < currentMesh.subMeshs.size(); ++subMeshIndex) {
-			uint32_t subMeshKey = (subMeshIndex << 16) | 0;
-
-			// If the submesh don't existe in the global Vertex, discard it
-			auto corrIt = mesh_In_VertexList.find(subMeshKey);
-			if (corrIt == mesh_In_VertexList.end()) continue;
-			const MeshCorrespondence& corr = corrIt->second;
+			const SubMeshCorrespondence& corr = mesh_Correspondence->subMesh_Correspondence[subMeshIndex];
 
 
 			OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));
@@ -269,18 +271,21 @@ void OpenGL_Renderer::BuildInstance_ShadowSSBO() {
 	std::vector<ShadowInstanceData> global_Shadow_InstanceData;
 	
 	// Add by OrderShadowDraw
-	for (auto& [meshIndex, matrices] : recordedMeshInstances_ShadowPass) {
-		Mesh currentMesh = assetStore->Get_Mesh(meshIndex);
+	for (auto& [mesh_Correspondence, matrices] : recordedMeshInstances_ShadowPass) {
+		std::shared_ptr<Mesh> meshPtr = mesh_Correspondence->meshPtr.lock();
+		Mesh currentMesh = *meshPtr;
+
+		//Assert
+		assert(mesh_Correspondence != nullptr && "Current Mesh_Correspondence is empty in BuildInstance_ShadowSSBO");
+		assert(meshPtr && "NullPtr in BuildInstance_ShadowSSBO");
+		assert(mesh_In_VertexList.find(meshPtr->Get_UniqueIndex()) != mesh_In_VertexList.end() && "Current MeshCorrespondence don't exist in the global Vertex in BuildInstance_ShadowSSBO");
+		assert(currentMesh.subMeshs.size() == mesh_Correspondence->subMesh_Correspondence.size() && "SubMesh and correspondence submesh are de-aligned in BuildInstance_ShadowSSBO");
+
 		uint32_t instanceCount = static_cast<uint32_t>(matrices.size());
 
 		// Iterate over all subMesh
 		for (size_t subMeshIndex = 0; subMeshIndex < currentMesh.subMeshs.size(); ++subMeshIndex) {
-			uint32_t subMeshKey = (subMeshIndex << 16) | 0;
-
-			// If the submesh don't existe in the global Vertex, discard it
-			auto corrIt = mesh_In_VertexList.find(subMeshKey);
-			if (corrIt == mesh_In_VertexList.end()) continue;
-			const MeshCorrespondence& corr = corrIt->second;
+			const SubMeshCorrespondence& corr = mesh_Correspondence->subMesh_Correspondence[subMeshIndex];
 
 
 			OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));

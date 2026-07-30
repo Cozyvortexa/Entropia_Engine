@@ -100,7 +100,7 @@ void Systems::InterfaceSystem::Add_Entity_Button(World* world, Resource::RenderR
                     // TODO
                 }
                 else if (entry->type == Editor::ObjectType::Mesh) {
-                    Component::MeshHandle meshHandle(-1);
+                    Component::MeshHandle meshHandle;
                     world->add_components(entity, meshHandle);
                 }
                 else if (entry->type == Editor::ObjectType::AudioSource) {
@@ -384,29 +384,60 @@ Resource::FileType Systems::InterfaceSystem::GetType(const std::filesystem::path
     if (ext == ".png" || ext == ".jpg")
         return Resource::FileType::Image;
 
-    if (ext == ".fbx" || ext == ".obj" || ext == ".glb")
+    if (ext == ".fbx" || ext == ".obj" || ext == ".glb" || ext == ".gltf")
         return Resource::FileType::Model;
 
     return Resource::FileType::Other;
 }
 
+//std::unique_ptr<Resource::Node> Systems::InterfaceSystem::BuildTree(const std::filesystem::path& rootPath, Resource::Node* parent) {
+//    auto node = std::make_unique<Resource::Node>();
+//    node->name = rootPath.filename().string();
+//    node->path = rootPath.generic_string();
+//    node->parent = parent;
+//
+//    if (std::filesystem::is_directory(rootPath)) {
+//        node->type = Resource::FileType::Directory;
+//
+//        for (const auto& entry : std::filesystem::directory_iterator(rootPath)) {
+//            node->children.push_back(BuildTree(entry.path(), node.get()));
+//        }
+//    }
+//    else {
+//        node->type = GetType(rootPath);
+//    }
+//
+//    return node;
+//}
+
 std::unique_ptr<Resource::Node> Systems::InterfaceSystem::BuildTree(const std::filesystem::path& rootPath, Resource::Node* parent) {
+    // Point d'entrée : basePath = rootPath initial
+    return BuildTreeInternal(rootPath, parent, rootPath);
+}
+
+std::unique_ptr<Resource::Node> Systems::InterfaceSystem::BuildTreeInternal(const std::filesystem::path& currentPath,
+    Resource::Node* parent,
+    const std::filesystem::path& basePath) {
+
     auto node = std::make_unique<Resource::Node>();
-    node->name = rootPath.filename().string();
-    node->path = rootPath.generic_string();
+    node->name = currentPath.filename().string();
     node->parent = parent;
 
-    if (std::filesystem::is_directory(rootPath)) {
-        node->type = Resource::FileType::Directory;
+    //Absolute path
+    node->path = std::filesystem::absolute(currentPath).generic_string();
+    //Relative path
+    node->relativePath = std::filesystem::relative(currentPath, basePath).generic_string();
 
-        for (const auto& entry : std::filesystem::directory_iterator(rootPath)) {
-            node->children.push_back(BuildTree(entry.path(), node.get()));
+
+    if (std::filesystem::is_directory(currentPath)) {
+        node->type = Resource::FileType::Directory;
+        for (const auto& entry : std::filesystem::directory_iterator(currentPath)) {
+            node->children.push_back(BuildTreeInternal(entry.path(), node.get(), basePath));
         }
     }
     else {
-        node->type = GetType(rootPath);
+        node->type = GetType(currentPath);
     }
-
     return node;
 }
 
@@ -479,7 +510,7 @@ std::string inline FileTypeToIcon(Resource::FileType type) {
 }
 
 void Systems::InterfaceSystem::Display_ArboMenu(Resource::InterfaceRessource* interfaceData) {
-    ImGui::Begin("Arbo", &interfaceData->arbo_Toogle);
+    ImGui::Begin("Arborescence", &interfaceData->arbo_Toogle);
     ImGui::SetWindowFontScale(1.5f);
 
     Arbo_Breadcrum(interfaceData);

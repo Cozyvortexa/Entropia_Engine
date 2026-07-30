@@ -173,10 +173,10 @@ void AssetStore::CountMesh(std::unordered_map<unsigned int, std::vector<aiNode*>
 	}
 }
 
-Mesh AssetStore::LoadMesh(std::string path) {
+std::shared_ptr<Mesh> AssetStore::LoadMesh(std::string path) {
 	std::filesystem::path mesh_FullPath = ASSETS_DIR / path.c_str();
 
-	Mesh mesh = Mesh();
+	std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>();
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(mesh_FullPath.string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices |
 		aiProcess_CalcTangentSpace | aiProcess_GlobalScale | aiProcess_GenSmoothNormals |  aiProcess_FindInstances );
@@ -190,11 +190,11 @@ Mesh AssetStore::LoadMesh(std::string path) {
 	//std::cout << "Embedded textures: " << scene->mNumTextures << std::endl;
 	//std::cout << "Number of meshes: " << scene->mNumMeshes << std::endl;
 	//std::cout << "Number of materials: " << scene->mNumMaterials << std::endl;
-	mesh.directory = path.substr(0, path.find_last_of("/"));
+	mesh->directory = path.substr(0, path.find_last_of("/"));
 
 	CountMesh(meshCounts, scene->mRootNode);
 
-	ProcessNode(scene->mRootNode, scene, mesh, mesh_FullPath.string());
+	ProcessNode(scene->mRootNode, scene, *mesh, mesh_FullPath.string());
 
 	//Last Step
 	for (auto& futureTexture : m_PendingTextures) {
@@ -223,7 +223,10 @@ Mesh AssetStore::LoadMesh(std::string path) {
 	m_PendingTextures.clear();
 	meshCounts.clear();
 	assimpToOurMeshIndex.clear();
-	mesh.isValid = true;
+	mesh->isValid = true;
+
+	mesh->uniqueMeshIndex = uniqueMeshIndexCompteur++;
+	meshs.push_back(mesh);
 	return mesh;
 }
 
@@ -379,22 +382,32 @@ void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& c
 	currentMesh.Create_SubMesh(vertices, indices, material_Handle);
 }
 
-Mesh& AssetStore::Get_Mesh(int index) {
-	assert(index <= meshs.size() - 1 && "Index out of range in Get_Mesh, AssetStore");
-	return meshs[index];
+//std::shared_ptr<Mesh> AssetStore::Get_Mesh(int index) {
+//	assert(index <= meshs.size() - 1 && "Index out of range in Get_Mesh, AssetStore");
+//	return meshs[index];
+//}
+
+// Relative path ONLY (Assets Dir)
+std::shared_ptr<Mesh> AssetStore::Get_Mesh(std::string path) {
+	auto it = meshPath_AlreadyLoad.find(path);
+
+	if (it == meshPath_AlreadyLoad.end()) {
+		std::shared_ptr<Mesh> mesh = LoadMesh(path);
+		meshPath_AlreadyLoad[path] = mesh;
+
+		return mesh;
+	}
+	return it->second.lock();
 }
 
-std::pair<Mesh&, int> AssetStore::Get_Mesh(std::string path) {
-	auto it = pathToIndexMapMesh.find(path);
-
-	if (it == pathToIndexMapMesh.end()) {
-		meshs.push_back(LoadMesh(path));
-
-		int index = meshs.size() - 1;
-		pathToIndexMapMesh[path] = index;
-		return std::make_pair(std::ref(meshs[index]), index);
-	}
-	return std::make_pair(std::ref(meshs[it->second]), it->second);
+void AssetStore::CheckNonUseResources() {
+	meshs.erase(
+		std::remove_if(meshs.begin(), meshs.end(),
+			[](const std::shared_ptr<Mesh>& mesh){
+				return mesh.use_count() == 1;
+			}),
+		meshs.end()
+	);
 }
 
 #pragma endregion

@@ -20,6 +20,9 @@ struct InstanceGroup {
 };
 
 class Mesh {
+private:
+    uint32_t uniqueMeshIndex = -1;
+    friend class AssetStore;
 public:
 	Mesh() {};
 	std::vector<SubMeshStorage> subMeshs;
@@ -51,23 +54,53 @@ public:
 		}
 	}
 
-	std::pair<std::vector<glm::vec3>, std::vector<unsigned int>> Get_VerticesAndIndices() {
-		std::vector<glm::vec3> vertices;
-		std::vector<unsigned int> indices;
+    std::pair<std::vector<glm::vec3>, std::vector<unsigned int>> Get_VerticesAndIndices() {
+        std::vector<glm::vec3> vertices;
+        std::vector<unsigned int> indices;
 
-		for (const SubMeshStorage& current_SubMesh : subMeshs) {
-			std::visit([&vertices, &indices](auto& mesh) {
-				const SubMesh& subMesh = static_cast<const SubMesh&>(mesh);
-				unsigned int baseIndex = static_cast<unsigned int>(vertices.size());
+        for (size_t subMeshIndex = 0; subMeshIndex < subMeshs.size(); ++subMeshIndex) {
+            const SubMeshStorage& current_SubMesh = subMeshs[subMeshIndex];
 
-				for (const auto& vertex : subMesh.vertices)
-					vertices.push_back(vertex.Position);
+            std::visit([&](auto& mesh) {
+                const SubMesh& subMesh = static_cast<const SubMesh&>(mesh);
 
-				for (unsigned int idx : subMesh.indices)
-					indices.push_back(baseIndex + idx);
+                // Find the instance group corresponding to this submesh
+                const InstanceGroup* group = nullptr;
+                for (const InstanceGroup& g : instancesGroup) {
+                    if (g.subMesh == subMeshIndex) {
+                        group = &g;
+                        break;
+                    }
+                }
+                // Fallback 
+                if (group == nullptr || group->instancedMatrix.empty()) {
+                    std::cout << "A submesh in Get_VerticesAndIndices does not have a model matrice" << std::endl;
+                    unsigned int baseIndex = static_cast<unsigned int>(vertices.size());
+                    for (const auto& vertex : subMesh.vertices)
+                        vertices.push_back(vertex.Position);
+                    for (unsigned int idx : subMesh.indices)
+                        indices.push_back(baseIndex + idx);
+                    return;
+                }
 
-				}, current_SubMesh);
-		}
-		return std::make_pair(vertices, indices);
-	}
+                for (size_t y = 0; y < group->instancedMatrix.size(); ++y) {
+                    const glm::mat4& model = group->instancedMatrix[y];
+                    unsigned int baseIndex = static_cast<unsigned int>(vertices.size());
+
+                    for (const auto& vertex : subMesh.vertices) {
+                        glm::vec4 worldPos = model * glm::vec4(vertex.Position, 1.0f);
+                        vertices.push_back(glm::vec3(worldPos));
+                    }
+
+                    for (unsigned int idx : subMesh.indices)
+                        indices.push_back(baseIndex + idx);
+                }
+
+                }, current_SubMesh);
+        }
+
+        return std::make_pair(vertices, indices);
+    }
+
+    uint32_t Get_UniqueIndex() { return uniqueMeshIndex; }
 };

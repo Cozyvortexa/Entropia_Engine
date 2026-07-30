@@ -37,8 +37,8 @@ public:
 		stbi_set_flip_vertically_on_load(false);
 	}
 
-	Mesh& Get_Mesh(int index);
-	std::pair<Mesh&, int> Get_Mesh(std::string path);
+	//std::shared_ptr<Mesh> Get_Mesh(int index);
+	std::shared_ptr<Mesh> Get_Mesh(std::string path);
 
 	std::pair<Material&, int> CreateMaterial(std::string name, const char* vertexPath, const char* fragmentPath);
 
@@ -50,15 +50,17 @@ public:
 
 	Engine::Audio::Audio* Load_Sound(ma_engine& audioEngine, const std::string& name, const char* path, Engine::Audio::SoundFlags flags);
 
+	//Memory management
+	void CheckNonUseResources();
 private:
 	std::vector<std::future<PendingTextureData>> m_PendingTextures;
 	//Assets
-	std::vector<Mesh> meshs;
+	std::vector<std::shared_ptr<Mesh>> meshs;
 	std::vector<Texture> textures;
 	std::vector<Material> materials;
 
 	//Map
-	std::unordered_map<std::string, int> pathToIndexMapMesh;
+	std::unordered_map<std::string, std::weak_ptr<Mesh>> meshPath_AlreadyLoad;
 	std::unordered_map<std::string, unsigned int> pathToIndexMap_Texture;
 	std::unordered_map<size_t, unsigned int> keyTo_MaterialHandle;
 	std::unordered_map<uint32_t, int> pathToIndexMapMaterial;
@@ -72,10 +74,12 @@ private:
 
 	//Mesh creation
 	void CountMesh(std::unordered_map<unsigned int, std::vector<aiNode*>>& map, aiNode* node);
-	Mesh LoadMesh(std::string path);
+	std::shared_ptr<Mesh> LoadMesh(std::string path);
 	void ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMesh, std::string path, glm::mat4 parentTransform = glm::mat4(1.0f));
 	void ProcessSub_Mesh(aiMesh* mesh, const aiScene* scene, Mesh& currentMesh, std::string path, bool instancedSubMesh = false);
 	unsigned int LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh, std::string path);
+
+	static inline uint32_t uniqueMeshIndexCompteur = 0;
 
 	//friend
 	friend class LightSystem;  // WARNING, temp

@@ -198,14 +198,14 @@ namespace Engine::Editor {
         }
     }
     template<>
-    inline void DrawWidget<Engine::Component::MeshIndex>(EditorContext ctx, const char* label, Engine::Component::MeshIndex& value) {
+    inline void DrawWidget<std::shared_ptr<Mesh>>(EditorContext ctx, const char* label, std::shared_ptr<Mesh>& value) {
         Mesh mesh;
-        if (value == -1) {
+        if (value == nullptr) {
             std::string emptypath = "None";
             DrawWidget<std::string>(ctx, "Directory", emptypath);
         }
         else {
-            Mesh mesh = ctx.world->assetStore->Get_Mesh(value);
+            mesh = *value;
             DrawWidget<std::string>(ctx, "Directory", mesh.directory);
         }
 
@@ -215,8 +215,8 @@ namespace Engine::Editor {
                 Engine::Resource::Node* node = *static_cast<Engine::Resource::Node**>(payload->Data);
                 if (node->type == Engine::Resource::FileType::Model) {
 
-                    std::pair<Mesh&, int> newMesh = ctx.world->assetStore->Get_Mesh(node->path);
-                    value = newMesh.second;
+                    std::shared_ptr<Mesh> newMesh = ctx.world->assetStore->Get_Mesh(node->relativePath);
+                    value = newMesh;
                 }
             }
 
