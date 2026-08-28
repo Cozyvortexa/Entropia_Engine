@@ -14,6 +14,8 @@
 
 #include "Render/RenderObject.h"
 
+#include "Material.h"
+
 struct Vertex {
 	glm::vec3 Position = glm::vec3(0);
 	glm::vec3 Normal;
@@ -22,6 +24,7 @@ struct Vertex {
 };
 
 struct Texture {
+	Texture() = default;
 	enum Type {
 		None,
 		Diffuse,
@@ -32,10 +35,10 @@ struct Texture {
 		Metalness,
 		MetalicRoughness
 	};
-	Type textureType = None; // Valeur par default
-	unsigned int id;
-	uint64_t bindlessHandle;
-	std::string path;
+	Type textureType = None;
+	unsigned int id = -1;
+	uint64_t bindlessHandle = -1;
+	std::string path = "";
 };
 
 class SubMesh {
@@ -44,17 +47,17 @@ public:
 	// SubMesh data
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
-	unsigned int material_Handle;
+	std::shared_ptr<Material> materialPtr;
 
 
 	Engine::Render::VertexLayout layout;
 
 protected: 
-	SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle);
+	SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::shared_ptr<Material> materialPtr);
 };
 
 class OpenGL_SubMesh : public SubMesh{
 public:
-	OpenGL_SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle);
+	OpenGL_SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::shared_ptr<Material> materialPtr);
 	//unsigned int VAO, VBO, EBO;
 };

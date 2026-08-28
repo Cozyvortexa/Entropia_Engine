@@ -184,24 +184,24 @@ void OpenGL_Renderer::ExecuteRenderCommands() {
 
 
 			OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));
-			Material* currentMat = assetStore->Get_Material(subMesh.material_Handle);
+			Material* currentMat = subMesh.materialPtr.get();
 
 
 
 			// Retrieving bindless handles (with a fallback to the default texture if null)
-			Texture* diff = assetStore->Get_Texture(currentMat->diffuse_Text_Handle);
+			Texture* diff = currentMat->diffuse_Text_Ptr.get();
 			uint64_t diffH = diff ? diff->bindlessHandle : Shader::GetDefaultText_Handle();
 
-			Texture* norm = assetStore->Get_Texture(currentMat->normal_Text_Handle);
+			Texture* norm = currentMat->normal_Text_Ptr.get();
 			uint64_t normH = norm ? norm->bindlessHandle : Shader::GetNeutralNormalText_Handle();
 
-			Texture* ao = assetStore->Get_Texture(currentMat->ambientOcclusion_Text_Handle);
+			Texture* ao = currentMat->ambientOcclusion_Text_Ptr.get();
 			uint64_t aoH = ao ? ao->bindlessHandle : Shader::GetDefaultText_Handle();
 
-			Texture* rough = assetStore->Get_Texture(currentMat->roughness_handle_Text_Handle);
+			Texture* rough = currentMat->roughness_handle_Text_Ptr.get();
 			uint64_t roughH = rough ? rough->bindlessHandle : 0;
 
-			Texture* met = assetStore->Get_Texture(currentMat->metalness_handle_Text_Handle);
+			Texture* met = currentMat->metalness_handle_Text_Ptr.get();
 			uint64_t metH = met ? met->bindlessHandle : 0;
 
 			// Take the subMesh model matrices
@@ -289,11 +289,11 @@ void OpenGL_Renderer::BuildInstance_ShadowSSBO() {
 
 
 			OpenGL_SubMesh& subMesh = static_cast<OpenGL_SubMesh&>(std::get<OpenGL_SubMesh>(currentMesh.subMeshs[subMeshIndex]));
-			Material* currentMat = assetStore->Get_Material(subMesh.material_Handle);
+			Material* currentMat = subMesh.materialPtr.get();
 
 
 			// Retrieving bindless handles (with a fallback to the default texture if null)
-			Texture* diff = assetStore->Get_Texture(currentMat->diffuse_Text_Handle);
+			Texture* diff = currentMat->diffuse_Text_Ptr.get();
 			uint64_t diffH = diff ? diff->bindlessHandle : Shader::GetDefaultText_Handle();
 
 

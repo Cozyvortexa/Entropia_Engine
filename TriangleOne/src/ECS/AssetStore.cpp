@@ -15,12 +15,15 @@ static glm::mat4 AssimpMat4_To_glmMat4(aiMatrix4x4& assimpMat4) {
 
 #pragma region Texture
 
-unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh, std::string path)
-{
-	unsigned int texture_Handle = 0;
+std::shared_ptr<Texture> AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh, std::string path){
 	aiString str;
+	std::shared_ptr<Texture> texture = std::make_shared<Texture>();
+
 	aiReturn succes = mat->GetTexture(type, 0, &str);  // Only take the first texture
-	if (succes == aiReturn_FAILURE) { return -1; }
+	if (succes == aiReturn_FAILURE) {
+		texture->id = (unsigned int)TextureLoadState::NotFound;
+		return texture;
+	}
 
 	std::string keyPath = str.C_Str();
 	// embedded path detected
@@ -36,47 +39,46 @@ unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType typ
 	auto is_Inserted = result.second;
 
 	if (is_Inserted) { // Create a new texture if the key don't exist
-		Texture texture;
-		texture.path = keyPath;
+		texture->path = keyPath;
 
 		switch (type) {
 		case aiTextureType_DIFFUSE:
-			texture.textureType = Texture::Diffuse;
+			texture->textureType = Texture::Diffuse;
 			break;
 		case aiTextureType_BASE_COLOR:
-			texture.textureType = Texture::Albedo;
+			texture->textureType = Texture::Albedo;
 			break;
 		case aiTextureType_SPECULAR:
-			texture.textureType = Texture::Specular;
+			texture->textureType = Texture::Specular;
 			break;
 		case aiTextureType_NORMALS:
-			texture.textureType = Texture::Normal;
+			texture->textureType = Texture::Normal;
 			break;
 		case aiTextureType_HEIGHT:
-			texture.textureType = Texture::Normal;
+			texture->textureType = Texture::Normal;
 			break;
 		case aiTextureType_METALNESS:
-			texture.textureType = Texture::Metalness;
+			texture->textureType = Texture::Metalness;
 			break;
 		case aiTextureType_GLTF_METALLIC_ROUGHNESS:
-			texture.textureType = Texture::MetalicRoughness;
+			texture->textureType = Texture::MetalicRoughness;
 			break;
 		case aiTextureType_AMBIENT_OCCLUSION:
-			texture.textureType = Texture::Ambient_Occlusion;
+			texture->textureType = Texture::Ambient_Occlusion;
 			break;
 		}
 
 		const aiTexture* embeddedTex = scene->GetEmbeddedTexture(str.C_Str());
 		if (embeddedTex) {  // embedded texture detected
-			texture.id = TextureClass::LoadEmbeddedTexture(embeddedTex);
+			texture->id = TextureClass::LoadEmbeddedTexture(embeddedTex);
 
-			texture.bindlessHandle = glGetTextureHandleARB(texture.id);
+			texture->bindlessHandle = glGetTextureHandleARB(texture->id);
 			//Makes the texture persistent in GPU memory
-			glMakeTextureHandleResidentARB(texture.bindlessHandle);
+			glMakeTextureHandleResidentARB(texture->bindlessHandle);
 		}
 		else {
 			// --- MULTI-THREADING FOR DISK-BASED TEXTURES ---
-			texture.bindlessHandle = 0; // Will be generate later on the main thread !
+			texture->bindlessHandle = 0; // Will be generate later on the main thread !
 
 			std::string filename = str.C_Str();
 			std::string dir = currentMesh.directory;
@@ -95,20 +97,19 @@ unsigned int AssetStore::LoadMaterialTextures(aiMaterial* mat, aiTextureType typ
 
 		}
 
-
+		texture->id = (unsigned int)TextureLoadState::Pending;
 		textures.push_back(texture);
-		texture_Handle = textures.size() - 1;
-		it->second = texture_Handle;
+		it->second = texture;
+		return texture;
 	}
 	else { // or return the existing texture one
-		texture_Handle = it->second;
+		return it->second.lock();
 	}
-	return texture_Handle;
 }
 
-Texture* AssetStore::Get_Texture(unsigned int index) {  // Dedicate to the Systemes
+std::shared_ptr<Texture> AssetStore::Get_Texture(unsigned int index) {  // Dedicate to the Systemes
 	if (index >= textures.size()) { return nullptr; } // "Index out of range in Get_textures(int index)"
-	return &textures[index];
+	return textures[index];
 }
 
 
@@ -126,12 +127,12 @@ int AssetStore::CheckExistingMat(std::string name) {
 	return it->second;
 }
 
-std::pair<Material&, int> AssetStore::CreateMaterial(std::string name, const char* vertexPath, const char* fragmentPath) {
+std::pair<std::shared_ptr<Material>, int> AssetStore::CreateMaterial(std::string name, const char* vertexPath, const char* fragmentPath) {
 	int index = CheckExistingMat(name);
 	if (index != -1) {  // Material already exist
 		return std::make_pair(std::ref(materials[index]), index);
 	}
-	Material material(name, vertexPath, fragmentPath);
+	std::shared_ptr<Material> material = std::make_shared<Material>(name, vertexPath, fragmentPath);
 	materials.push_back(material);
 	int lastElementIndex = materials.size() - 1;
 	pathToIndexMapMaterial[std::hash<std::string>{}(name)] = lastElementIndex;
@@ -139,7 +140,7 @@ std::pair<Material&, int> AssetStore::CreateMaterial(std::string name, const cha
 	return std::make_pair(std::ref(materials[lastElementIndex]), lastElementIndex);
 }
 
-Material& AssetStore::Get_Material(std::string name) {
+std::shared_ptr<Material> AssetStore::Get_Material(std::string name) {
 	int index = CheckExistingMat(name);
 
 	if (index == -1) {
@@ -150,13 +151,13 @@ Material& AssetStore::Get_Material(std::string name) {
 	return materials[index];
 }
 
-Material* AssetStore::Get_Material(unsigned int index) {  // Dedicate to the Systemes
+std::shared_ptr<Material> AssetStore::Get_Material(unsigned int index) {
 	assert(index >= 0);
-	if (index >= materials.size()) {  // Index out of range in Get_Material(int index)
-		return &materials[0];
+	if (index >= materials.size()) {
+		return materials[0];
 	}
 
-	return &materials[index];
+	return materials[index];
 }
 
 #pragma endregion
@@ -202,18 +203,18 @@ std::shared_ptr<Mesh> AssetStore::LoadMesh(std::string path) {
 		PendingTextureData data = futureTexture.get();
 
 		if (data.data) {
-			unsigned int textureHandle = pathToIndexMap_Texture[data.keyPath];
+			Texture* texture = pathToIndexMap_Texture[data.keyPath].lock().get();
 
 			unsigned int textureID = TextureClass::Load_OpenGL_Texture(data.data, data.width, data.height, data.nrChannels);
 			stbi_image_free(data.data);
 
 
 			// Updates the OpenGL ID of the texture that was waiting
-			textures[textureHandle].id = textureID;
-			textures[textureHandle].bindlessHandle = glGetTextureHandleARB(textureID);
+			texture->id = textureID;
+			texture->bindlessHandle = glGetTextureHandleARB(textureID);
 
 			//Makes the texture persistent in GPU memory
-			glMakeTextureHandleResidentARB(textures[textureHandle].bindlessHandle);
+			glMakeTextureHandleResidentARB(texture->bindlessHandle);
 		}
 		else {
 			std::cout << "fail to load the texture in async thread: " << data.keyPath << std::endl;
@@ -324,29 +325,30 @@ void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& c
 		for (unsigned int j = 0; j < face.mNumIndices; j++)
 			indices.push_back(face.mIndices[j]);
 	}
-	unsigned int material_Handle = 0;
+	std::shared_ptr<Material> material = std::make_shared<Material>();
 	if (sub_Mesh->mMaterialIndex >= 0)
 	{
 		aiMaterial* assimp_material = scene->mMaterials[sub_Mesh->mMaterialIndex];
-		unsigned int diffuseMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_BASE_COLOR, scene, currentMesh, path);
-		unsigned int normalMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_NORMALS, scene, currentMesh, path);
-		unsigned int ambientOcclusion_handle = LoadMaterialTextures(assimp_material, aiTextureType_AMBIENT_OCCLUSION, scene, currentMesh, path);
-		unsigned int metalness_handle = LoadMaterialTextures(assimp_material, aiTextureType_METALNESS, scene, currentMesh, path);
-		unsigned int roughness_handle = LoadMaterialTextures(assimp_material, aiTextureType_DIFFUSE_ROUGHNESS, scene, currentMesh, path);
+		std::shared_ptr<Texture> diffuseMap_text = LoadMaterialTextures(assimp_material, aiTextureType_BASE_COLOR, scene, currentMesh, path);
+		std::shared_ptr<Texture> normalMap_text = LoadMaterialTextures(assimp_material, aiTextureType_NORMALS, scene, currentMesh, path);
+		std::shared_ptr<Texture> ambientOcclusion_text = LoadMaterialTextures(assimp_material, aiTextureType_AMBIENT_OCCLUSION, scene, currentMesh, path);
+		std::shared_ptr<Texture> metalness_text = LoadMaterialTextures(assimp_material, aiTextureType_METALNESS, scene, currentMesh, path);
+		std::shared_ptr<Texture> roughness_text = LoadMaterialTextures(assimp_material, aiTextureType_DIFFUSE_ROUGHNESS, scene, currentMesh, path);
 
-		if (normalMap_handle == -1) {
-			normalMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_HEIGHT, scene, currentMesh, path);
-			if (normalMap_handle == -1) currentMesh.hasNormalMap = false;
+		const unsigned int NOT_FOUND = (unsigned int)TextureLoadState::NotFound;
+		if (normalMap_text->id == NOT_FOUND) {
+			normalMap_text = LoadMaterialTextures(assimp_material, aiTextureType_HEIGHT, scene, currentMesh, path);
+			if (normalMap_text->id == NOT_FOUND) currentMesh.hasNormalMap = false;
 		}
-		//if (metalness_handle == -1) {
-		//	metalness_handle = LoadMaterialTextures(assimp_material, aiTextureType_GLTF_METALLIC_ROUGHNESS, scene, currentMesh);
+		//if (metalness_id == -1) {
+		//	metalness_id = LoadMaterialTextures(assimp_material, aiTextureType_GLTF_METALLIC_ROUGHNESS, scene, currentMesh);
 		//}
-		if (diffuseMap_handle == -1) {
-			diffuseMap_handle = LoadMaterialTextures(assimp_material, aiTextureType_DIFFUSE, scene, currentMesh, path);
+		if (diffuseMap_text->id == NOT_FOUND) {
+			diffuseMap_text = LoadMaterialTextures(assimp_material, aiTextureType_DIFFUSE, scene, currentMesh, path);
 		}
 
 		//Create the id key of the mat
-		MaterialKey key(diffuseMap_handle, normalMap_handle, ambientOcclusion_handle, metalness_handle, roughness_handle);
+		MaterialKey key(diffuseMap_text.get(), normalMap_text.get(), ambientOcclusion_text.get(), metalness_text.get(), roughness_text.get());
 		size_t hash_ID = std::hash<MaterialKey>{}(key);
 
 		auto result = keyTo_MaterialHandle.try_emplace(hash_ID);
@@ -355,31 +357,29 @@ void AssetStore::ProcessSub_Mesh(aiMesh* sub_Mesh, const aiScene* scene, Mesh& c
 
 
 		if (is_Inserted) {  // Create a new material if the key don't exist
-			Material material;  
-			if (instancedSubMesh) material.shader = Get_Material(1)->shader;
-			else material.shader = Get_Material(0)->shader; // Material at index 0 corresponds to the default mat who has all default value
+			if (instancedSubMesh) material->shader = Get_Material(1)->shader;
+			else material->shader = Get_Material(0)->shader; // Material at index 0 corresponds to the default mat who has all default value
 
-			material.diffuse_Text_Handle = diffuseMap_handle;
-			material.normal_Text_Handle = normalMap_handle;
-			material.ambientOcclusion_Text_Handle = ambientOcclusion_handle;
-			material.metalness_handle_Text_Handle = metalness_handle;
-			material.roughness_handle_Text_Handle = roughness_handle;
+			material->diffuse_Text_Ptr = diffuseMap_text;
+			material->normal_Text_Ptr = normalMap_text;
+			material->ambientOcclusion_Text_Ptr = ambientOcclusion_text;
+			material->metalness_handle_Text_Ptr = metalness_text;
+			material->roughness_handle_Text_Ptr = roughness_text;
 
-			assimp_material->Get(AI_MATKEY_METALLIC_FACTOR, material.metallic_Factor);
-			assimp_material->Get(AI_MATKEY_ROUGHNESS_FACTOR, material.roughness_Factor);
+			assimp_material->Get(AI_MATKEY_METALLIC_FACTOR, material->metallic_Factor);
+			assimp_material->Get(AI_MATKEY_ROUGHNESS_FACTOR, material->roughness_Factor);
 
-			//material.name  // maybe add a custom name
+			//material->name  // maybe add a custom name
 
 			materials.push_back(material);
-			material_Handle = materials.size() - 1;
-			it->second = material_Handle;
+			it->second = material;
 		}
 		else {  // or return the existing material one
-			material_Handle = it->second;
+			material = it->second.lock();
 		}
 
 	}
-	currentMesh.Create_SubMesh(vertices, indices, material_Handle);
+	currentMesh.Create_SubMesh(vertices, indices, material);
 }
 
 //std::shared_ptr<Mesh> AssetStore::Get_Mesh(int index) {
@@ -401,6 +401,7 @@ std::shared_ptr<Mesh> AssetStore::Get_Mesh(std::string path) {
 }
 
 void AssetStore::CheckNonUseResources() {
+	//Meshs
 	meshs.erase(
 		std::remove_if(meshs.begin(), meshs.end(),
 			[](const std::shared_ptr<Mesh>& mesh){
@@ -408,6 +409,22 @@ void AssetStore::CheckNonUseResources() {
 			}),
 		meshs.end()
 	);
+	////Materials
+	//materials.erase(
+	//	std::remove_if(materials.begin(), materials.end(),
+	//		[](const std::shared_ptr<Material>& material) {
+	//			return material.use_count() == 1;
+	//		}),
+	//	materials.end()
+	//);
+	////Textures
+	//textures.erase(
+	//	std::remove_if(textures.begin(), textures.end(),
+	//		[](const std::shared_ptr<Texture>& textures) {
+	//			return textures.use_count() == 1;
+	//		}),
+	//	textures.end()
+	//);
 }
 
 #pragma endregion

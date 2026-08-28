@@ -357,7 +357,7 @@ void Systems::RenderSystem::RenderScene(World& world, const Resource::ResourceBu
 			}
 		}
 	});
-	Shader* mainShader = &world.assetStore->Get_Material(0)->shader;
+	Shader* mainShader = world.assetStore->Get_Material(0)->shader;
 
 	mainShader->Use();
 	mainShader->setMatrix("view", mainCamera->viewMatrice);
@@ -380,15 +380,15 @@ void Systems::RenderSystem::Init(World& world, const Resource::ResourceBuffer* r
 	Shader::CreateNeutralNormalText();
 
 	//Main mat
-	std::pair<Material&, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "Geometry_Pass/Vertex_GeometryPass.glsl", "Geometry_Pass/Fragment_GeometryPass.glsl");
-	defaultMat.first.diffuse_Text_Handle = Shader::GetDefaultText();
-	defaultMat.first.normal_Text_Handle = Shader::GetNeutralNormalText();
+	std::pair<std::shared_ptr<Material>, int> defaultMat = world.assetStore->CreateMaterial("Default_Material", "Geometry_Pass/Vertex_GeometryPass.glsl", "Geometry_Pass/Fragment_GeometryPass.glsl");
+	defaultMat.first->diffuse_Text_Ptr->id = Shader::GetDefaultText();
+	defaultMat.first->normal_Text_Ptr->bindlessHandle = Shader::GetNeutralNormalText();
 	renderData->mainMaterialHandle = defaultMat.second;
 
 	//Main Instanced mat
-	std::pair<Material&, int> default_Instanced_Mat = world.assetStore->CreateMaterial("Instanced_Default_Material", "Geometry_Pass/Vertex_Instanced_GeometryPass.glsl", "Geometry_Pass/Fragment_GeometryPass.glsl");
-	default_Instanced_Mat.first.diffuse_Text_Handle = Shader::GetDefaultText();
-	default_Instanced_Mat.first.normal_Text_Handle = Shader::GetNeutralNormalText();
+	std::pair<std::shared_ptr<Material>, int> default_Instanced_Mat = world.assetStore->CreateMaterial("Instanced_Default_Material", "Geometry_Pass/Vertex_Instanced_GeometryPass.glsl", "Geometry_Pass/Fragment_GeometryPass.glsl");
+	default_Instanced_Mat.first->diffuse_Text_Ptr->id = Shader::GetDefaultText();
+	default_Instanced_Mat.first->normal_Text_Ptr->bindlessHandle = Shader::GetNeutralNormalText();
 	renderData->main_Instanced_Material_Handle = default_Instanced_Mat.second;
 
 	std::pair<unsigned  int, unsigned int> shadowDummy = CreateDummyShadowTextures();

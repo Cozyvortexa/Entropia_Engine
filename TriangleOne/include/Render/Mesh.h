@@ -35,7 +35,7 @@ public:
 	std::vector<InstanceGroup> instancesGroup;
 
 	//SubMesh factory
-	void Create_SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle) {
+	void Create_SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::shared_ptr<Material> materialPtr) {
 		Engine::Render::RendererAPI::API graphicAPI = Engine::Render::RendererAPI::GetAPI();
 
 		switch (graphicAPI)
@@ -45,7 +45,7 @@ public:
 			abort();
 			break;
 		case Engine::Render::RendererAPI::API::OpenGL:
-			subMeshs.push_back(OpenGL_SubMesh(vertices, indices, material_Handle));
+			subMeshs.push_back(OpenGL_SubMesh(vertices, indices, materialPtr));
 			break;
 		case Engine::Render::RendererAPI::API::Vulkan:
 			std::cout << "RendererAPI is set on Vulkan" << std::endl;

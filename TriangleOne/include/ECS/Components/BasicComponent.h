@@ -105,10 +105,10 @@ namespace Engine::Component {
 		}
 	};
 
-	struct MaterialHandle : Component {
-		MaterialHandle() {};
-		MaterialHandle(uint32_t index) { this->index = index; }
-		uint32_t index = 0;
-	};
+	//struct MaterialHandle : Component {
+	//	MaterialHandle() {};
+	//	MaterialHandle(uint32_t index) { this->index = index; }
+	//	uint32_t index = 0;
+	//};
 
 }

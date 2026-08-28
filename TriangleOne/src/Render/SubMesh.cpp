@@ -40,11 +40,11 @@ static uint32_t ToGLCount(Render::Format format)
 	return 0;
 }
 
-SubMesh::SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle)
+SubMesh::SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::shared_ptr<Material> materialPtr)
 {
 	this->vertices = vertices;
 	this->indices = indices;
-	this->material_Handle = material_Handle;
+	this->materialPtr = materialPtr;
 
 	//Position
 	Render::VertexAttribute posAttribute;
@@ -79,7 +79,7 @@ SubMesh::SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices
 
 ///////////////OpenGL
 
-OpenGL_SubMesh::OpenGL_SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int material_Handle) : SubMesh(vertices, indices, material_Handle) {
+OpenGL_SubMesh::OpenGL_SubMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::shared_ptr<Material> materialPtr) : SubMesh(vertices, indices, materialPtr) {
 	//glGenVertexArrays(1, &VAO);
 	//glGenBuffers(1, &VBO);
 	//glGenBuffers(1, &EBO);

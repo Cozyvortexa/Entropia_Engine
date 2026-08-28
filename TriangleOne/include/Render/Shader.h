@@ -22,17 +22,17 @@ public:
 	Shader(const char* vertexPath, const char* fragmentPath);
 	//The path starts with the Shader folder
 	Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath);
-	~Shader() = default;
-	//~Shader() {
-		//if (shaderID != 0) {
-		//	glUseProgram(0);
-		//	glDeleteProgram(shaderID);
-		//	shaderID = 0;
-		//}
-	//}
+	//~Shader() = default;
+	~Shader() {
+		if (shaderID != 0) {
+			glUseProgram(0);
+			glDeleteProgram(shaderID);
+			shaderID = NULL;
+		}
+	}
 
-	//Shader(const Shader&) = delete;
-	//Shader& operator=(const Shader&) = delete;
+	Shader(const Shader&) = delete;
+	Shader& operator=(const Shader&) = delete;
 
 	void Use();
 
@@ -106,7 +106,7 @@ public:
 
 	unsigned int shaderID = NULL;
 	static unsigned int GetDefaultText() { assert(defaultText != 0); return defaultText; }
-	static GLuint GetNeutralNormalText() { assert(neutralNormalText != 0); return neutralNormalText; }
+	static uint32_t GetNeutralNormalText() { assert(neutralNormalText != 0); return neutralNormalText; }
 
 	//BindlessHandle
 	static uint64_t GetDefaultText_Handle() { assert(defaultText_BindlessHandle != 0); return defaultText_BindlessHandle; }
@@ -115,7 +115,7 @@ private:
 	std::string ReadFile(const char* shaderPath);
 	int AssertShader(unsigned int& shader);
 
-	inline static GLuint neutralNormalText = 0;
+	inline static uint32_t neutralNormalText = 0;
 	inline static uint64_t neutralNormalText_BindlessHandle = 0;
 
 	inline static unsigned int defaultText = 0;

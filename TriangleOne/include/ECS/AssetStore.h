@@ -29,6 +29,8 @@ struct PendingTextureData {
 	std::string directory;
 };
 
+static enum class TextureLoadState { NotFound, Pending, Loaded };
+
 class AssetStore {
 public:
 	AssetStore() { 
@@ -40,12 +42,12 @@ public:
 	//std::shared_ptr<Mesh> Get_Mesh(int index);
 	std::shared_ptr<Mesh> Get_Mesh(std::string path);
 
-	std::pair<Material&, int> CreateMaterial(std::string name, const char* vertexPath, const char* fragmentPath);
+	std::pair<std::shared_ptr<Material>, int> CreateMaterial(std::string name, const char* vertexPath, const char* fragmentPath);
 
-	Material& Get_Material(std::string name);
-	Material* Get_Material(unsigned int index);
+	std::shared_ptr<Material> Get_Material(std::string name);
+	std::shared_ptr<Material> Get_Material(unsigned int index);
 
-	Texture* Get_Texture(unsigned int index);
+	std::shared_ptr<Texture> Get_Texture(unsigned int index);
 
 
 	Engine::Audio::Audio* Load_Sound(ma_engine& audioEngine, const std::string& name, const char* path, Engine::Audio::SoundFlags flags);
@@ -56,13 +58,13 @@ private:
 	std::vector<std::future<PendingTextureData>> m_PendingTextures;
 	//Assets
 	std::vector<std::shared_ptr<Mesh>> meshs;
-	std::vector<Texture> textures;
-	std::vector<Material> materials;
+	std::vector<std::shared_ptr<Texture>> textures;
+	std::vector<std::shared_ptr<Material>> materials;
 
 	//Map
 	std::unordered_map<std::string, std::weak_ptr<Mesh>> meshPath_AlreadyLoad;
-	std::unordered_map<std::string, unsigned int> pathToIndexMap_Texture;
-	std::unordered_map<size_t, unsigned int> keyTo_MaterialHandle;
+	std::unordered_map<std::string, std::weak_ptr<Texture>> pathToIndexMap_Texture;
+	std::unordered_map<size_t, std::weak_ptr<Material>> keyTo_MaterialHandle;
 	std::unordered_map<uint32_t, int> pathToIndexMapMaterial;
 
 	std::unordered_map<unsigned int, std::vector<aiNode*>> meshCounts;
@@ -77,7 +79,7 @@ private:
 	std::shared_ptr<Mesh> LoadMesh(std::string path);
 	void ProcessNode(aiNode* node, const aiScene* scene, Mesh& currentMesh, std::string path, glm::mat4 parentTransform = glm::mat4(1.0f));
 	void ProcessSub_Mesh(aiMesh* mesh, const aiScene* scene, Mesh& currentMesh, std::string path, bool instancedSubMesh = false);
-	unsigned int LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh, std::string path);
+	std::shared_ptr<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const aiScene* scene, Mesh& currentMesh, std::string path);
 
 	static inline uint32_t uniqueMeshIndexCompteur = 0;
 

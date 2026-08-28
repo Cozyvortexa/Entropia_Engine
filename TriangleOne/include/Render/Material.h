@@ -2,28 +2,29 @@
 #include "string.h"
 #include "Render/Shader.h"
 
+class Texture;
 struct Material {
 	Material() = default;
-	Material(Shader shader) {
+	Material(Shader* shader) {
 		this->shader = shader;
 	}
-	Material(std::string name, Shader shader) {
+	Material(std::string name, Shader* shader) {
 		this->shader = shader;
 		this->name = name;
 	}
 	Material(std::string name, const char* vertexPath, const char* fragmentPath) {
-		shader = Shader(vertexPath, fragmentPath);
+		shader = new Shader(vertexPath, fragmentPath);
 		this->name = name;
 	};
 
 	std::string name = "DefaultName";
-	Shader shader;
+	Shader* shader;
 
-	unsigned int diffuse_Text_Handle = -1;
-	unsigned int normal_Text_Handle = -1;
-	unsigned int ambientOcclusion_Text_Handle = -1;
-	unsigned int roughness_handle_Text_Handle = -1;
-	unsigned int metalness_handle_Text_Handle = -1;
+	std::shared_ptr<Texture> diffuse_Text_Ptr = std::make_shared<Texture>();
+	std::shared_ptr<Texture> normal_Text_Ptr = std::make_shared<Texture>();
+	std::shared_ptr<Texture> ambientOcclusion_Text_Ptr = std::make_shared<Texture>();
+	std::shared_ptr<Texture> roughness_handle_Text_Ptr = std::make_shared<Texture>();
+	std::shared_ptr<Texture> metalness_handle_Text_Ptr = std::make_shared<Texture>();
 
 	bool hasARM_Text = false;
 
@@ -35,12 +36,12 @@ struct Material {
 
 struct MaterialKey {
 	MaterialKey() = default;
-	MaterialKey(unsigned int diffuse, unsigned int normal, unsigned int ambientOcclusion, unsigned int metalness_handle, unsigned int roughness_handle) {
-		this->diffuse = diffuse;
-		this->normal = normal;
-		this->ambientOcclusion = ambientOcclusion;
-		this->metalness_handle = metalness_handle;
-		this->roughness_handle = roughness_handle;
+	MaterialKey(Texture* diffuse, Texture* normal, Texture* ambientOcclusion, Texture* metalness_handle, Texture* roughness_handle) {
+		this->diffuse = (size_t)diffuse;
+		this->normal = (size_t)normal;
+		this->ambientOcclusion = (size_t)ambientOcclusion;
+		this->metalness_handle = (size_t)metalness_handle;
+		this->roughness_handle = (size_t)roughness_handle;
 	}
 	size_t diffuse = 0;
 	size_t normal = 0;
